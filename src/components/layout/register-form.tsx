@@ -11,8 +11,9 @@ export default function RegisterForm() {
 
   const [form, setForm] = useState({
     name: "",
+    storeName: "",
     email: "",
-    confirmEmail: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -23,6 +24,10 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({
       ...prev,
@@ -31,13 +36,8 @@ export default function RegisterForm() {
   };
 
   const handleSubmit = async () => {
-    if (form.email !== form.confirmEmail) {
-      setError("Emails do not match");
-      return;
-    }
-
     if (!form.name) {
-      return setError("Please Enter your name!");
+      return setError("Please Enter Store name!");
     }
 
     if (!form.email) {
@@ -54,23 +54,39 @@ export default function RegisterForm() {
 
     try {
       setError("");
-
       setLoading(true);
 
-      const res = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         name: form.name,
+        storeName: form.storeName,
         email: form.email,
+        phone: form.phone,
         password: form.password,
       });
 
-      console.log("REGISTER SUCCESS:", res.data);
+      // ✅ SAVE EMAIL + OPEN OTP MODAL
+      setUserEmail(form.email);
+      setShowOtpModal(true);
+    } catch (err) {
+      setError("Sign Up Failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      setLoading(true);
+
+      await api.post("/auth/verify-register", {
+        email: userEmail,
+        code: String(otp),
+      });
+
+      // ✅ success → go to login
       navigate("/login");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError("Sign Up Failed");
-      } else {
-        setError("Sign Up Failed");
-      }
+    } catch (err) {
+      setError("Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -96,9 +112,25 @@ export default function RegisterForm() {
       </div>
 
       {/* Form */}
-      <div className="space-y-4">{/* your inputs here */}</div>
 
-      {/* Form */}
+      <div className="flex gap-4">
+        <Input
+          name="name"
+          type="text"
+          className="flex-1 border p-2"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+        />
+        <Input
+          name="storeName"
+          type="text"
+          value={form.storeName}
+          className="flex-1 border p-2"
+          placeholder="Store Name"
+          onChange={handleChange}
+        />
+      </div>
 
       <div className="flex gap-4">
         <Input
@@ -110,23 +142,16 @@ export default function RegisterForm() {
           onChange={handleChange}
         />
         <Input
-          name="confirmEmail"
-          type="email"
-          value={form.confirmEmail}
+          name="phone"
+          type="text"
+          value={form.phone}
           className="flex-1 border p-2"
-          placeholder="Confirm Email"
+          placeholder="Phone number"
           onChange={handleChange}
         />
       </div>
 
       <div className="space-y-4">
-        <Input
-          name="name"
-          placeholder="Store Name"
-          value={form.name}
-          onChange={handleChange}
-        />
-
         {/* Password */}
         <div className="relative">
           <Input
@@ -205,6 +230,40 @@ export default function RegisterForm() {
           <span className="text-sm font-medium">Apple</span>
         </button>
       </div>
+
+      {showOtpModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-2xl w-[90%] max-w-sm space-y-4">
+            <h2 className="text-xl font-semibold text-center">Verify Email</h2>
+
+            <p className="text-sm text-gray-500 text-center">
+              Enter the OTP sent to your email
+            </p>
+
+            <Input
+              type="text"
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+            />
+
+            <Button
+              onClick={handleVerifyOtp}
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? "Verifying..." : "Verify"}
+            </Button>
+
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="text-sm text-gray-400 w-full text-center"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
