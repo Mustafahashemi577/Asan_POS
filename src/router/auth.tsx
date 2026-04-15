@@ -26,4 +26,5 @@ export const authRoutes: RouteObject[] = [
     path: "/verify-2fa",
     element: <Verify2FA />,
   },
+
 ];

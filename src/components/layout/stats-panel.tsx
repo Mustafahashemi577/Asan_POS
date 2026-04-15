@@ -22,8 +22,8 @@ const CurrentDate = new Date().toLocaleDateString("en-US", {
 export default function StatsPanel() {
   return (
     <>
-      <div className="flex items-center justify-center mb-2 -mt-10 text-center">
-        <img src="/icons/logo.png" alt="Logo" className="w-27 h-18 mb-2" />
+      <div className="flex items-center justify-center mb-2 gap-2 text-center">
+        <img src="/icons/logo.svg" alt="Logo" className="w-9 h-9 gap-2" />
         <div className="text-xl font-bold mr-4">MPOS</div>
       </div>
 

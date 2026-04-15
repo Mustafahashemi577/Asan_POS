@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 interface LoginPayload {
   email: string;
   password: string;
-  code?: string; // optional 2FA code
+  code?: string;
 }
 
 interface RegisterPayload {
@@ -29,6 +29,10 @@ interface Enable2FAPayload {
 // POST /auth/login
 export const login = (payload: LoginPayload) => {
   return api.post("/auth/login", payload);
+};
+
+export const verify2FA = (payload: { code: string }) => {
+  return api.post("/auth/verify-2fa-setup", payload);
 };
 
 // POST /auth/register

@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { login } from "@/queries/auth";
-import { Eye, EyeOff } from "lucide-react";
+import api from "@/lib/axios";
+import { useAuthStore } from "@/lib/store";
+import { Eye, EyeOff, Shield } from "lucide-react";
+import TwoFADialog from "@/pages/(auth)/two-fa-dialog/two-fa-dialog";
+import TwoFASetupDialog from "@/pages/(auth)/two-fa-dialog/two-fa-setup-dialog";
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -16,16 +19,19 @@ export default function LoginForm() {
     remember: false,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [twoFAOpen, setTwoFAOpen] = useState(false);
+  const [twoFASetupOpen, setTwoFASetupOpen] = useState(false);
+  const [pendingAuth, setPendingAuth] = useState<{
+    user: any;
+    token: string;
+  } | null>(null);
+
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000:api/auth/google";
+    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
-  // const handleAppleLogin = () => {
-  //   window.location.href = "http://localhost:5000/api/auth/apple";
-  // };
-
   const [showPassword, setShowPassword] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,42 +43,41 @@ export default function LoginForm() {
     }));
   };
 
+  const { setAuth } = useAuthStore();
   const handleSubmit = async () => {
     setError("");
-
-    if (!form.email) {
-      return setError("Please enter your Email!");
-    }
-
-    if (!form.password) {
-      return setError("Please enter your Password!");
-    }
+    if (!form.email || !form.password) return setError("Email and password required");
 
     try {
       setLoading(true);
-
-      const res = await login({
+      const res = await api.post("/auth/login", {
         email: form.email,
         password: form.password,
       });
 
-      if (res.data.requires2FA) {
-        navigate("/verify-2fa", {
-          state: { email: form.email },
-        });
+      // Backend sends twoFactorRequired:true if 2FA is enabled
+      if (res.data.twoFactorRequired) {
+        setTwoFAOpen(true);
         return;
       }
 
-      console.log("LOGIN SUCCESS:", res.data);
+      // Normal login — token comes back directly
+      const { token } = res.data;
+      localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError("Login Failed");
-      } else {
-        setError("Login Failed");
-      }
+    } catch {
+      setError("Login failed");
     } finally {
       setLoading(false);
+    }
+  };
+  const handleTwoFASuccess = (data: any) => {
+    if (pendingAuth) {
+      // Set auth with the pending user and token
+      setAuth(pendingAuth.user, data.token || pendingAuth.token);
+      localStorage.setItem("token", data.token || pendingAuth.token);
+      setPendingAuth(null);
+      navigate("/dashboard");
     }
   };
 
@@ -80,7 +85,7 @@ export default function LoginForm() {
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
       <div className="text-center">
-        <img src="/icons/logo.png" alt="Logo" className="mx-auto w-24 h-16" />
+        <img src="/icons/logo.svg" alt="Logo" className="mx-auto w-8 h-8" />
 
         <h1 className="text-[32px] leading-tight font-semibold mb-2">
           Welcome Back!
@@ -107,6 +112,7 @@ export default function LoginForm() {
         {/* Password */}
         <div className="relative">
           <Input
+            className="w-112 h-11"
             name="password"
             type={showPassword ? "password" : "text"}
             placeholder="Your Password"
@@ -149,13 +155,17 @@ export default function LoginForm() {
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
-        <Button onClick={handleSubmit} disabled={loading} className="w-full">
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full h-11"
+        >
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </div>
 
       <div className="text-center text-sm text-gray-500">
-        Don’t have an account?{" "}
+        Don't have an account?{" "}
         <span
           onClick={() => navigate("/register")}
           className="text-black font-medium cursor-pointer hover:underline"
@@ -188,6 +198,19 @@ export default function LoginForm() {
           <span className="text-sm font-medium">Apple</span>
         </button>
       </div>
+
+      <TwoFADialog
+        open={twoFAOpen}
+        onClose={() => setTwoFAOpen(false)}
+        email={form.email}
+        password={form.password}
+      />
+
+      <TwoFASetupDialog
+        open={twoFASetupOpen}
+        onClose={() => setTwoFASetupOpen(false)}
+        email={form.email}
+      />
     </div>
   );
 }

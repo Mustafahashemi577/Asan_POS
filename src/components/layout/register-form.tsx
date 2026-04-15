@@ -96,11 +96,7 @@ export default function RegisterForm() {
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
       <div className="text-center">
-        <img
-          src="icons/logo.png"
-          alt="Logo"
-          className="mx-auto w-24 h-16 mb-0"
-        />
+        <img src="/icons/logo.svg" alt="Logo" className="mx-auto w-8 h-8" />
 
         <h1 className="text-[32px] leading-tight font-semibold mb-2">
           Welcome!

@@ -21,7 +21,7 @@ export default function Verify2FA() {
     try {
       setLoading(true);
 
-      const res = await api.post("/auth/verify-2fa", {
+      const res = await api.post("/auth/verify-register", {
         email,
         code,
       });
