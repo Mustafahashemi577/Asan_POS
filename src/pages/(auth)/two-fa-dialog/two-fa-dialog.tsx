@@ -4,6 +4,7 @@ import api from "@/lib/axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/store";  // ← added
 
 type Props = {
   open: boolean;
@@ -14,6 +15,7 @@ type Props = {
 
 export default function TwoFADialog({ open, onClose, email, password }: Props) {
   const navigate = useNavigate();
+  const { setAuth } = useAuthStore();  // ← added
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,12 +25,11 @@ export default function TwoFADialog({ open, onClose, email, password }: Props) {
       setLoading(true);
       setError("");
 
-      // Send login again with the 2FA code included
       const res = await api.post("/auth/login", { email, password, code });
 
-      localStorage.setItem("token", res.data.token);
+      setAuth({ id: "", email }, res.data.token);  // ← replaces localStorage.setItem
       onClose();
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });   // ← replace blocks back button
     } catch {
       setError("Invalid code. Please try again.");
     } finally {
