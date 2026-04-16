@@ -10,65 +10,90 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/lib/store";
 
 export default function Dashboard() {
     const navigate = useNavigate();
-    const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+    const { twoFAEnabled, setTwoFAEnabled, logout } = useAuthStore();
+
+    // Enable 2FA flow — two steps
     const [showEnableDialog, setShowEnableDialog] = useState(false);
-    const [showDisableDialog, setShowDisableDialog] = useState(false);
+    const [enableStep, setEnableStep] = useState<"qr" | "verify">("qr");
     const [qrCode, setQrCode] = useState("");
+
+    // Disable 2FA flow
+    const [showDisableDialog, setShowDisableDialog] = useState(false);
+
+    // Shared
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        navigate("/");
+        logout();
+        navigate("/", { replace: true });
     };
 
-    // Step 1: call enable-2fa to get QR code
+    // Step 1: call POST /auth/enable-2fa to get the QR code
     const handleOpenEnable = async () => {
+        setError("");
+        setCode("");
+        setEnableStep("qr");
         try {
             const res = await api.post("/auth/enable-2fa");
-            setQrCode(res.data.qrCode || res.data.otpauthUrl || "");
+            setQrCode(res.data.qrCode || "");
             setShowEnableDialog(true);
-        } catch {
-            setError("Failed to start 2FA setup.");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || "Failed to start 2FA setup.";
+            setError(msg);
         }
     };
 
-    // Step 2: confirm with the code from authenticator app
+    // Step 2: call POST /auth/verify-2fa-setup with the code from authenticator app
     const handleConfirmEnable = async () => {
+        setError("");
+        setLoading(true);
         try {
-            setLoading(true);
-            setError("");
-            await api.post("/auth/enable-2fa", { code });
-            setTwoFAEnabled(true);
+            await api.post("/auth/verify-2fa-setup", { code });
+            setTwoFAEnabled(true);   // ← correctly inside the function
             setShowEnableDialog(false);
-            setSuccess("Two-factor authentication enabled!");
             setCode("");
-        } catch {
-            setError("Invalid code. Please try again.");
+            setSuccess("Two-factor authentication enabled!");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || "Invalid code. Please try again.";
+            setError(msg);
         } finally {
             setLoading(false);
         }
     };
-
 
     const handleDisable = async () => {
+        setError("");
+        setLoading(true);
         try {
-            setLoading(true);
-            setError("");
             await api.delete("/auth/disable-2fa");
-            setTwoFAEnabled(false);
+            setTwoFAEnabled(false);  // ← correctly inside the function
             setShowDisableDialog(false);
             setSuccess("Two-factor authentication disabled.");
-        } catch {
-            setError("Failed to disable 2FA.");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || "Failed to disable 2FA.";
+            setError(msg);
         } finally {
             setLoading(false);
         }
+    };
+
+    const closeEnableDialog = () => {
+        setShowEnableDialog(false);
+        setCode("");
+        setError("");
+        setEnableStep("qr");
+    };
+
+    const closeDisableDialog = () => {
+        setShowDisableDialog(false);
+        setError("");
     };
 
     return (
@@ -95,6 +120,12 @@ export default function Dashboard() {
                 {success && (
                     <div className="w-full bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm text-center">
                         {success}
+                    </div>
+                )}
+
+                {error && !showEnableDialog && !showDisableDialog && (
+                    <div className="w-full bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm text-center">
+                        {error}
                     </div>
                 )}
 
@@ -126,7 +157,7 @@ export default function Dashboard() {
                         <Button
                             variant="outline"
                             className="w-full border-red-200 text-red-500 hover:bg-red-50"
-                            onClick={() => setShowDisableDialog(true)}
+                            onClick={() => { setError(""); setShowDisableDialog(true); }}
                         >
                             Disable 2FA
                         </Button>
@@ -139,47 +170,74 @@ export default function Dashboard() {
             </div>
 
             {/* Enable 2FA Dialog */}
-            <Dialog open={showEnableDialog} onOpenChange={setShowEnableDialog}>
+            <Dialog open={showEnableDialog} onOpenChange={closeEnableDialog}>
                 <DialogContent className="max-w-sm rounded-2xl p-6">
                     <DialogHeader>
                         <DialogTitle className="text-center text-xl font-semibold">
-                            Enable 2FA
+                            {enableStep === "qr" ? "Scan QR Code" : "Confirm Code"}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="mt-4 space-y-4">
-                        {qrCode && (
-                            <div className="flex flex-col items-center gap-2">
-                                <p className="text-sm text-center text-muted-foreground">
-                                    Scan this QR code with Google Authenticator
-                                </p>
-                                <img src={qrCode} alt="QR Code" className="w-40 h-40" />
-                            </div>
+                        {enableStep === "qr" && (
+                            <>
+                                {qrCode ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <p className="text-sm text-center text-muted-foreground">
+                                            Scan this QR code with <strong>Google Authenticator</strong>
+                                        </p>
+                                        <img src={qrCode} alt="QR Code" className="w-44 h-44 rounded-xl border border-gray-100" />
+                                        <p className="text-xs text-center text-gray-400">
+                                            The QR code expires in 5 minutes
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-sm text-red-500">Failed to load QR code.</p>
+                                )}
+                                <Button
+                                    className="w-full"
+                                    onClick={() => { setError(""); setEnableStep("verify"); }}
+                                    disabled={!qrCode}
+                                >
+                                    I've scanned it →
+                                </Button>
+                            </>
                         )}
-                        <p className="text-sm text-center text-muted-foreground">
-                            Then enter the 6-digit code to confirm
-                        </p>
-                        <Input
-                            autoFocus
-                            value={code}
-                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                            maxLength={6}
-                            placeholder="123456"
-                            className="text-center text-lg tracking-[0.5em]"
-                        />
-                        {error && <p className="text-center text-sm text-red-500">{error}</p>}
-                        <Button
-                            onClick={handleConfirmEnable}
-                            disabled={loading || code.length !== 6}
-                            className="w-full"
-                        >
-                            {loading ? "Confirming..." : "Confirm & Enable"}
-                        </Button>
+                        {enableStep === "verify" && (
+                            <>
+                                <p className="text-sm text-center text-muted-foreground">
+                                    Enter the 6-digit code from your authenticator app
+                                </p>
+                                <Input
+                                    autoFocus
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                                    maxLength={6}
+                                    placeholder="123456"
+                                    className="text-center text-lg tracking-[0.5em]"
+                                />
+                                {error && <p className="text-center text-sm text-red-500">{error}</p>}
+                                <Button
+                                    onClick={handleConfirmEnable}
+                                    disabled={loading || code.length !== 6}
+                                    className="w-full"
+                                >
+                                    {loading ? "Confirming..." : "Confirm & Enable"}
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    className="w-full text-sm text-gray-400"
+                                    onClick={() => { setError(""); setEnableStep("qr"); }}
+                                >
+                                    ← Back to QR code
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
 
             {/* Disable 2FA Dialog */}
-            <Dialog open={showDisableDialog} onOpenChange={setShowDisableDialog}>
+            <Dialog open={showDisableDialog} onOpenChange={closeDisableDialog}>
                 <DialogContent className="max-w-sm rounded-2xl p-6">
                     <DialogHeader>
                         <DialogTitle className="text-center text-xl font-semibold">
@@ -188,7 +246,7 @@ export default function Dashboard() {
                     </DialogHeader>
                     <div className="mt-4 space-y-4">
                         <p className="text-center text-sm text-muted-foreground">
-                            Are you sure you want to disable two-factor authentication?
+                            Are you sure you want to disable two-factor authentication? Your account will be less secure.
                         </p>
                         {error && <p className="text-center text-sm text-red-500">{error}</p>}
                         <Button
@@ -199,7 +257,7 @@ export default function Dashboard() {
                         >
                             {loading ? "Disabling..." : "Yes, disable 2FA"}
                         </Button>
-                        <Button variant="ghost" className="w-full" onClick={() => setShowDisableDialog(false)}>
+                        <Button variant="ghost" className="w-full" onClick={closeDisableDialog}>
                             Cancel
                         </Button>
                     </div>

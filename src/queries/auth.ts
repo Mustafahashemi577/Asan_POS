@@ -31,10 +31,6 @@ export const login = (payload: LoginPayload) => {
   return api.post("/auth/login", payload);
 };
 
-export const verify2FA = (payload: { code: string }) => {
-  return api.post("/auth/verify-2fa-setup", payload);
-};
-
 // POST /auth/register
 export const register = (payload: RegisterPayload) => {
   return api.post("/auth/register", payload);

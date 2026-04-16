@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/lib/store";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 

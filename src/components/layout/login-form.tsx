@@ -61,10 +61,9 @@ export default function LoginForm() {
         return;
       }
 
-      // Normal login — token comes back directly
       const { token } = res.data;
-      localStorage.setItem("token", token);
-      navigate("/dashboard");
+      setAuth({ id: "", email: form.email }, token);  // ← updates store so PrivateRoute re-renders
+      navigate("/dashboard", { replace: true });
     } catch {
       setError("Login failed");
     } finally {
