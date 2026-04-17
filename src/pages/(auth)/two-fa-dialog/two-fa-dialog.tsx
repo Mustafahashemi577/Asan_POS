@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/lib/store";  // ← added
+import { useAuthStore } from "@/lib/store";
 
 type Props = {
   open: boolean;
@@ -15,7 +15,7 @@ type Props = {
 
 export default function TwoFADialog({ open, onClose, email, password }: Props) {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();  // ← added
+  const { setAuth, setTwoFAEnabled } = useAuthStore();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,9 +27,10 @@ export default function TwoFADialog({ open, onClose, email, password }: Props) {
 
       const res = await api.post("/auth/login", { email, password, code });
 
-      setAuth({ id: "", email }, res.data.token);  // ← replaces localStorage.setItem
+      setAuth({ id: "", email }, res.data.token);
+      setTwoFAEnabled(true); // ← user just used 2FA to log in, so it's definitely enabled
       onClose();
-      navigate("/dashboard", { replace: true });   // ← replace blocks back button
+      navigate("/dashboard", { replace: true });
     } catch {
       setError("Invalid code. Please try again.");
     } finally {
@@ -58,7 +59,11 @@ export default function TwoFADialog({ open, onClose, email, password }: Props) {
             className="text-center text-lg tracking-[0.5em]"
           />
           {error && <p className="text-center text-sm text-red-500">{error}</p>}
-          <Button onClick={handleVerify} disabled={loading || code.length !== 6} className="w-full">
+          <Button
+            onClick={handleVerify}
+            disabled={loading || code.length !== 6}
+            className="w-full"
+          >
             {loading ? "Verifying..." : "Verify"}
           </Button>
         </div>
