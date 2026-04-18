@@ -67,8 +67,9 @@ export default function RegisterForm() {
       // ✅ SAVE EMAIL + OPEN OTP MODAL
       setUserEmail(form.email);
       setShowOtpModal(true);
-    } catch (err) {
-      setError("Sign Up Failed");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg[0] : msg || "Sign Up Failed");
     } finally {
       setLoading(false);
     }
