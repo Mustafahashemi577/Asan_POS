@@ -162,7 +162,7 @@ export default function LoginForm() {
         <Button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full h-11"
+          className="w-full h-12"
         >
           {loading ? "Signing in..." : "Sign in"}
         </Button>
