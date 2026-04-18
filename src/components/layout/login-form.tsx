@@ -46,7 +46,9 @@ export default function LoginForm() {
   const { setAuth } = useAuthStore();
   const handleSubmit = async () => {
     setError("");
-    if (!form.email || !form.password) return setError("Email and password required");
+    if (!form.email && !form.password) return setError("Email and password required");
+    if (!form.email) return setError("Please enter your Email");
+    if(!form.password) return setError("Please enter your password");
 
     try {
       setLoading(true);
@@ -64,8 +66,8 @@ export default function LoginForm() {
       const { token } = res.data;
       setAuth({ id: "", email: form.email }, token);  // ← updates store so PrivateRoute re-renders
       navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Login failed");
+    } catch (err:unknown) {
+      setError(err.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -95,14 +97,13 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {/* Form */}
-      <div className="space-y-4">{/* your inputs here */}</div>
 
       {/* Form */}
       <div className="space-y-4">
         <Input
           name="email"
           type="email"
+          classname="h-12"
           placeholder="Your Email"
           value={form.email}
           onChange={handleChange}
@@ -111,16 +112,19 @@ export default function LoginForm() {
         {/* Password */}
         <div className="relative">
           <Input
-            className="w-112 h-11"
             name="password"
+            className="h-12"
             type={showPassword ? "password" : "text"}
             placeholder="Your Password"
+            autoComplete="new-password"
             value={form.password}
             onChange={handleChange}
           />
 
-          <button
+          <Button
             type="button"
+            size="icon"
+            variant="ghost"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
           >
@@ -129,7 +133,7 @@ export default function LoginForm() {
             ) : (
               <Eye className="h-5 w-5" />
             )}
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center justify-between text-sm">
@@ -172,30 +176,32 @@ export default function LoginForm() {
           Sign Up
         </span>
       </div>
+      {/* Separator for "Or" */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
         <span className="text-gray-400 text-sm">Or</span>
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         {/*Google */}
-        <button
-          onClick={handleGoogleLogin}
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-            hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
         >
-          <img src="/icons/google_color.svg" alt="Google" className="w-5 h-5" />
+          <img src="icons/google_color.svg" alt="Google" className="w-5 h-5" />
           <span className="text-sm font-medium">Google</span>
-        </button>
+        </Button>
         {/*Apple*/}
-        <button
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-                hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
         >
           <img src="/icons/apple_black.svg" alt="Apple" className="w-5 h-5" />
           <span className="text-sm font-medium">Apple</span>
-        </button>
+        </Button>
       </div>
 
       <TwoFADialog
