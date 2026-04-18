@@ -208,7 +208,7 @@ export default function RegisterForm() {
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
-        <Button onClick={handleSubmit} disabled={loading} className="w-full">
+        <Button onClick={handleSubmit} disabled={loading} className="w-full h-12">
           {loading ? "Creating..." : "Sign Up"}
         </Button>
       </div>
