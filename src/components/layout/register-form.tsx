@@ -123,7 +123,7 @@ export default function RegisterForm() {
 
       {/* Form */}
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <Input
           name="name"
           type="text"
@@ -142,7 +142,7 @@ export default function RegisterForm() {
         />
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <Input
           name="email"
           type="email"
