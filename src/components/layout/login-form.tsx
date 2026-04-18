@@ -62,10 +62,11 @@ export default function LoginForm() {
       }
 
       const { token } = res.data;
-      setAuth({ id: "", email: form.email }, token);  // ← updates store so PrivateRoute re-renders
+      setAuth({ id: "", email: form.email }, token);
       navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Login failed");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg[0] : msg || "Login failed");
     } finally {
       setLoading(false);
     }
