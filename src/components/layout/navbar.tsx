@@ -28,16 +28,16 @@ export default function Navbar({
       <div className="flex items-center justify-between px-4 py-3">
         {/*Logo + Name*/}
         <div className="flex items-center">
-          <img src="/icons/logo.png" alt="Logo" className="w-14 h-9" />
+          <img src="/icons/logo.svg" alt="Logo" className="w-14 h-9" />
           <span className="-ml-1 text-lg font-semibold">MPOS</span>
         </div>
 
         {/*Right Side */}
         <div className="flex items-center gap-2">
           {/* Notification */}
-          <Button variant="outline" size="icon">
+          {/* <Button variant="outline" size="icon">
             <Bell className="w-5 h-5" />
-          </Button>
+          </Button> */}
 
           {/*Menu*/}
           <Button variant="outline" size="icon" onClick={onMenuClick}>
@@ -54,10 +54,10 @@ export default function Navbar({
         </div>
 
         {/*Avatar*/}
-        <Avatar className="w-9 h-9">
+        {/* <Avatar className="w-9 h-9">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
+        </Avatar> */}
       </div>
     </div>
   );
