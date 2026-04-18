@@ -4,6 +4,7 @@ import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/lib/store";
 import { Eye, EyeOff, Shield } from "lucide-react";
