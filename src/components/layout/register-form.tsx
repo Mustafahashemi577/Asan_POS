@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+
 import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
