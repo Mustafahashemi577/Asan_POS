@@ -37,15 +37,27 @@ export default function RegisterForm() {
 
   const handleSubmit = async () => {
     if (!form.name) {
-      return setError("Please Enter Store name!");
+      return setError("Please Enter name");
+    }
+
+    if (!form.storeName) {
+      return setError("Please Enter Store name");
     }
 
     if (!form.email) {
       return setError("Please enter your email!");
     }
 
+    if (!form.phone) {
+      return setError("Please enter your Phone number");
+    }
+
     if (!form.password) {
       return setError("Please enter your password!");
+    }
+
+    if (!form.confirmPassword) {
+      return setError("Please confirm you password");
     }
 
     if (form.password !== form.confirmPassword) {
@@ -67,8 +79,8 @@ export default function RegisterForm() {
       // ✅ SAVE EMAIL + OPEN OTP MODAL
       setUserEmail(form.email);
       setShowOtpModal(true);
-    } catch (err) {
-      setError("Sign Up Failed");
+    } catch (err:unknown) {
+      setError(err.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -113,7 +125,7 @@ export default function RegisterForm() {
         <Input
           name="name"
           type="text"
-          className="flex-1 border p-2"
+          className="flex-1 border p-2 h-12"
           placeholder="Full Name"
           value={form.name}
           onChange={handleChange}
@@ -122,7 +134,7 @@ export default function RegisterForm() {
           name="storeName"
           type="text"
           value={form.storeName}
-          className="flex-1 border p-2"
+          className="flex-1 border p-2 h-12"
           placeholder="Store Name"
           onChange={handleChange}
         />
@@ -132,7 +144,7 @@ export default function RegisterForm() {
         <Input
           name="email"
           type="email"
-          className="flex-1 border p-2"
+          className="flex-1 border p-2 h-12"
           placeholder="Your Email"
           value={form.email}
           onChange={handleChange}
@@ -141,7 +153,7 @@ export default function RegisterForm() {
           name="phone"
           type="text"
           value={form.phone}
-          className="flex-1 border p-2"
+          className="flex-1 border p-2 h-12"
           placeholder="Phone number"
           onChange={handleChange}
         />
@@ -149,41 +161,47 @@ export default function RegisterForm() {
 
       <div className="space-y-4">
         {/* Password */}
-        <div className="relative">
+        <div className="relative h-12">
           <Input
             name="password"
             type={showPassword ? "password" : "text"}
             placeholder="Password"
+            autoComplete="new-password"
             value={form.password}
             onChange={handleChange}
           />
 
-          <button
+          <Button
             type="button"
+            size="icon"
+            variant="ghost"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+          </Button>
         </div>
 
         {/* Confirm Password */}
-        <div className="relative">
+        <div className="relative h-12">
           <Input
             name="confirmPassword"
             type={showConfirm ? "password" : "text"}
             placeholder="Confirm Password"
+            autoComplete="new-password"
             value={form.confirmPassword}
             onChange={handleChange}
           />
 
-          <button
+          <Button
             type="button"
+            size="icon"
+            variant="ghost"
             onClick={() => setShowConfirm((prev) => !prev)}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
           >
             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+          </Button>
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -202,29 +220,33 @@ export default function RegisterForm() {
           Sign In
         </span>
       </div>
+      
+      {/* Separator for "Or" */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
         <span className="text-gray-400 text-sm">Or</span>
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         {/*Google */}
-        <button
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-            hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm h-12 py-3"
         >
           <img src="icons/google_color.svg" alt="Google" className="w-5 h-5" />
           <span className="text-sm font-medium">Google</span>
-        </button>
+        </Button>
         {/*Apple*/}
-        <button
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-                hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm h-12 py-3"
         >
           <img src="/icons/apple_black.svg" alt="Apple" className="w-5 h-5" />
           <span className="text-sm font-medium">Apple</span>
-        </button>
+        </Button>
       </div>
 
       {showOtpModal && (
@@ -251,12 +273,14 @@ export default function RegisterForm() {
               {loading ? "Verifying..." : "Verify"}
             </Button>
 
-            <button
+            <Button
+              type="button"
+              variant="link"
+              className="text-sm text-gray-400 w-full text-center p-0"
               onClick={() => setShowOtpModal(false)}
-              className="text-sm text-gray-400 w-full text-center"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
