@@ -67,10 +67,10 @@ export default function StatsPanel() {
         </p>
       </div>
 <div className="flex justify-center gap-2 mt-6 mb-4">
-        <div className="w-2 h-2 rounded-full bg-white"></div>
-        <div className="w-2 h-2 rounded-full bg-white"></div>
-        <div className="w-2 h-2 rounded-full bg-white"></div>
-        <div className="w-2 h-2 rounded-full bg-white"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-500"></div>
       </div> 
     </>
   );
