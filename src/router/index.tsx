@@ -3,6 +3,7 @@ import Dashboard from "@/pages/dashboard";
 import { createBrowserRouter } from "react-router-dom";
 import { authRoutes } from "./auth";
 import { PrivateRoute, PublicRoute } from "./guards";
+import ProfilePage from "@/pages/profile";
 
 export const router = createBrowserRouter([
   {
@@ -12,6 +13,10 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <PrivateRoute><Dashboard /></PrivateRoute>,  // logged-out users can't access
+  },
+  {
+    path: "/profile",
+    element: <PrivateRoute><ProfilePage /></PrivateRoute>,
   },
   ...authRoutes,
 ]);

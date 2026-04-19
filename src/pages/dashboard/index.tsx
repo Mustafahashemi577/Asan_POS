@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "@/lib/axios";
 import { Shield, ShieldOff } from "lucide-react";
+import { enable2FA, verify2FASetup, disable2FA } from "@/queries/auth";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store";
+
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function Dashboard() {
         setCode("");
         setEnableStep("qr");
         try {
-            const res = await api.post("/auth/enable-2fa");
+            const res = await enable2FA();
             setQrCode(res.data.qrCode || "");
             setShowEnableDialog(true);
         } catch (err: any) {
@@ -55,7 +56,7 @@ export default function Dashboard() {
         setError("");
         setLoading(true);
         try {
-            await api.post("/auth/verify-2fa-setup", { code });
+            await verify2FASetup(code);
             setTwoFAEnabled(true);   // ← correctly inside the function
             setShowEnableDialog(false);
             setCode("");
@@ -72,7 +73,7 @@ export default function Dashboard() {
         setError("");
         setLoading(true);
         try {
-            await api.delete("/auth/disable-2fa");
+            await disable2FA();
             setTwoFAEnabled(false);  // ← correctly inside the function
             setShowDisableDialog(false);
             setSuccess("Two-factor authentication disabled.");
@@ -105,12 +106,15 @@ export default function Dashboard() {
                     <img src="/icons/logo.svg" alt="Logo" className="w-7 h-7" />
                     <span className="font-semibold text-lg">MPOS</span>
                 </div>
+
                 <button
-                    onClick={handleLogout}
+                    onClick={() => navigate("/profile")}
                     className="text-sm text-gray-400 hover:text-white transition"
                 >
-                    Logout
+                    Profile
                 </button>
+
+
             </div>
 
             {/* Main content */}
