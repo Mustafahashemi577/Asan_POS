@@ -72,15 +72,3 @@ export const verify2FASetup = (code: string) =>
 export const disable2FA = () =>
   api.delete("/auth/disable-2fa");
 
-// PUT /auth/update-employee-info  (requires JWT)
-// Updates employee profile — only send fields that changed
-// If email changes → backend sends OTP to new email + returns message
-// Returns: { message: string }
-export const updateEmployeeInfo = (payload: UpdateEmployeePayload) =>
-  api.put("/auth/update-employee-info", payload);
-
-// POST /auth/verify-updated-email  (requires JWT)
-// Verifies OTP sent to new email after email change
-// Returns: { message: string }
-export const verifyUpdatedEmail = (payload: VerifyPayload) =>
-  api.post("/auth/verify-updated-email", payload);

@@ -186,7 +186,7 @@ export default function ProfilePage() {
             if (emailChanged) formData.append("email", editForm.email);
 
             // ← Send as multipart/form-data — axios sets Content-Type automatically
-            await api.put("/auth/update-employee-info", formData, {
+            await api.put("/employees/info", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
@@ -216,7 +216,7 @@ export default function ProfilePage() {
         setOtpError("");
         setOtpLoading(true);
         try {
-            await api.post("/auth/verify-updated-email", { email: pendingEmail, code: otpCode });
+            await api.post("/employees/verify-updated-email", { email: pendingEmail, code: otpCode });
             await mutate(); // refresh profile from server
             setOtpOpen(false);
             setOtpCode("");
