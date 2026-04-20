@@ -38,6 +38,8 @@ interface UpdateEmployeePayload {
 export const register = (payload: RegisterPayload) =>
   api.post("/auth/register", payload);
 
+export const getMe = () => api.get("/auth/me");
+
 // POST /auth/verify-register
 // Verifies the OTP sent to email after registration
 // Returns: { message: "Registration successful", employee_id: string }

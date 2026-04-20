@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Bell, ChevronDown, Calendar } from "lucide-react";
+import { Eye, EyeOff, Bell, ChevronDown, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,21 +11,61 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthStore } from "@/lib/store";
 import api from "@/lib/axios";
+import useSWR from "swr";
+import GenderDropdown from "@/components/ui/GenderDropdown";
+import DateInput from "@/components/ui/DateInput";
 
-interface ProfileData {
+// ─── SWR fetcher ─────────────────────────────────────────────────────────────
+const fetcher = (url: string) => api.get(url).then((res) => res.data);
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+interface EmployeeProfile {
+    id: string;
+    email: string;
+    name: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    title: string | null;
+    imageUrl: string | null;
+    dob: string | null;
+    gender: string | null;
+    storeName: string | null;
+    createdAt: string | null;
+}
+
+interface EditForm {
     firstName: string;
     lastName: string;
-    role: string;
     email: string;
     phone: string;
-    position: string;
-    birthday: string;
-    firstSeen: string;
-    avatarUrl: string | null;
-    status: string;
+    gender: string;
+    dob: string;
     storeName: string;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Shows "..." for null/empty values
+const display = (val: string | null | undefined) =>
+    val && val.trim() !== "" ? val : "...";
+
+const formatDate = (val: string | null | undefined) => {
+    if (!val) return "...";
+    try {
+        return new Date(val).toLocaleDateString("en-US", {
+            month: "2-digit", day: "2-digit", year: "numeric",
+        });
+    } catch { return "..."; }
+};
+
+const getInitials = (profile: EmployeeProfile) => {
+    if (profile.firstName && profile.lastName)
+        return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
+    if (profile.name) return profile.name.slice(0, 2).toUpperCase();
+    return "??";
+};
+
+// ─── Static mock data (replace with real API later) ──────────────────────────
 const stats = [
     { label: "Order Process", value: "5", pct: "0,5%", pctColor: "text-green-400", date: "Yesterday, 26 Mar 2024", sub: "1,300" },
     { label: "Order Done", value: "40", pct: "", pctColor: "", date: "Yesterday, 26 Mar 2024", sub: "70" },
@@ -39,46 +79,39 @@ const transactions = [
     { id: "21239172AKS233", customer: "Dina Septiani", type: "Dine In", total: "Rp. 119,000.00", status: "Complited" },
     { id: "21239172AKS234", customer: "Relastini", type: "Dine In", total: "Rp. 98,000.00", status: "Complited" },
     { id: "21239172AKS234", customer: "Vikeski", type: "Dine In", total: "Rp. 88,000.00", status: "Declned" },
-    { id: "21239172AKS234", customer: "Puree Adi Wicaksana", type: "Dine In", total: "Rp. 67,000.00", status: "Complited" },
+    { id: "21239172AKS234", customer: "Puree Adi", type: "Dine In", total: "Rp. 67,000.00", status: "Complited" },
 ];
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
     const navigate = useNavigate();
     const { logout } = useAuthStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
-    const [profile, setProfile] = useState<ProfileData>({
-        firstName: "Mustafa",
-        lastName: "Hashimi",
-        role: "Male",
-        email: "mustafahashemi577@gmail.com",
-        phone: "+93 700 000 000",
-        position: "Waiters",
-        birthday: "10/18/2023",
-        firstSeen: "19 Jan 2024",
-        avatarUrl: null,
-        status: "Onlien",
-        storeName: "Hedayat store",
-    });
+    // ── Fetch employee data from GET /auth/me ──────────────────────────────────
+    const { data: profile, isLoading, error: fetchError, mutate } = useSWR<EmployeeProfile>(
+        "/auth/me",
+        fetcher,
+        { revalidateOnFocus: false }
+    );
 
-    // Edit modal
+    // ── Edit modal state ───────────────────────────────────────────────────────
     const [editOpen, setEditOpen] = useState(false);
-    const [editForm, setEditForm] = useState({ ...profile });
+    const [editForm, setEditForm] = useState<EditForm>({
+        firstName: "", lastName: "", email: "", phone: "",
+        gender: "", dob: "", storeName: "",
+    });
     const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
-
-    // Password
     const [showOldPass, setShowOldPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
-
-    // States
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // Email OTP verification — shown when user changes email
+    // ── Email OTP state ────────────────────────────────────────────────────────
     const [otpOpen, setOtpOpen] = useState(false);
     const [otpCode, setOtpCode] = useState("");
     const [pendingEmail, setPendingEmail] = useState("");
@@ -91,8 +124,17 @@ export default function ProfilePage() {
     };
 
     const openEdit = () => {
-        setEditForm({ ...profile });
-        setPreviewAvatar(profile.avatarUrl);
+        if (!profile) return;
+        setEditForm({
+            firstName: profile.firstName ?? "",
+            lastName: profile.lastName ?? "",
+            email: profile.email ?? "",
+            phone: profile.phone ?? "",
+            gender: profile.gender ?? "",
+            dob: profile.dob ? profile.dob.split("T")[0] : "",
+            storeName: profile.storeName ?? "",
+        });
+        setPreviewAvatar(profile.imageUrl);
         setOldPassword("");
         setNewPassword("");
         setError("");
@@ -111,22 +153,22 @@ export default function ProfilePage() {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    // ── Save profile — calls PUT /auth/update-employee-info ──────────────────
+    // ── Save — calls PUT /auth/update-employee-info ────────────────────────────
     const handleSave = async () => {
+        if (!profile) return;
         setError("");
         setSuccess("");
         setSaving(true);
 
         try {
-            // Build payload — only send fields that actually changed
-            const payload: Record<string, string> = {};
+            const payload: Record<string, any> = {};
 
-            const fullName = `${editForm.firstName} ${editForm.lastName}`.trim();
-            if (fullName !== `${profile.firstName} ${profile.lastName}`.trim()) {
-                payload.name = fullName;
-            }
-            if (editForm.phone !== profile.phone) payload.phone = editForm.phone;
-            if (editForm.storeName !== profile.storeName) payload.storeName = editForm.storeName;
+            if (editForm.firstName !== (profile.firstName ?? "")) payload.firstName = editForm.firstName;
+            if (editForm.lastName !== (profile.lastName ?? "")) payload.lastName = editForm.lastName;
+            if (editForm.phone !== (profile.phone ?? "")) payload.phone = editForm.phone;
+            if (editForm.gender !== (profile.gender ?? "")) payload.gender = editForm.gender;
+            if (editForm.dob !== (profile.dob ? profile.dob.split("T")[0] : "")) payload.dob = editForm.dob;
+            if (editForm.storeName !== (profile.storeName ?? "")) payload.storeName = editForm.storeName;
             if (newPassword && oldPassword) payload.password = newPassword;
 
             const emailChanged = editForm.email !== profile.email;
@@ -134,7 +176,6 @@ export default function ProfilePage() {
 
             await api.put("/auth/update-employee-info", payload);
 
-            // If email changed — backend sends OTP to new email, show verify modal
             if (emailChanged) {
                 setPendingEmail(editForm.email);
                 setEditOpen(false);
@@ -145,16 +186,8 @@ export default function ProfilePage() {
                 return;
             }
 
-            // No email change — update local profile state immediately
-            setProfile((p) => ({
-                ...p,
-                firstName: editForm.firstName,
-                lastName: editForm.lastName,
-                phone: editForm.phone,
-                storeName: editForm.storeName,
-                avatarUrl: previewAvatar,
-            }));
-
+            // Refresh data from server
+            await mutate();
             setSuccess("Profile updated successfully!");
             setTimeout(() => { setEditOpen(false); setSuccess(""); }, 1200);
         } catch (err: any) {
@@ -165,27 +198,13 @@ export default function ProfilePage() {
         }
     };
 
-    // ── Verify new email OTP — calls POST /auth/verify-updated-email ─────────
+    // ── Verify new email OTP ───────────────────────────────────────────────────
     const handleVerifyOtp = async () => {
         setOtpError("");
         setOtpLoading(true);
         try {
-            await api.post("/auth/verify-updated-email", {
-                email: pendingEmail,
-                code: otpCode,
-            });
-
-            // OTP verified — update local email
-            setProfile((p) => ({
-                ...p,
-                email: pendingEmail,
-                firstName: editForm.firstName,
-                lastName: editForm.lastName,
-                phone: editForm.phone,
-                storeName: editForm.storeName,
-                avatarUrl: previewAvatar,
-            }));
-
+            await api.post("/auth/verify-updated-email", { email: pendingEmail, code: otpCode });
+            await mutate(); // refresh profile from server
             setOtpOpen(false);
             setOtpCode("");
             setPendingEmail("");
@@ -197,12 +216,39 @@ export default function ProfilePage() {
         }
     };
 
-    const fullName = `${profile.firstName} ${profile.lastName}`;
+    // ── Date/time for navbar ───────────────────────────────────────────────────
     const now = new Date();
     const dateStr = now.toLocaleDateString("en-US", {
         weekday: "long", day: "2-digit", month: "short", year: "numeric",
     });
     const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+    // ── Display values (null → "...") ─────────────────────────────────────────
+    const displayName = profile
+        ? (profile.firstName && profile.lastName)
+            ? `${profile.firstName} ${profile.lastName}`
+            : display(profile.name)
+        : "...";
+
+    // ── Loading state ──────────────────────────────────────────────────────────
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                    <p className="text-sm text-gray-400">Loading profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <p className="text-sm text-red-500">Failed to load profile. Please refresh the page.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -243,13 +289,13 @@ export default function ProfilePage() {
                         <button onClick={() => setDropdownOpen((p) => !p)}
                             className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-1.5 hover:bg-gray-50 transition">
                             <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center text-xs font-semibold text-white shrink-0 overflow-hidden">
-                                {profile.avatarUrl
-                                    ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                    : `${profile.firstName[0]}${profile.lastName[0]}`}
+                                {profile?.imageUrl
+                                    ? <img src={profile.imageUrl} alt="" className="w-full h-full object-cover" />
+                                    : profile ? getInitials(profile) : "??"}
                             </div>
                             <div className="text-left">
-                                <p className="text-xs font-medium text-gray-800 leading-none mb-0.5">{fullName}</p>
-                                <p className="text-[10px] text-gray-400 leading-none">{profile.email}</p>
+                                <p className="text-xs font-medium text-gray-800 leading-none mb-0.5">{displayName}</p>
+                                <p className="text-[10px] text-gray-400 leading-none">{display(profile?.email)}</p>
                             </div>
                             <ChevronDown size={13} className="text-gray-400" />
                         </button>
@@ -278,27 +324,34 @@ export default function ProfilePage() {
             {dropdownOpen && <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />}
 
             {/* ── Page Content ── */}
-            <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+
                 <div className="mb-5">
                     <h1 className="text-3xl font-semibold text-gray-900">Detail Profile</h1>
                     <p className="text-sm text-gray-400 mt-1">Be a good and honest employee for everyone's happiness</p>
                 </div>
 
-                {/* Dark profile card */}
+                {/* ── Dark Profile Card ── */}
                 <div className="bg-[#0f1117] rounded-2xl p-6 mb-5">
                     <div className="flex items-start justify-between mb-6">
+
+                        {/* Avatar + name */}
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-gray-600 overflow-hidden flex items-center justify-center shrink-0">
-                                {profile.avatarUrl
-                                    ? <img src={profile.avatarUrl} alt={fullName} className="w-full h-full object-cover" />
-                                    : <span className="text-white text-xl font-semibold">{profile.firstName[0]}{profile.lastName[0]}</span>}
+                                {profile?.imageUrl
+                                    ? <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
+                                    : <span className="text-white text-xl font-semibold">{profile ? getInitials(profile) : "??"}</span>}
                             </div>
                             <div>
                                 <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-white font-semibold text-lg">{fullName}</span>
-                                    <span className="text-xs bg-white/15 text-gray-300 px-2 py-0.5 rounded-full">{profile.role}</span>
+                                    <span className="text-white font-semibold text-lg">{displayName}</span>
+                                    {profile?.gender && (
+                                        <span className="text-xs bg-white/15 text-gray-300 px-2 py-0.5 rounded-full capitalize">
+                                            {profile.gender}
+                                        </span>
+                                    )}
                                 </div>
-                                <p className="text-gray-400 text-sm mb-3">{profile.email}</p>
+                                <p className="text-gray-400 text-sm mb-3">{display(profile?.email)}</p>
                                 <button onClick={openEdit}
                                     className="text-xs border border-white/25 text-gray-300 px-4 py-1.5 rounded-lg hover:bg-white/10 transition">
                                     Edit Profile
@@ -306,31 +359,30 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
+                        {/* Right meta */}
                         <div className="text-right">
                             <div className="flex items-center gap-2 justify-end mb-4">
                                 <span className="text-gray-500 text-xs">Birthday</span>
-                                <span className="text-white text-sm font-medium">{profile.birthday}</span>
+                                <span className="text-white text-xs">{formatDate(profile?.dob)}</span>
                             </div>
                             <div className="flex items-center gap-0 divide-x divide-white/15">
                                 <div className="text-center px-5">
                                     <p className="text-gray-500 text-[10px] mb-1">First seen</p>
-                                    <p className="text-white text-xs">{profile.firstSeen}</p>
+                                    <p className="text-white text-xs">{formatDate(profile?.createdAt)}</p>
                                 </div>
                                 <div className="text-center px-5">
                                     <p className="text-gray-500 text-[10px] mb-1">Position</p>
-                                    <p className="text-white text-xs">{profile.position}</p>
+                                    <p className="text-white text-xs">{display(profile?.title)}</p>
                                 </div>
                                 <div className="text-center px-5">
-                                    <p className="text-gray-500 text-[10px] mb-1">User</p>
-                                    <div className="flex items-center gap-1 justify-center">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
-                                        <p className="text-white text-xs">{profile.status}</p>
-                                    </div>
+                                    <p className="text-gray-500 text-[10px] mb-1">Store</p>
+                                    <p className="text-white text-xs">{display(profile?.storeName)}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Stats */}
                     <div className="grid grid-cols-4 gap-3">
                         {stats.map((stat) => (
                             <div key={stat.label} className="bg-[#1a1d27] rounded-xl p-4">
@@ -356,7 +408,7 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* Recent Transaction */}
+                {/* ── Recent Transaction ── */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
@@ -404,27 +456,34 @@ export default function ProfilePage() {
             </div>
 
             {/* ── Edit Profile Dialog ── */}
+            {/* ── Edit Profile Dialog ──
+          Replace your existing <Dialog open={editOpen}> block with this
+      */}
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
-                <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden">
-                    <div className="p-8">
-                        <DialogHeader className="mb-6">
+                <DialogContent
+                    className="rounded-2xl p-0 overflow-hidden"
+                    style={{ maxWidth: "min(85vw, 1000px)", width: "85vw" }}                >
+                    <div className="p-7">
+                        <DialogHeader className="mb-4">
                             <DialogTitle className="text-lg font-semibold">Edit Profile</DialogTitle>
                             <p className="text-xs text-gray-400">Change Profile</p>
                         </DialogHeader>
 
                         {/* Avatar */}
-                        <div className="flex items-center gap-5 mb-7">
+                        <div className="flex items-center gap-5 mb-4">
                             <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                                 {previewAvatar
                                     ? <img src={previewAvatar} alt="avatar" className="w-full h-full object-cover" />
-                                    : <span className="text-gray-500 text-2xl font-semibold">{editForm.firstName[0]}{editForm.lastName[0]}</span>}
+                                    : <span className="text-gray-500 text-2xl font-semibold">
+                                        {profile ? getInitials(profile) : "??"}
+                                    </span>}
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <button onClick={handleRemoveAvatar}
                                     className="text-xs bg-red-50 text-red-400 border border-red-200 px-4 py-1.5 rounded-lg hover:bg-red-100 transition block">
                                     Remove Image
                                 </button>
-                                <p className="text-xs text-gray-400">{editForm.firstName}-Profile.png</p>
+                                <p className="text-xs text-gray-400">{editForm.firstName || profile?.name}-Profile.png</p>
                                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                                 <button onClick={() => fileInputRef.current?.click()} className="text-xs text-blue-500 hover:underline">
                                     Change photo
@@ -432,71 +491,129 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* Row 1: First Name | Last Name | Rool */}
-                        <div className="grid grid-cols-3 gap-4 mb-4">
+                        {/* Row 1: First Name | Last Name | Gender */}
+                        <div className="grid grid-cols-3 gap-5 mb-3">
                             <div>
-                                <label className="text-xs text-gray-500 mb-1.5 block">First Name</label>
-                                <Input value={editForm.firstName} className="h-11"
-                                    onChange={(e) => setEditForm((p) => ({ ...p, firstName: e.target.value }))} />
+                                <label className="text-sm text-gray-600 mb-2 block">First Name</label>
+                                <Input
+                                    value={editForm.firstName}
+                                    placeholder={display(profile?.firstName)}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, firstName: e.target.value }))}
+                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                />
                             </div>
                             <div>
-                                <label className="text-xs text-gray-500 mb-1.5 block">Last Name</label>
-                                <Input value={editForm.lastName} className="h-11"
-                                    onChange={(e) => setEditForm((p) => ({ ...p, lastName: e.target.value }))} />
+                                <label className="text-sm text-gray-600 mb-2 block">Last Name</label>
+                                <Input
+                                    value={editForm.lastName}
+                                    placeholder={display(profile?.lastName)}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, lastName: e.target.value }))}
+                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                />
                             </div>
                             <div>
-                                <label className="text-xs text-gray-500 mb-1.5 block">Rool</label>
-                                <Input value={editForm.role} className="h-11"
-                                    onChange={(e) => setEditForm((p) => ({ ...p, role: e.target.value }))} />
+                                <label className="text-sm text-gray-600 mb-2 block">Gender</label>
+                                {/* 
+                  Native <select> dropdown list styling (the opened list) 
+                  cannot be styled with CSS — it's rendered by the OS.
+                  We use a custom dropdown instead for full control.
+                */}
+                                <GenderDropdown
+                                    value={editForm.gender}
+                                    onChange={(val) => setEditForm((p) => ({ ...p, gender: val }))}
+                                />
                             </div>
                         </div>
 
                         {/* Row 2: Email | Phone */}
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-2 gap-5 mb-3">
                             <div>
-                                <label className="text-xs text-gray-500 mb-1.5 block">Email</label>
-                                <Input type="email" value={editForm.email} className="h-11"
-                                    onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))} />
-                                {editForm.email !== profile.email && (
-                                    <p className="text-xs text-amber-500 mt-1">⚠ You'll need to verify your new email</p>
+                                <label className="text-sm text-gray-600 mb-2 block">Email</label>
+                                <Input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
+                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                />
+                                {editForm.email !== (profile?.email ?? "") && (
+                                    <p className="text-xs text-amber-500 mt-1.5">⚠ You'll need to verify your new email</p>
                                 )}
                             </div>
                             <div>
-                                <label className="text-xs text-gray-500 mb-1.5 block">Phone</label>
-                                <Input value={editForm.phone} className="h-11"
-                                    onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))} />
+                                <label className="text-sm text-gray-600 mb-2 block">Phone</label>
+                                <Input
+                                    value={editForm.phone}
+                                    placeholder={display(profile?.phone)}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
+                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                />
                             </div>
                         </div>
 
+                        {/* Row 3: Date of Birth | Store Name */}
+                        <div className="grid grid-cols-2 gap-5 mb-3">
+                            <div>
+                                <label className="text-sm text-gray-600 mb-2 block">Date of Birth</label>
+                                {/*
+                  Native date picker popup also cannot be fully styled with CSS.
+                  We use a custom date input that matches the Input style.
+                */}
+                                <DateInput
+                                    value={editForm.dob}
+                                    onChange={(val) => setEditForm((p) => ({ ...p, dob: val }))}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-600 mb-2 block">Store Name</label>
+                                <Input
+                                    value={editForm.storeName}
+                                    placeholder={display(profile?.storeName)}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, storeName: e.target.value }))}
+                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <hr className="border-gray-100 mb-4" />
+
                         {/* Change Password */}
-                        <div className="mb-6">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-semibold text-gray-800">Change Password</span>
-                                <button className="text-xs border border-gray-200 text-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition">
+                        <div className="mb-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-base font-semibold text-gray-800">Change Password</span>
+                                <button className="text-xs border border-gray-200 text-gray-600 px-4 py-2 rounded-xl hover:bg-gray-50 transition">
                                     Change Password
                                 </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <label className="text-xs text-gray-500 mb-1.5 block">Old Password</label>
+                                    <label className="text-sm text-gray-600 mb-2 block">Old Password</label>
                                     <div className="relative">
-                                        <Input type={showOldPass ? "text" : "password"} value={oldPassword}
+                                        <input
+                                            type={showOldPass ? "text" : "password"}
+                                            value={oldPassword}
                                             onChange={(e) => setOldPassword(e.target.value)}
-                                            placeholder="••••••••••" className="h-11 pr-10 bg-gray-50" />
+                                            placeholder="Old Password"
+                                            className="w-full h-12 border border-gray-200 rounded-xl px-4 pr-10 text-sm bg-gray-50 outline-none hover:border-gray-300 focus:border-gray-400 transition-colors"
+                                        />
                                         <button type="button" onClick={() => setShowOldPass((p) => !p)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                             {showOldPass ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500 mb-1.5 block">New Password</label>
+                                    <label className="text-sm text-gray-600 mb-2 block">New Password</label>
                                     <div className="relative">
-                                        <Input type={showNewPass ? "text" : "password"} value={newPassword}
+                                        <input
+                                            type={showNewPass ? "text" : "password"}
+                                            value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
-                                            placeholder="••••••••••" className="h-11 pr-10 bg-gray-50" />
+                                            placeholder="New Password"
+                                            className="w-full h-12 border border-gray-200 rounded-xl px-4 pr-10 text-sm bg-gray-50 outline-none hover:border-gray-300 focus:border-gray-400 transition-colors"
+                                        />
                                         <button type="button" onClick={() => setShowNewPass((p) => !p)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                             {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
                                     </div>
@@ -504,14 +621,16 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
-                        {success && <p className="text-green-600 text-xs mb-3">{success}</p>}
+                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                        {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
 
                         <div className="flex gap-3">
-                            <Button variant="outline" className="px-8 h-11" onClick={() => setEditOpen(false)} disabled={saving}>
+                            <Button variant="outline" className="px-8 h-11 rounded-xl border-gray-200"
+                                onClick={() => setEditOpen(false)} disabled={saving}>
                                 Cancel
                             </Button>
-                            <Button className="px-8 h-11 bg-gray-900 hover:bg-gray-800 text-white" onClick={handleSave} disabled={saving}>
+                            <Button className="px-8 h-11 rounded-xl bg-gray-900 hover:bg-gray-800 text-white"
+                                onClick={handleSave} disabled={saving}>
                                 {saving ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
@@ -519,8 +638,7 @@ export default function ProfilePage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ── Email OTP Verification Dialog ── */}
-            {/* Shown when user changes their email — backend sends OTP to new email */}
+            {/* ── Email OTP Dialog ── */}
             <Dialog open={otpOpen} onOpenChange={setOtpOpen}>
                 <DialogContent className="max-w-sm rounded-2xl p-6">
                     <DialogHeader className="mb-4">
@@ -533,29 +651,17 @@ export default function ProfilePage() {
                     <div className="space-y-4">
                         <div>
                             <label className="text-xs text-gray-500 mb-1.5 block">Enter OTP Code</label>
-                            <Input
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={6}
-                                value={otpCode}
+                            <Input type="text" inputMode="numeric" maxLength={6} value={otpCode}
                                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                                placeholder="123456"
-                                className="text-center text-lg tracking-[0.5em] h-11"
-                                autoFocus
-                            />
+                                placeholder="123456" className="text-center text-lg tracking-[0.5em] h-11" autoFocus />
                         </div>
                         {otpError && <p className="text-red-500 text-xs">{otpError}</p>}
-                        <Button
-                            className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white"
-                            onClick={handleVerifyOtp}
-                            disabled={otpLoading || otpCode.length < 6}
-                        >
+                        <Button className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white"
+                            onClick={handleVerifyOtp} disabled={otpLoading || otpCode.length < 6}>
                             {otpLoading ? "Verifying..." : "Verify & Save"}
                         </Button>
-                        <button
-                            onClick={() => { setOtpOpen(false); setOtpCode(""); }}
-                            className="w-full text-xs text-gray-400 hover:text-gray-600 transition"
-                        >
+                        <button onClick={() => { setOtpOpen(false); setOtpCode(""); }}
+                            className="w-full text-xs text-gray-400 hover:text-gray-600 transition">
                             Cancel
                         </button>
                     </div>
