@@ -1,3 +1,4 @@
+import GenderDropdown from "@/components/ui/GenderDropdown";
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Bell, ChevronDown, Calendar, Loader2 } from "lucide-react";
@@ -12,7 +13,6 @@ import {
 import { useAuthStore } from "@/lib/store";
 import api from "@/lib/axios";
 import useSWR from "swr";
-import GenderDropdown from "@/components/ui/GenderDropdown";
 import DateInput from "@/components/ui/DateInput";
 
 // ─── SWR fetcher ─────────────────────────────────────────────────────────────
@@ -38,6 +38,7 @@ interface EditForm {
     firstName: string;
     lastName: string;
     email: string;
+    title: string;
     phone: string;
     gender: string;
     dob: string;
@@ -99,7 +100,7 @@ export default function ProfilePage() {
     // ── Edit modal state ───────────────────────────────────────────────────────
     const [editOpen, setEditOpen] = useState(false);
     const [editForm, setEditForm] = useState<EditForm>({
-        firstName: "", lastName: "", email: "", phone: "",
+        firstName: "", lastName: "", title: "", email: "", phone: "",
         gender: "", dob: "", storeName: "",
     });
     const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
@@ -128,6 +129,7 @@ export default function ProfilePage() {
         setEditForm({
             firstName: profile.firstName ?? "",
             lastName: profile.lastName ?? "",
+            title: profile.title ?? "",
             email: profile.email ?? "",
             phone: profile.phone ?? "",
             gender: profile.gender ?? "",
@@ -166,6 +168,7 @@ export default function ProfilePage() {
             if (editForm.firstName !== (profile.firstName ?? "")) payload.firstName = editForm.firstName;
             if (editForm.lastName !== (profile.lastName ?? "")) payload.lastName = editForm.lastName;
             if (editForm.phone !== (profile.phone ?? "")) payload.phone = editForm.phone;
+            if (editForm.title !== (profile.title ?? "")) payload.title = editForm.title;
             if (editForm.gender !== (profile.gender ?? "")) payload.gender = editForm.gender;
             if (editForm.dob !== (profile.dob ? profile.dob.split("T")[0] : "")) payload.dob = editForm.dob;
             if (editForm.storeName !== (profile.storeName ?? "")) payload.storeName = editForm.storeName;
@@ -494,58 +497,55 @@ export default function ProfilePage() {
                         {/* Row 1: First Name | Last Name | Gender */}
                         <div className="grid grid-cols-3 gap-5 mb-3">
                             <div>
-                                <label className="text-sm text-gray-600 mb-2 block">First Name</label>
+                                <label className="text-sm text-gray-600 mb-2 block">Name</label>
                                 <Input
                                     value={editForm.firstName}
-                                    placeholder={display(profile?.firstName)}
                                     onChange={(e) => setEditForm((p) => ({ ...p, firstName: e.target.value }))}
-                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
                                 />
                             </div>
                             <div>
                                 <label className="text-sm text-gray-600 mb-2 block">Last Name</label>
                                 <Input
                                     value={editForm.lastName}
-                                    placeholder={display(profile?.lastName)}
                                     onChange={(e) => setEditForm((p) => ({ ...p, lastName: e.target.value }))}
-                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="text-sm text-gray-600 mb-2 block">Gender</label>
-                                {/* 
-                  Native <select> dropdown list styling (the opened list) 
-                  cannot be styled with CSS — it's rendered by the OS.
-                  We use a custom dropdown instead for full control.
-                */}
-                                <GenderDropdown
-                                    value={editForm.gender}
-                                    onChange={(val) => setEditForm((p) => ({ ...p, gender: val }))}
+                                <label className="text-sm text-gray-600 mb-2 block">Role</label>
+                                <Input
+                                    value={editForm.title}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
                                 />
                             </div>
                         </div>
 
                         {/* Row 2: Email | Phone */}
-                        <div className="grid grid-cols-2 gap-5 mb-3">
+                        <div className="grid grid-cols-3 gap-5 mb-3">
                             <div>
                                 <label className="text-sm text-gray-600 mb-2 block">Email</label>
                                 <Input
                                     type="email"
                                     value={editForm.email}
                                     onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
-                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
                                 />
-                                {editForm.email !== (profile?.email ?? "") && (
-                                    <p className="text-xs text-amber-500 mt-1.5">⚠ You'll need to verify your new email</p>
-                                )}
                             </div>
                             <div>
                                 <label className="text-sm text-gray-600 mb-2 block">Phone</label>
                                 <Input
                                     value={editForm.phone}
-                                    placeholder={display(profile?.phone)}
                                     onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
-                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-600 mb-2 block">Gender</label>
+                                <GenderDropdown
+                                    value={editForm.gender}
+                                    onChange={(val) => setEditForm((p) => ({ ...p, gender: val }))}
                                 />
                             </div>
                         </div>
@@ -569,7 +569,7 @@ export default function ProfilePage() {
                                     value={editForm.storeName}
                                     placeholder={display(profile?.storeName)}
                                     onChange={(e) => setEditForm((p) => ({ ...p, storeName: e.target.value }))}
-                                    className="h-12 rounded-xl border-gray-200 text-sm"
+                                    className="h-10 rounded-xl border-gray-200 text-sm"
                                 />
                             </div>
                         </div>

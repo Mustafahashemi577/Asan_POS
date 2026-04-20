@@ -50,7 +50,7 @@ export default function DateInput({ value, onChange }: Props) {
             <button
                 type="button"
                 onClick={() => setOpen((p) => !p)}
-                className="w-full h-12 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
+                className="w-full h-10 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
             >
                 <span className={displayValue ? "text-gray-700" : "text-gray-400"}>
                     {displayValue || "Select date"}
