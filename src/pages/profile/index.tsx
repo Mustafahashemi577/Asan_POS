@@ -579,11 +579,9 @@ export default function ProfilePage() {
 
                         {/* Change Password */}
                         <div className="mb-4">
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="mb-4">
                                 <span className="text-base font-semibold text-gray-800">Change Password</span>
-                                <button className="text-xs border border-gray-200 text-gray-600 px-4 py-2 rounded-xl hover:bg-gray-50 transition">
-                                    Change Password
-                                </button>
+                                <p className="text-xs text-gray-400 mt-0.5">Leave blank to keep your current password</p>
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <div>
