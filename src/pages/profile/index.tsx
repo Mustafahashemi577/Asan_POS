@@ -40,6 +40,7 @@ interface EditForm {
     email: string;
     title: string;
     phone: string;
+    imageUrl: string;
     gender: string;
     dob: string;
     storeName: string;
@@ -101,7 +102,7 @@ export default function ProfilePage() {
     const [editOpen, setEditOpen] = useState(false);
     const [editForm, setEditForm] = useState<EditForm>({
         firstName: "", lastName: "", title: "", email: "", phone: "",
-        gender: "", dob: "", storeName: "",
+        gender: "", dob: "", storeName: "", imageUrl: "",
     });
     const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
     const [showOldPass, setShowOldPass] = useState(false);
@@ -135,6 +136,7 @@ export default function ProfilePage() {
             gender: profile.gender ?? "",
             dob: profile.dob ? profile.dob.split("T")[0] : "",
             storeName: profile.storeName ?? "",
+            imageUrl: profile.imageUrl ?? "",
         });
         setPreviewAvatar(profile.imageUrl);
         setOldPassword("");
@@ -163,21 +165,30 @@ export default function ProfilePage() {
         setSaving(true);
 
         try {
-            const payload: Record<string, any> = {};
+            // ← Use FormData instead of JSON because backend uses FileInterceptor
+            const formData = new FormData();
 
-            if (editForm.firstName !== (profile.firstName ?? "")) payload.firstName = editForm.firstName;
-            if (editForm.lastName !== (profile.lastName ?? "")) payload.lastName = editForm.lastName;
-            if (editForm.phone !== (profile.phone ?? "")) payload.phone = editForm.phone;
-            if (editForm.title !== (profile.title ?? "")) payload.title = editForm.title;
-            if (editForm.gender !== (profile.gender ?? "")) payload.gender = editForm.gender;
-            if (editForm.dob !== (profile.dob ? profile.dob.split("T")[0] : "")) payload.dob = editForm.dob;
-            if (editForm.storeName !== (profile.storeName ?? "")) payload.storeName = editForm.storeName;
-            if (newPassword && oldPassword) payload.password = newPassword;
+            if (editForm.firstName !== (profile.firstName ?? "")) formData.append("firstName", editForm.firstName);
+            if (editForm.lastName !== (profile.lastName ?? "")) formData.append("lastName", editForm.lastName);
+            if (editForm.phone !== (profile.phone ?? "")) formData.append("phone", editForm.phone);
+            if (editForm.title !== (profile.title ?? "")) formData.append("title", editForm.title);
+            if (editForm.gender !== (profile.gender ?? "")) formData.append("gender", editForm.gender);
+            if (editForm.dob !== (profile.dob ? profile.dob.split("T")[0] : "")) formData.append("dob", editForm.dob);
+            if (editForm.storeName !== (profile.storeName ?? "")) formData.append("storeName", editForm.storeName);
+            if (newPassword && oldPassword) formData.append("password", newPassword);
+
+            // ← Append the actual image file if user selected one
+            if (fileInputRef.current?.files?.[0]) {
+                formData.append("image", fileInputRef.current.files[0]);
+            }
 
             const emailChanged = editForm.email !== profile.email;
-            if (emailChanged) payload.email = editForm.email;
+            if (emailChanged) formData.append("email", editForm.email);
 
-            await api.put("/auth/update-employee-info", payload);
+            // ← Send as multipart/form-data — axios sets Content-Type automatically
+            await api.put("/auth/update-employee-info", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             if (emailChanged) {
                 setPendingEmail(editForm.email);
@@ -189,7 +200,6 @@ export default function ProfilePage() {
                 return;
             }
 
-            // Refresh data from server
             await mutate();
             setSuccess("Profile updated successfully!");
             setTimeout(() => { setEditOpen(false); setSuccess(""); }, 1200);
