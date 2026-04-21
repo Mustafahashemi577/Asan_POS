@@ -107,7 +107,7 @@ export default function ProfileCard({ profile, onEditClick }: Props) {
             </div>
             <div className="text-center px-5">
               <p className="text-gray-500 text-[10px] mb-1">Position</p>
-              <p className="text-white text-xs">{display(profile.title)}</p>
+              <p className="text-white text-xs">{display(profile.role)}</p>
             </div>
             <div className="text-center px-5">
               <p className="text-gray-500 text-[10px] mb-1">Store</p>
