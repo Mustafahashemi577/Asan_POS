@@ -3,6 +3,7 @@ import type { EmployeeProfile } from "@/types/profile.types";
 import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
 import { Bell, Calendar, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface NavbarProps {
   profile: EmployeeProfile;
@@ -26,12 +27,7 @@ export const Navbar = ({
   };
 
   const now = new Date();
-  const dateStr = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const dateStr = format(new Date(now), "EEEE, dd, MMM, yyyy");
   const timeStr = now.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",

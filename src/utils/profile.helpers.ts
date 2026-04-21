@@ -1,28 +1,27 @@
 import type { EmployeeProfile } from "@/types/profile.types";
+import { format } from "date-fns";
 
 export const display = (val: string | null | undefined): string =>
-    val && val.trim() !== "" ? val : "...";
+  val && val.trim() !== "" ? val : "...";
 
 export const formatDate = (val: string | null | undefined): string => {
-    if (!val) return "...";
-    try {
-        return new Date(val).toLocaleDateString("en-US", {
-            month: "2-digit", day: "2-digit", year: "numeric",
-        });
-    } catch {
-        return "...";
-    }
+  if (!val) return "...";
+  try {
+    return format(new Date(val), "dd, MMM, yyyy");
+  } catch {
+    return "...";
+  }
 };
 
 export const getInitials = (profile: EmployeeProfile): string => {
-    if (profile.firstName && profile.lastName)
-        return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
-    if (profile.name) return profile.name.slice(0, 2).toUpperCase();
-    return "??";
+  if (profile.firstName && profile.lastName)
+    return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
+  if (profile.name) return profile.name.slice(0, 2).toUpperCase();
+  return "??";
 };
 
 export const getDisplayName = (profile: EmployeeProfile): string => {
-    if (profile.firstName && profile.lastName)
-        return `${profile.firstName} ${profile.lastName}`;
-    return display(profile.name);
+  if (profile.firstName && profile.lastName)
+    return `${profile.firstName} ${profile.lastName}`;
+  return display(profile.name);
 };
