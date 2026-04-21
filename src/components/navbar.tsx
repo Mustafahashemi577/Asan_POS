@@ -42,7 +42,7 @@ export const Navbar = ({
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2">
           <img src="/icons/logo.svg" alt="Logo" className="w-6 h-6" />
-          <span className="font-bold text-base text-gray-900">Mpos</span>
+          <span className="font-bold text-base text-gray-900">APOS</span>
         </div>
         <nav className="flex items-center gap-6">
           {[
