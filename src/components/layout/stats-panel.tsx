@@ -24,7 +24,7 @@ export default function StatsPanel() {
     <>
       <div className="flex items-center justify-center mb-2 gap-2 text-center">
         <img src="/icons/logo.svg" alt="Logo" className="w-9 h-9 gap-2" />
-        <div className="text-xl font-bold mr-4">MPOS</div>
+        <div className="text-xl font-bold mr-4">APOS</div>
       </div>
 
       <div className="grid grid-cols-2 sm-grid-cols gap-4 mb-12 mr-10 ml-10 mt-10">
