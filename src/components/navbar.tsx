@@ -9,6 +9,7 @@ interface NavbarProps {
   profile: EmployeeProfile;
   dropdownOpen: boolean;
   setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onEditProfile?: () => void;
   openEdit: () => void;
 }
 
@@ -113,6 +114,13 @@ export const Navbar = ({
                   openEdit();
                 }}
                 className="w-full text-left text-sm text-gray-700 px-4 py-2.5 hover:bg-gray-50 transition"
+              >
+                Edit Profile
+              </button>
+              <hr className="border-gray-100" />
+              <button
+                onClick={handleLogout}
+                className="w-full text-left text-sm text-red-500 px-4 py-2.5 hover:bg-red-50 transition"
               >
                 Logout
               </button>
