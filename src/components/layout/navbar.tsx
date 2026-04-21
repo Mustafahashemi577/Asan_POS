@@ -1,6 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 type NavbarProps = {
   userName?: string;
@@ -8,11 +7,7 @@ type NavbarProps = {
   onMenuClick?: () => void;
 };
 
-export default function Navbar({
-  userName = "User",
-  avatarUrl,
-  onMenuClick,
-}: NavbarProps) {
+export default function Navbar({ onMenuClick }: NavbarProps) {
   const CurrentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     day: "2-digit",
@@ -28,16 +23,13 @@ export default function Navbar({
       <div className="flex items-center justify-between px-4 py-3">
         {/*Logo + Name*/}
         <div className="flex items-center">
-          <img src="/icons/logo.png" alt="Logo" className="w-14 h-9" />
-          <span className="-ml-1 text-lg font-semibold">MPOS</span>
+          <img src="/icons/logo.svg" alt="Logo" className="w-7 h-7" />
+          <span className="-ml-1 text-lg font-semibold p-2">APOS</span>
         </div>
 
         {/*Right Side */}
         <div className="flex items-center gap-2">
           {/* Notification */}
-          <Button variant="outline" size="icon">
-            <Bell className="w-5 h-5" />
-          </Button>
 
           {/*Menu*/}
           <Button variant="outline" size="icon" onClick={onMenuClick}>
@@ -52,12 +44,6 @@ export default function Navbar({
         <div className="flex items-center gap-2 border rounded-xl px-3 py-2 text-sm text-gray-600 w-full">
           <span className="truncate">{CurrentDate}</span>
         </div>
-
-        {/*Avatar*/}
-        <Avatar className="w-9 h-9">
-          <AvatarImage src={avatarUrl} />
-          <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
       </div>
     </div>
   );
