@@ -1,8 +1,19 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeProfile } from "@/types/profile.types";
 import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
-import { Bell, Calendar, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Bell, Calendar, ChevronDown, Menu } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
 
 interface NavbarProps {
@@ -13,13 +24,9 @@ interface NavbarProps {
   openEdit: () => void;
 }
 
-export const Navbar = ({
-  profile,
-  dropdownOpen,
-  setDropdownOpen,
-  openEdit,
-}: NavbarProps) => {
+export const Navbar = ({ profile }: NavbarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -34,98 +41,189 @@ export const Navbar = ({
     minute: "2-digit",
   });
 
+  const items = [
+    { label: "Dashboard", path: "/dashboard" },
+    { label: "Product", path: "/products" },
+    { label: "Transaction", path: "/transactions" },
+    { label: "Report", path: "/reports" },
+  ];
+
   return (
-    <header className="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between sticky top-0 z-20">
-      <div className="flex items-center gap-8">
-        <div className="flex items-center gap-2">
-          <img src="/icons/logo.svg" alt="Logo" className="w-6 h-6" />
-          <span className="font-bold text-base text-gray-900">APOS</span>
-        </div>
-        <nav className="flex items-center gap-6">
-          {[
-            { label: "Dashboard", path: "/dashboard" },
-            { label: "Product", path: "/products" },
-            { label: "Transaction", path: "/transactions" },
-            { label: "Report", path: "/reports" },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              className="text-sm text-gray-500 hover:text-gray-900 transition"
+    <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
+      {/* ================= MOBILE ================= */}
+      <div className="md:hidden px-4 py-3 flex flex-col gap-3">
+        {/* ROW 1 */}
+        <div className="flex items-center justify-between">
+          {/* Left: Menu + Logo */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <img src="/icons/logo.svg" className="w-6 h-6" />
+              <span className="font-bold text-gray-900">APOS</span>
+            </div>
+          </div>
+
+          {/* Right: Bell */}
+          <div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="w-8 h-8 rounded-full"
             >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+              <Bell size={14} />
+            </Button>
+
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu size={20} />
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent side="right" className="w-64">
+                <div className="mt-6 flex flex-col gap-4">
+                  {items.map((item) => {
+                    const isActive = location.pathname.startsWith(item.path);
+
+                    return (
+                      <Button
+                        key={item.label}
+                        onClick={() => navigate(item.path)}
+                        variant="outline"
+                        className={`justify-start text-gray-700 px-3 py-2 rounded-lg ${
+                          isActive
+                            ? "bg-bg-light text-white font-medium"
+                            : "text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {item.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        {/* ROW 2 */}
+        <div className="flex items-center justify-between">
+          {/* Date */}
+          <div className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
+            <Calendar size={13} />
+            <span>
+              {dateStr} at {timeStr}
+            </span>
+          </div>
+
+          {/* Avatar */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+              >
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src={profile.imageUrl} />
+                  <AvatarFallback>{getInitials(profile)}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                View Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-2">
-          <Calendar size={13} className="text-gray-400" />
-          <span>
-            {dateStr} at {timeStr}
-          </span>
+      {/* ================= DESKTOP ================= */}
+      <div className="hidden md:flex items-center justify-between px-8 py-3">
+        {/* LEFT */}
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <img src="/icons/logo.svg" className="w-6 h-6" />
+            <span className="font-bold text-gray-900">APOS</span>
+          </div>
+
+          <nav className="flex items-center gap-6">
+            {items.map((item) => {
+              const isActive = location.pathname.startsWith(item.path);
+
+              return (
+                <Button
+                  key={item.label}
+                  variant="ghost"
+                  onClick={() => navigate(item.path)}
+                  className={`text-sm px-3 py-1.5 rounded-lg text-gray-500  transition ${
+                    isActive
+                      ? "bg-bg-light text-white font-medium"
+                      : "text-gray-400 hover:text-black hover:bg-gray-50"
+                  }`}
+                >
+                  {item.label}
+                </Button>
+              );
+            })}
+          </nav>
         </div>
-        <button className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 transition">
-          <Bell size={14} className="text-gray-500" />
-        </button>
 
-        <div className="relative">
-          <button
-            onClick={() => setDropdownOpen((p) => !p)}
-            className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-1.5 hover:bg-gray-50 transition"
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
+            <Calendar size={13} />
+            <span>
+              {dateStr} at {timeStr}
+            </span>
+          </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="w-8 h-8 rounded-full"
           >
-            <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center text-xs font-semibold text-white shrink-0 overflow-hidden">
-              {profile.imageUrl ? (
-                <img
-                  src={profile.imageUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                getInitials(profile)
-              )}
-            </div>
-            <div className="text-left">
-              <p className="text-xs font-medium text-gray-800 leading-none mb-0.5">
-                {getDisplayName(profile)}
-              </p>
-              <p className="text-[10px] text-gray-400 leading-none">
-                {display(profile.email)}
-              </p>
-            </div>
-            <ChevronDown size={13} className="text-gray-400" />
-          </button>
+            <Bell size={14} />
+          </Button>
 
-          {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl border border-gray-100 shadow-lg z-30 overflow-hidden">
-              <button
-                onClick={() => {
-                  setDropdownOpen(false);
-                  navigate("/profile");
-                }}
-                className="w-full text-left text-sm text-gray-700 px-4 py-2.5 hover:bg-gray-50 transition"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+                variant="outline"
               >
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src={profile.imageUrl} />
+                  <AvatarFallback>{getInitials(profile)}</AvatarFallback>
+                </Avatar>
+
+                <div className="text-left">
+                  <p className="text-xs font-medium">
+                    {getDisplayName(profile)}
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    {display(profile.email)}
+                  </p>
+                </div>
+
+                <ChevronDown size={13} />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
                 View Profile
-              </button>
-              <button
-                onClick={() => {
-                  setDropdownOpen(false);
-                  openEdit();
-                }}
-                className="w-full text-left text-sm text-gray-700 px-4 py-2.5 hover:bg-gray-50 transition"
-              >
-                Edit Profile
-              </button>
-              <hr className="border-gray-100" />
-              <button
-                onClick={handleLogout}
-                className="w-full text-left text-sm text-red-500 px-4 py-2.5 hover:bg-red-50 transition"
-              >
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                 Logout
-              </button>
-            </div>
-          )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
