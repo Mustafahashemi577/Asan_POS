@@ -58,6 +58,7 @@ export default function EditProfileForm({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     profile.imageUrl,
   );
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -114,8 +115,11 @@ export default function EditProfileForm({
       formData.append("storeName", data.storeName ?? "");
     if (data.newPassword && data.oldPassword)
       formData.append("password", data.newPassword);
-    if (fileInputRef.current?.files?.[0])
+    if (fileInputRef.current?.files?.[0]) {
       formData.append("image", fileInputRef.current.files[0]);
+    } else if (imageRemoved) {
+      formData.append("imageUrl", ""); // ← empty string, backend now handles this
+    }
 
     const emailChanged = data.email !== profile.email;
     if (emailChanged) formData.append("email", data.email);
@@ -168,6 +172,7 @@ export default function EditProfileForm({
             type="button"
             onClick={() => {
               setAvatarPreview(null);
+              setImageRemoved(true);
               if (fileInputRef.current) fileInputRef.current.value = "";
             }}
             className="text-xs bg-red-50 text-red-400 border border-red-200 px-4 py-1.5 rounded-lg hover:bg-red-100 transition block"
@@ -184,7 +189,10 @@ export default function EditProfileForm({
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) setAvatarPreview(URL.createObjectURL(f));
+              if (f) {
+                setAvatarPreview(URL.createObjectURL(f));
+                setImageRemoved(false);
+              }
             }}
           />
           <button
