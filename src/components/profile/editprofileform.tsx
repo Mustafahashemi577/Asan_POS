@@ -14,8 +14,8 @@ import { display, getInitials } from "@/utils/profile.helpers";
 // ─── Schema ──────────────────────────────────────────────────────────────────
 const schema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     role: z.string().optional(),
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
@@ -99,9 +99,9 @@ export default function EditProfileForm({
     const formData = new FormData();
 
     if (data.firstName !== (profile.firstName ?? ""))
-      formData.append("firstName", data.firstName);
+      formData.append("firstName", data.firstName ?? "");
     if (data.lastName !== (profile.lastName ?? ""))
-      formData.append("lastName", data.lastName);
+      formData.append("lastName", data.lastName ?? "");
     if (data.role !== (profile.role ?? ""))
       formData.append("role", data.role ?? "");
     if (data.phone !== (profile.phone ?? ""))

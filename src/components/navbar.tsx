@@ -123,7 +123,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 className="flex items-center gap-2 rounded-xl px-3 py-1.5"
               >
                 <Avatar className="w-7 h-7">
-                  <AvatarImage src={profile.imageUrl} />
+                  <AvatarImage src={profile.imageUrl ?? undefined} />
                   <AvatarFallback>{getInitials(profile)}</AvatarFallback>
                 </Avatar>
               </Button>
@@ -197,7 +197,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 variant="outline"
               >
                 <Avatar className="w-7 h-7">
-                  <AvatarImage src={profile.imageUrl} />
+                  <AvatarImage src={profile.imageUrl ?? undefined} />
                   <AvatarFallback>{getInitials(profile)}</AvatarFallback>
                 </Avatar>
 
