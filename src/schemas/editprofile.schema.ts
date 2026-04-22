@@ -2,14 +2,12 @@ import { z } from "zod";
 
 export const editProfileSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    firstName: z.string(),
+    lastName: z.string(),
     role: z.string().optional(),
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
-    gender: z
-      .enum(["male", "female", "other", "prefer_not_to_say", ""])
-      .optional(),
+    gender: z.enum(["male", "female", "other"]).optional(),
     dob: z.string().optional(),
     storeName: z.string().optional(),
     oldPassword: z.string().optional(),
