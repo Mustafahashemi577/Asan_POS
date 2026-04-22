@@ -4,18 +4,33 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+
 import { Eye, EyeOff } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { Separator } from "../ui/separator";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    name: "",
-    storeName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
+  const formHook = useForm({
+    defaultValues: {
+      name: "",
+      storeName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const [showPassword, setShowPassword] = useState(true);
@@ -28,27 +43,12 @@ export default function RegisterForm() {
   const [otp, setOtp] = useState("");
   const [userEmail, setUserEmail] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = async () => {
-    if (!form.name) {
-      return setError("Please Enter Store name!");
-    }
-
-    if (!form.email) {
-      return setError("Please enter your email!");
-    }
-
-    if (!form.password) {
-      return setError("Please enter your password!");
-    }
-
-    if (form.password !== form.confirmPassword) {
+  const handleSubmit = async (values: any) => {
+    if (!values.name) return setError("Please Enter you Full name!");
+    if (!values.storeName) return setError("Please Enter Store Name");
+    if (!values.email) return setError("Please enter your email!");
+    if (!values.password) return setError("Please enter your password!");
+    if (values.password !== values.confirmPassword) {
       return setError("Passwords do not match");
     }
 
@@ -57,15 +57,14 @@ export default function RegisterForm() {
       setLoading(true);
 
       await api.post("/auth/register", {
-        name: form.name,
-        storeName: form.storeName,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
+        name: values.name,
+        storeName: values.storeName,
+        email: values.email,
+        phone: values.phone,
+        password: values.password,
       });
 
-      // ✅ SAVE EMAIL + OPEN OTP MODAL
-      setUserEmail(form.email);
+      setUserEmail(values.email);
       setShowOtpModal(true);
     } catch (err: any) {
       const msg = err?.response?.data?.message;
@@ -84,9 +83,8 @@ export default function RegisterForm() {
         code: String(otp),
       });
 
-      // ✅ success → go to login
       navigate("/login");
-    } catch (err) {
+    } catch {
       setError("Invalid OTP");
     } finally {
       setLoading(false);
@@ -96,7 +94,7 @@ export default function RegisterForm() {
   return (
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center mt-20">
         <img src="/icons/logo.svg" alt="Logo" className="mx-auto w-8 h-8" />
 
         <h1 className="text-[32px] leading-tight font-semibold mb-2">
@@ -108,92 +106,150 @@ export default function RegisterForm() {
         </p>
       </div>
 
-      {/* Form */}
+      {/* FORM */}
+      <Form {...formHook}>
+        <form
+          onSubmit={formHook.handleSubmit(handleSubmit)}
+          className="space-y-4"
+        >
+          {/* ROW 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={formHook.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Full Name"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-      <div className="flex gap-4">
-        <Input
-          name="name"
-          type="text"
-          className="flex-1 border p-2"
-          placeholder="Full Name"
-          value={form.name}
-          onChange={handleChange}
-        />
-        <Input
-          name="storeName"
-          type="text"
-          value={form.storeName}
-          className="flex-1 border p-2"
-          placeholder="Store Name"
-          onChange={handleChange}
-        />
-      </div>
+            <FormField
+              control={formHook.control}
+              name="storeName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Store Name"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
 
-      <div className="flex gap-4">
-        <Input
-          name="email"
-          type="email"
-          className="flex-1 border p-2"
-          placeholder="Your Email"
-          value={form.email}
-          onChange={handleChange}
-        />
-        <Input
-          name="phone"
-          type="text"
-          value={form.phone}
-          className="flex-1 border p-2"
-          placeholder="Phone number"
-          onChange={handleChange}
-        />
-      </div>
+          {/* ROW 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={formHook.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Your Email"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-      <div className="space-y-4">
-        {/* Password */}
-        <div className="relative">
-          <Input
+            <FormField
+              control={formHook.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Phone number"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* PASSWORD */}
+          <FormField
+            control={formHook.control}
             name="password"
-            type={showPassword ? "password" : "text"}
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "password" : "text"}
+                      placeholder="Password"
+                      autoComplete="new-password"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowPassword((p) => !p)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
           />
 
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-        </div>
-
-        {/* Confirm Password */}
-        <div className="relative">
-          <Input
+          {/* CONFIRM */}
+          <FormField
+            control={formHook.control}
             name="confirmPassword"
-            type={showConfirm ? "password" : "text"}
-            placeholder="Confirm Password"
-            value={form.confirmPassword}
-            onChange={handleChange}
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showConfirm ? "password" : "text"}
+                      placeholder="Confirm Password"
+                      autoComplete="new-password"
+                      className="min-h-12 w-full"
+                      {...field}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowConfirm((p) => !p)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    >
+                      {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
           />
 
-          <button
-            type="button"
-            onClick={() => setShowConfirm((prev) => !prev)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-          >
-            {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-        </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+          <Button type="submit" className="w-full min-h-12" disabled={loading}>
+            {loading ? "Creating..." : "Sign Up"}
+          </Button>
+        </form>
+      </Form>
 
-        <Button onClick={handleSubmit} disabled={loading} className="w-full">
-          {loading ? "Creating..." : "Sign Up"}
-        </Button>
-      </div>
-
+      {/* LOGIN LINK */}
       <div className="text-center text-sm text-gray-500">
         Already have an account?{" "}
         <span
@@ -203,64 +259,64 @@ export default function RegisterForm() {
           Sign In
         </span>
       </div>
+
+      {/* Separator */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
         <span className="text-gray-400 text-sm">Or</span>
-        <div className="flex-1 h-px bg-gray-400" />
+        <Separator className="flex-1" />
       </div>
 
+      {/* SOCIAL */}
       <div className="grid grid-cols-2 gap-4">
         {/*Google */}
-        <button
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-            hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
         >
           <img src="icons/google_color.svg" alt="Google" className="w-5 h-5" />
           <span className="text-sm font-medium">Google</span>
-        </button>
+        </Button>
         {/*Apple*/}
-        <button
-          className="flex items-center justify-center gap-2 border rounded-xl py-3
-                hover:bg-gray-50 transition"
+        <Button
+          type="button"
+          variant="outline"
+          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
         >
           <img src="/icons/apple_black.svg" alt="Apple" className="w-5 h-5" />
           <span className="text-sm font-medium">Apple</span>
-        </button>
+        </Button>
       </div>
 
-      {showOtpModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-2xl w-[90%] max-w-sm space-y-4">
-            <h2 className="text-xl font-semibold text-center">Verify Email</h2>
-
-            <p className="text-sm text-gray-500 text-center">
+      {/* OTP DIALOG */}
+      <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify Email</DialogTitle>
+            <DialogDescription>
               Enter the OTP sent to your email
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
-            <Input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-            />
+          <Input
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
 
-            <Button
-              onClick={handleVerifyOtp}
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Verify"}
-            </Button>
+          <Button onClick={handleVerifyOtp} disabled={loading}>
+            {loading ? "Verifying..." : "Verify"}
+          </Button>
 
-            <button
-              onClick={() => setShowOtpModal(false)}
-              className="text-sm text-gray-400 w-full text-center"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+          <Button
+            onClick={() => setShowOtpModal(false)}
+            className="text-sm text-gray-400 w-full text-center"
+          >
+            Cancel
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
