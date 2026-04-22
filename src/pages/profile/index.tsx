@@ -19,8 +19,8 @@ export default function ProfilePage() {
     otpOpen,
     closeOtp,
     pendingEmail,
-    editForm,
-    setEditForm,
+    // editForm,
+    // setEditForm,
     handleEmailChange,
   } = useEditProfile(profile);
 
@@ -77,8 +77,8 @@ export default function ProfilePage() {
         open={editOpen}
         onClose={closeEdit}
         profile={profile}
-        editForm={editForm}
-        setEditForm={setEditForm}
+        // editForm={editForm}
+        // setEditForm={setEditForm}
         onSaveSuccess={() => mutate()}
         onEmailChange={handleEmailChange}
       />

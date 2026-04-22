@@ -99,18 +99,6 @@ export default function EditProfileForm({
 
     const formData = new FormData();
 
-    if (data.firstName !== (profile.firstName ?? ""))
-      formData.append("firstName", data.firstName ?? "");
-    if (data.lastName !== (profile.lastName ?? ""))
-      formData.append("lastName", data.lastName ?? "");
-    if (data.role !== (profile.role ?? ""))
-      formData.append("role", data.role ?? "");
-    if (data.phone !== (profile.phone ?? ""))
-      formData.append("phone", data.phone ?? "");
-    if (data.gender !== (profile.gender ?? ""))
-      formData.append("gender", data.gender ?? "");
-    if (data.dob !== (profile.dob ? profile.dob.split("T")[0] : ""))
-      formData.append("dob", data.dob ?? "");
     if (data.storeName !== (profile.storeName ?? ""))
       formData.append("storeName", data.storeName ?? "");
     if (data.newPassword && data.oldPassword)
@@ -136,11 +124,11 @@ export default function EditProfileForm({
       }
 
       setSuccess("Profile updated successfully!");
-      setTimeout(() => {
-        onSaveSuccess();
-        onClose();
-        reset();
-      }, 1200);
+      // setTimeout(() => {
+      onSaveSuccess();
+      onClose();
+      reset();
+      // }, 1200);
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       setServerError(
