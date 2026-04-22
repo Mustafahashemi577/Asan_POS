@@ -312,6 +312,7 @@ export default function RegisterForm() {
           <Button
             onClick={() => setShowOtpModal(false)}
             className="text-sm text-gray-400 w-full text-center"
+            variant="outline"
           >
             Cancel
           </Button>
