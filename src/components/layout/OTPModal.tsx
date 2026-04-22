@@ -40,12 +40,13 @@ export default function OtpModal({
                     {loading ? "Verifying..." : "Verify OTP"}
                 </Button>
 
-                <button
+                <Button
                     onClick={onClose}
                     className="text-sm text-gray-400 w-full text-center"
+                    variant="outline"
                 >
                     Cancel
-                </button>
+                </Button>
             </div>
         </div>
     );
