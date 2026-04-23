@@ -123,15 +123,17 @@ export default function DateInput({ value, onChange }: Props) {
                   {Array.from({ length: 120 }).map((_, i) => {
                     const year = new Date().getFullYear() - i;
                     return (
-                      <button
+                      <Button
                         key={year}
                         type="button"
+                        variant="outline"
                         onClick={() => setViewYear(year)}
                         className={`w-full text-left px-3 py-1.5 text-xs rounded-md hover:bg-gray-100
+
             ${year === viewYear ? "bg-gray-100 font-medium" : ""}`}
                       >
                         {year}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
