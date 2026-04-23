@@ -100,8 +100,8 @@ export default function EditProfileForm({
     const formData = new FormData();
     Object.keys(dirtyFields).forEach((key) => {
       if (key === "email") return;
-      if (key === "newPassword") return; // handle password separately
-      if (key === "oldPassword") return; // handle email separately
+      if (key === "newPassword") return;
+      if (key === "oldPassword") return;
       const value = data[key as keyof FormValues];
 
       if (value !== undefined && value !== null) {
