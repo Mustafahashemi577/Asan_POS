@@ -1,4 +1,13 @@
 // TODO: Replace mock data with real API call using SWR when transactions endpoint is ready
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+//import { Table } from "lucide-react";
 
 const transactions = [
   {
@@ -64,7 +73,6 @@ export default function TransactionTable() {
           className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none w-full sm:w-44 text-gray-600"
         />
       </div>
-
       {/* HEADER */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900">
@@ -74,33 +82,40 @@ export default function TransactionTable() {
           View all
         </button>
       </div>
-
       {/* DESKTOP TABLE */}
-      <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead>
-            <tr className="border-b border-gray-100">
+      // REPLACE WITH:
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {["Id", "Customer", "Type", "Total", "Status", "Action"].map(
                 (h) => (
-                  <th
+                  <TableHead
                     key={h}
-                    className="text-left text-xs text-gray-400 py-2 pr-4"
+                    className="text-xs text-gray-400 font-medium"
                   >
                     {h}
-                  </th>
+                  </TableHead>
                 ),
               )}
-            </tr>
-          </thead>
-
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {transactions.map((row, i) => (
-              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="py-3 text-xs text-gray-600">{row.id}</td>
-                <td className="py-3 text-xs text-gray-800">{row.customer}</td>
-                <td className="py-3 text-xs text-gray-600">{row.type}</td>
-                <td className="py-3 text-xs text-gray-800">{row.total}</td>
-                <td className="py-3">
+              <TableRow key={i}>
+                <TableCell className="text-xs text-gray-600">
+                  {row.id}
+                </TableCell>
+                <TableCell className="text-xs text-gray-800">
+                  {row.customer}
+                </TableCell>
+                <TableCell className="text-xs text-gray-600">
+                  {row.type}
+                </TableCell>
+                <TableCell className="text-xs text-gray-800">
+                  {row.total}
+                </TableCell>
+                <TableCell>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       row.status === "Complited"
@@ -110,18 +125,17 @@ export default function TransactionTable() {
                   >
                     {row.status}
                   </span>
-                </td>
-                <td>
+                </TableCell>
+                <TableCell>
                   <button className="text-xs text-blue-500 hover:underline">
                     View
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
-
       {/* MOBILE CARDS */}
       <div className="sm:hidden space-y-3">
         {transactions.map((row, i) => (
