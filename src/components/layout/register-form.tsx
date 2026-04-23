@@ -3,21 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
+import OtpDialog from "@/components/otp-dialog";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Separator } from "../ui/separator";
+import { Input } from "../ui/input";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -40,7 +32,6 @@ export default function RegisterForm() {
   const [error, setError] = useState("");
 
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otp, setOtp] = useState("");
   const [userEmail, setUserEmail] = useState("");
 
   const handleSubmit = async (values: any) => {
@@ -69,23 +60,6 @@ export default function RegisterForm() {
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg || "Sign Up Failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    try {
-      setLoading(true);
-
-      await api.post("/auth/verify-register", {
-        email: userEmail,
-        code: String(otp),
-      });
-
-      navigate("/login");
-    } catch {
-      setError("Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -290,34 +264,19 @@ export default function RegisterForm() {
       </div>
 
       {/* OTP DIALOG */}
-      <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Verify Email</DialogTitle>
-            <DialogDescription>
-              Enter the OTP sent to your email
-            </DialogDescription>
-          </DialogHeader>
-
-          <Input
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
-
-          <Button onClick={handleVerifyOtp} disabled={loading}>
-            {loading ? "Verifying..." : "Verify"}
-          </Button>
-
-          <Button
-            onClick={() => setShowOtpModal(false)}
-            className="text-sm text-gray-400 w-full text-center"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-        </DialogContent>
-      </Dialog>
+      <OtpDialog
+        open={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        title="Verify Email"
+        description={`Enter the OTP sent to ${userEmail}`}
+        onVerify={async (code: any) => {
+          await api.post("/auth/verify-register", {
+            email: userEmail,
+            code,
+          });
+          navigate("/login");
+        }}
+      />
     </div>
   );
 }

@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useProfile } from "@/hooks/useprofile";
 import ProfileCard from "@/components/profile/profilecard";
 import EditProfileDialog from "@/components/profile/editprofiledialog";
-import OtpDialog from "@/components/profile/otpdialog";
+import OtpDialog from "@/components/otp-dialog";
 import TransactionTable from "@/components/profile/transactiontable";
 import { useEditProfile } from "@/hooks/useeditprofile";
 import { Loading } from "@/components/loading";
 import { Navbar } from "@/components/navbar";
+import api from "@/lib/axios";
 
 export default function ProfilePage() {
   const { profile, isLoading, fetchError, mutate } = useProfile();
@@ -86,8 +87,15 @@ export default function ProfilePage() {
       <OtpDialog
         open={otpOpen}
         onClose={closeOtp}
-        pendingEmail={pendingEmail}
-        onSuccess={() => mutate()}
+        title="Verify New Email"
+        description={`We sent a verification code to ${pendingEmail}`}
+        onVerify={async (code) => {
+          await api.post("/employees/verify-updated-email", {
+            email: pendingEmail,
+            code,
+          });
+          await mutate();
+        }}
       />
     </div>
   );

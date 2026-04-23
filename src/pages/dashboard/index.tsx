@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Shield, ShieldOff } from "lucide-react";
 import { enable2FA, verify2FASetup, disable2FA } from "@/queries/auth";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store";
 import { Navbar } from "@/components/navbar";
 import { useProfile } from "@/hooks/useprofile";
+import OtpDialog from "@/components/otp-dialog";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { twoFAEnabled, setTwoFAEnabled, logout } = useAuthStore();
   // At the top of your Dashboard component, add:
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -24,33 +24,33 @@ export default function Dashboard() {
   const handleOpenEdit = () => {
     // open your edit profile modal here
   };
+  const [loading, setLoading] = useState(false);
   // Enable 2FA flow — two steps
   const [showEnableDialog, setShowEnableDialog] = useState(false);
-  const [enableStep, setEnableStep] = useState<"qr" | "verify">("qr");
-  const [qrCode, setQrCode] = useState("");
+  // const [enableStep, setEnableStep] = useState<"qr" | "otp">("qr");
+
   const { profile } = useProfile(); // ← get profile data for Navbar
   // Disable 2FA flow
   const [showDisableDialog, setShowDisableDialog] = useState(false);
-
+  const [showVerifyOtp, setShowVerifyOtp] = useState(false);
   // Shared
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleLogout = () => {
-    logout();
-    navigate("/", { replace: true });
-  };
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate("/", { replace: true });
+  // };
 
   // Step 1: call POST /auth/enable-2fa to get the QR code
   const handleOpenEnable = async () => {
     setError("");
     setCode("");
-    setEnableStep("qr");
+    // setEnableStep("qr");
     try {
       const res = await enable2FA();
-      setQrCode(res.data.qrCode || "");
+      setCode(res.data.qrCode || "");
       setShowEnableDialog(true);
     } catch (err: any) {
       const msg = err?.response?.data?.message || "Failed to start 2FA setup.";
@@ -59,23 +59,6 @@ export default function Dashboard() {
   };
 
   // Step 2: call POST /auth/verify-2fa-setup with the code from authenticator app
-  const handleConfirmEnable = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      await verify2FASetup(code);
-      setTwoFAEnabled(true); // ← correctly inside the function
-      setShowEnableDialog(false);
-      setCode("");
-      setSuccess("Two-factor authentication enabled!");
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message || "Invalid code. Please try again.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDisable = async () => {
     setError("");
@@ -95,9 +78,7 @@ export default function Dashboard() {
 
   const closeEnableDialog = () => {
     setShowEnableDialog(false);
-    setCode("");
     setError("");
-    setEnableStep("qr");
   };
 
   const closeDisableDialog = () => {
@@ -180,87 +161,61 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Enable 2FA Dialog */}
+      {/* Enable 2FA Dialog — QR step only */}
       <Dialog open={showEnableDialog} onOpenChange={closeEnableDialog}>
         <DialogContent className="max-w-sm rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-semibold">
-              {enableStep === "qr" ? "Scan QR Code" : "Confirm Code"}
+              Scan QR Code
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4 space-y-4">
-            {enableStep === "qr" && (
-              <>
-                {qrCode ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-center text-muted-foreground">
-                      Scan this QR code with{" "}
-                      <strong>Google Authenticator</strong>
-                    </p>
-                    <img
-                      src={qrCode}
-                      alt="QR Code"
-                      className="w-44 h-44 rounded-xl border border-gray-100"
-                    />
-                    <p className="text-xs text-center text-gray-400">
-                      The QR code expires in 5 minutes
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-center text-sm text-red-500">
-                    Failed to load QR code.
-                  </p>
-                )}
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    setError("");
-                    setEnableStep("verify");
-                  }}
-                  disabled={!qrCode}
-                >
-                  I've scanned it →
-                </Button>
-              </>
-            )}
-            {enableStep === "verify" && (
-              <>
+            {code ? (
+              <div className="flex flex-col items-center gap-2">
                 <p className="text-sm text-center text-muted-foreground">
-                  Enter the 6-digit code from your authenticator app
+                  Scan this QR code with <strong>Google Authenticator</strong>
                 </p>
-                <Input
-                  autoFocus
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  maxLength={6}
-                  placeholder="123456"
-                  className="text-center text-lg tracking-[0.5em]"
+                <img
+                  src={code}
+                  alt="QR Code"
+                  className="w-44 h-44 rounded-xl border border-gray-100"
                 />
-                {error && (
-                  <p className="text-center text-sm text-red-500">{error}</p>
-                )}
-                <Button
-                  onClick={handleConfirmEnable}
-                  disabled={loading || code.length !== 6}
-                  className="w-full"
-                >
-                  {loading ? "Confirming..." : "Confirm & Enable"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full text-sm text-gray-400"
-                  onClick={() => {
-                    setError("");
-                    setEnableStep("qr");
-                  }}
-                >
-                  ← Back to QR code
-                </Button>
-              </>
+                <p className="text-xs text-center text-gray-400">
+                  The QR code expires in 5 minutes
+                </p>
+              </div>
+            ) : (
+              <p className="text-center text-sm text-red-500">
+                Failed to load QR code.
+              </p>
             )}
+            <Button
+              className="w-full"
+              onClick={() => {
+                setShowEnableDialog(false);
+                setShowVerifyOtp(true);
+              }}
+              disabled={!code}
+            >
+              I've scanned it →
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* OTP step — uses global OtpDialog */}
+      <OtpDialog
+        open={showVerifyOtp}
+        onClose={() => setShowVerifyOtp(false)}
+        title="Confirm 2FA Setup"
+        description="Enter the 6-digit code from your authenticator app"
+        onVerify={async (code) => {
+          await verify2FASetup(code);
+          setTwoFAEnabled(true);
+          setShowVerifyOtp(false);
+          setSuccess("Two-factor authentication enabled!");
+        }}
+      />
 
       {/* Disable 2FA Dialog */}
       <Dialog open={showDisableDialog} onOpenChange={closeDisableDialog}>
