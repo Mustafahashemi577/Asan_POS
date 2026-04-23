@@ -99,7 +99,9 @@ export default function EditProfileForm({
 
     const formData = new FormData();
     Object.keys(dirtyFields).forEach((key) => {
-      if (key === "email") return; // handle email separately
+      if (key === "email") return;
+      if (key === "newPassword") return; // handle password separately
+      if (key === "oldPassword") return; // handle email separately
       const value = data[key as keyof FormValues];
 
       if (value !== undefined && value !== null) {
@@ -114,6 +116,11 @@ export default function EditProfileForm({
 
     if (imageRemoved) {
       formData.append("imageUrl", "");
+    }
+
+    if (data.newPassword && data.oldPassword) {
+      formData.append("password", data.newPassword);
+      formData.append("oldPassword", data.oldPassword);
     }
 
     const emailChanged = data.email !== profile.email;
