@@ -20,8 +20,6 @@ interface NavbarProps {
   profile: EmployeeProfile;
   dropdownOpen: boolean;
   setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onEditProfile?: () => void;
-  openEdit: () => void;
 }
 
 export const Navbar = ({ profile }: NavbarProps) => {

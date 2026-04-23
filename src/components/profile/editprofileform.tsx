@@ -70,7 +70,7 @@ export default function EditProfileForm({
     watch,
     setValue,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -98,15 +98,22 @@ export default function EditProfileForm({
     setSuccess("");
 
     const formData = new FormData();
+    Object.keys(dirtyFields).forEach((key) => {
+      if (key === "email") return; // handle email separately
+      const value = data[key as keyof FormValues];
 
-    if (data.storeName !== (profile.storeName ?? ""))
-      formData.append("storeName", data.storeName ?? "");
-    if (data.newPassword && data.oldPassword)
-      formData.append("password", data.newPassword);
+      if (value !== undefined && value !== null) {
+        formData.append(key, value as string);
+      }
+    });
+
+    // file handling (separate from RHF)
     if (fileInputRef.current?.files?.[0]) {
       formData.append("image", fileInputRef.current.files[0]);
-    } else if (imageRemoved) {
-      formData.append("imageUrl", ""); // ← empty string, backend now handles this
+    }
+
+    if (imageRemoved) {
+      formData.append("imageUrl", "");
     }
 
     const emailChanged = data.email !== profile.email;
@@ -270,7 +277,12 @@ export default function EditProfileForm({
           </label>
           <DateInput
             value={currentDob ?? ""}
-            onChange={(val) => setValue("dob", val)}
+            onChange={(val) =>
+              setValue("dob", val, {
+                shouldDirty: true,
+                shouldTouch: true,
+              })
+            }
           />
         </div>
         <div>

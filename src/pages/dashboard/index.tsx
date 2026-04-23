@@ -1,5 +1,4 @@
 import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import { Shield, ShieldOff } from "lucide-react";
 import { enable2FA, verify2FASetup, disable2FA } from "@/queries/auth";
 import { Button } from "@/components/ui/button";
@@ -15,15 +14,8 @@ import { useProfile } from "@/hooks/useprofile";
 import OtpDialog from "@/components/otp-dialog";
 
 export default function Dashboard() {
-  // const navigate = useNavigate();
-  const { twoFAEnabled, setTwoFAEnabled, logout } = useAuthStore();
-  // At the top of your Dashboard component, add:
+  const { twoFAEnabled, setTwoFAEnabled } = useAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // If you have a profile edit modal, wire this up; otherwise a no-op is fine for now:
-  const handleOpenEdit = () => {
-    // open your edit profile modal here
-  };
   const [loading, setLoading] = useState(false);
   // Enable 2FA flow — two steps
   const [showEnableDialog, setShowEnableDialog] = useState(false);
@@ -38,16 +30,10 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // const handleLogout = () => {
-  //   logout();
-  //   navigate("/", { replace: true });
-  // };
-
   // Step 1: call POST /auth/enable-2fa to get the QR code
   const handleOpenEnable = async () => {
     setError("");
     setCode("");
-    // setEnableStep("qr");
     try {
       const res = await enable2FA();
       setCode(res.data.qrCode || "");
@@ -65,7 +51,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       await disable2FA();
-      setTwoFAEnabled(false); // ← correctly inside the function
+      setTwoFAEnabled(false);
       setShowDisableDialog(false);
       setSuccess("Two-factor authentication disabled.");
     } catch (err: any) {
@@ -94,7 +80,6 @@ export default function Dashboard() {
           profile={profile}
           dropdownOpen={dropdownOpen}
           setDropdownOpen={setDropdownOpen}
-          openEdit={handleOpenEdit}
         />
       )}
       {/* Main content */}

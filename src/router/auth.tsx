@@ -7,11 +7,11 @@ import type { RouteObject } from "react-router-dom";
 
 export const authRoutes: RouteObject[] = [
   {
-    path: "",
+    path: "/login",
     element: <LoginPage />,
   },
   {
-    path: "",
+    path: "/register",
     element: <Register />,
   },
   {
