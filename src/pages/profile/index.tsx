@@ -48,7 +48,7 @@ export default function ProfilePage() {
         profile={profile}
         dropdownOpen={dropdownOpen}
         setDropdownOpen={setDropdownOpen}
-        openEdit={openEdit}
+        // openEdit={openEdit}
       />
 
       {dropdownOpen && (
