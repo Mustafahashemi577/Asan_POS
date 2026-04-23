@@ -41,9 +41,10 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
   const items = [
     { label: "Dashboard", path: "/dashboard" },
-    { label: "Product", path: "/products" },
-    { label: "Transaction", path: "/transactions" },
-    { label: "Report", path: "/reports" },
+    { label: "Category", path: "/category" },
+    { label: "Product", path: "/product" },
+    { label: "Transaction", path: "/transaction" },
+    { label: "Report", path: "/report" },
   ];
 
   return (

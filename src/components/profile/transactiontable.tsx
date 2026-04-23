@@ -1,3 +1,5 @@
+import { Button } from "../ui/button";
+
 // TODO: Replace mock data with real API call using SWR when transactions endpoint is ready
 
 const transactions = [
@@ -6,28 +8,28 @@ const transactions = [
     customer: "Deni Setiawan",
     type: "Delivery",
     total: "Rp. 220,000.00",
-    status: "Complited",
+    status: "Completed",
   },
   {
     id: "21239172AKS232",
     customer: "Nemaanestina",
     type: "Take Away",
     total: "Rp. 200,000.00",
-    status: "Complited",
+    status: "Completed",
   },
   {
     id: "21239172AKS233",
     customer: "Dina Septiani",
     type: "Dine In",
     total: "Rp. 119,000.00",
-    status: "Complited",
+    status: "Completed",
   },
   {
     id: "21239172AKS234",
     customer: "Relastini",
     type: "Dine In",
     total: "Rp. 98,000.00",
-    status: "Complited",
+    status: "Completed",
   },
   {
     id: "21239172AKS234",
@@ -41,7 +43,7 @@ const transactions = [
     customer: "Puree Adi",
     type: "Dine In",
     total: "Rp. 67,000.00",
-    status: "Complited",
+    status: "Completed",
   },
 ];
 
@@ -60,8 +62,8 @@ export default function TransactionTable() {
         </div>
 
         <input
-          placeholder="Cari Transaksi..."
-          className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none w-full sm:w-44 text-gray-600"
+          placeholder="Search Transactions"
+          className="text-xs border border-gray-200 Totalrounded-lg px-3 py-1.5 outline-none w-full sm:w-44 text-gray-600"
         />
       </div>
 
@@ -70,9 +72,12 @@ export default function TransactionTable() {
         <h3 className="text-sm font-semibold text-gray-900">
           Recent Transaction
         </h3>
-        <button className="text-xs text-blue-500 hover:underline">
+        <Button
+          className="text-xs text-blue-500 hover:underline"
+          variant="ghost"
+        >
           View all
-        </button>
+        </Button>
       </div>
 
       {/* DESKTOP TABLE */}
@@ -103,7 +108,7 @@ export default function TransactionTable() {
                 <td className="py-3">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
-                      row.status === "Complited"
+                      row.status === "Completed"
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-600"
                     }`}
@@ -112,9 +117,12 @@ export default function TransactionTable() {
                   </span>
                 </td>
                 <td>
-                  <button className="text-xs text-blue-500 hover:underline">
+                  <Button
+                    className=" text-xs text-blue-500 hover:underline"
+                    variant="ghost"
+                  >
                     View
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -133,7 +141,7 @@ export default function TransactionTable() {
               <span className="text-xs text-gray-500">{row.id}</span>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full ${
-                  row.status === "Complited"
+                  row.status === "Completed"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-600"
                 }`}
@@ -149,7 +157,7 @@ export default function TransactionTable() {
               <span>{row.total}</span>
             </div>
 
-            <button className="text-xs text-blue-500 mt-2">View Receipt</button>
+            <Button className="text-xs text-blue-500 mt-2">View Receipt</Button>
           </div>
         ))}
       </div>

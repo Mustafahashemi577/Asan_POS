@@ -1,22 +1,70 @@
 import Login from "@/pages/(auth)/login";
+import Category from "@/pages/category";
 import Dashboard from "@/pages/dashboard";
+import Product from "@/pages/product";
+import ProfilePage from "@/pages/profile";
+import Report from "@/pages/report";
+import Transaction from "@/pages/transaction";
 import { createBrowserRouter } from "react-router-dom";
 import { authRoutes } from "./auth";
 import { PrivateRoute, PublicRoute } from "./guards";
-import ProfilePage from "@/pages/profile";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <PublicRoute><Login /></PublicRoute>,   // logged-in users can't go back here
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    ), // logged-in users can't go back here
   },
   {
     path: "/dashboard",
-    element: <PrivateRoute><Dashboard /></PrivateRoute>,  // logged-out users can't access
+    element: (
+      <PrivateRoute>
+        <Dashboard />
+      </PrivateRoute>
+    ), // logged-out users can't access
   },
   {
     path: "/profile",
-    element: <PrivateRoute><ProfilePage /></PrivateRoute>,
+    element: (
+      <PrivateRoute>
+        <ProfilePage />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/category",
+    element: (
+      <PrivateRoute>
+        <Category />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/product",
+    element: (
+      <PrivateRoute>
+        <Product />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/transaction",
+    element: (
+      <PrivateRoute>
+        <Transaction />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/report",
+    element: (
+      <PrivateRoute>
+        <Report />
+      </PrivateRoute>
+    ),
   },
   ...authRoutes,
 ]);
