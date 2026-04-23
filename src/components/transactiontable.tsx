@@ -83,7 +83,6 @@ export default function TransactionTable() {
         </button>
       </div>
       {/* DESKTOP TABLE */}
-      // REPLACE WITH:
       <div className="hidden sm:block">
         <Table>
           <TableHeader>
