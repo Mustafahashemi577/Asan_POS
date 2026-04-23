@@ -3,7 +3,7 @@ import { useProfile } from "@/hooks/useprofile";
 import ProfileCard from "@/components/profile/profilecard";
 import EditProfileDialog from "@/components/profile/editprofiledialog";
 import OtpDialog from "@/components/otp-dialog";
-import TransactionTable from "@/components/profile/transactiontable";
+import TransactionTable from "@/components/transactiontable";
 import { useEditProfile } from "@/hooks/useeditprofile";
 import { Loading } from "@/components/loading";
 import { Navbar } from "@/components/navbar";
