@@ -1,30 +1,29 @@
-import ForgotPassword from "@/pages/(auth)/forgot-password/forgot-password";
+import ForgotPassword from "@/pages/(auth)/forgot-password";
 import LoginPage from "@/pages/(auth)/login";
-import Register from "@/pages/(auth)/register/register";
-import ResetPassword from "@/pages/(auth)/reset-password/reset-password";
-import Verify2FA from "@/pages/(auth)/verify-2fa/verify-2fa";
+import Register from "@/pages/(auth)/register";
+import ResetPassword from "@/pages/(auth)/reset-password";
+import Verify2FA from "@/pages/(auth)/verify-2fa";
 import type { RouteObject } from "react-router-dom";
 
 export const authRoutes: RouteObject[] = [
   {
-    path: "login",
+    path: "",
     element: <LoginPage />,
   },
   {
-    path: "register",
+    path: "",
     element: <Register />,
   },
   {
-    path: "/forgot-password",
+    path: "",
     element: <ForgotPassword />,
   },
   {
-    path: "/reset-password",
+    path: "",
     element: <ResetPassword />,
   },
   {
-    path: "/verify-2fa",
+    path: "",
     element: <Verify2FA />,
   },
-
 ];
