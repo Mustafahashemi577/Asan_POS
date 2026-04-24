@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/lib/store";
-import type { EmployeeProfile } from "@/types/profile.types";
+import type { EmployeeInfo } from "@/types/index";
 import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
 import { Bell, Calendar, ChevronDown, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
 
 interface NavbarProps {
-  profile: EmployeeProfile;
+  profile: EmployeeInfo;
   dropdownOpen: boolean;
   setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }

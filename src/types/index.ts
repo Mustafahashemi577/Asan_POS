@@ -1,4 +1,23 @@
-export interface EmployeeProfile {
+export interface Login {
+  email: string;
+  password: string;
+  code?: string;
+}
+
+export interface Register {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  storeName: string;
+}
+
+export interface Verify {
+  email: string;
+  code: string;
+}
+
+export interface EmployeeInfo {
   id: string;
   email: string;
   name: string;
@@ -13,7 +32,7 @@ export interface EmployeeProfile {
   createdAt: string | null;
 }
 
-export interface EditForm {
+export interface EditProfile {
   firstName: string;
   lastName: string;
   email: string;

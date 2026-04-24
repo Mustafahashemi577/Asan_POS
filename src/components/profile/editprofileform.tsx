@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import GenderDropdown from "@/components/ui/GenderDropdown";
 import DateInput from "@/components/ui/DateInput";
 import api from "@/lib/axios";
-import type { EmployeeProfile } from "@/types/profile.types";
+import type { EmployeeInfo } from "@/types/";
 import { display, getInitials } from "@/utils/profile.helpers";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ type FormValues = z.infer<typeof schema>;
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 interface Props {
-  profile: EmployeeProfile;
+  profile: EmployeeInfo;
   onSaveSuccess: () => void;
   onEmailChange: (newEmail: string) => void;
   onClose: () => void;

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { EmployeeProfile, EditForm } from "@/types/profile.types";
+import type { EmployeeInfo, EditProfile } from "@/types/index";
 
-const defaultForm: EditForm = {
+const defaultForm: EditProfile = {
   firstName: "",
   lastName: "",
   role: "",
@@ -14,7 +14,7 @@ const defaultForm: EditForm = {
 };
 
 // Converts profile data into edit form format
-const profileToForm = (profile: EmployeeProfile): EditForm => ({
+const profileToForm = (profile: EmployeeInfo): EditProfile => ({
   firstName: profile.firstName ?? "",
   lastName: profile.lastName ?? "",
   role: profile.role ?? "",
@@ -26,15 +26,15 @@ const profileToForm = (profile: EmployeeProfile): EditForm => ({
   imageUrl: profile.imageUrl ?? "",
 });
 
-export function useEditProfile(profile: EmployeeProfile | undefined) {
+export function useEditProfile(profile: EmployeeInfo | undefined) {
   const [editOpen, setEditOpen] = useState(false);
   const [otpOpen, setOtpOpen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
-  const [editForm, setEditForm] = useState<EditForm>(defaultForm);
+  const [EditProfile, setEditProfile] = useState<EditProfile>(defaultForm);
 
   const openEdit = () => {
     if (!profile) return;
-    setEditForm(profileToForm(profile)); // ← single call instead of 9 lines
+    setEditProfile(profileToForm(profile)); // ← single call instead of 9 lines
     setEditOpen(true);
   };
 
@@ -58,8 +58,8 @@ export function useEditProfile(profile: EmployeeProfile | undefined) {
     otpOpen,
     closeOtp,
     pendingEmail,
-    editForm,
-    setEditForm,
+    EditProfile,
+    setEditProfile,
     handleEmailChange,
   };
 }

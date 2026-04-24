@@ -85,6 +85,7 @@ export default function LoginForm() {
         <div className="space-y-4">
           <Input
             name="email"
+            className="h-12"
             type="email"
             placeholder="Your Email"
             value={form.email}

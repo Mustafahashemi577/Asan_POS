@@ -34,7 +34,7 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: getValidToken(),  // ← reads localStorage but validates expiry
+  token: getValidToken(), // ← reads localStorage but validates expiry
   twoFAEnabled: localStorage.getItem("2fa_enabled") === "true",
 
   setAuth: (user, token) => {

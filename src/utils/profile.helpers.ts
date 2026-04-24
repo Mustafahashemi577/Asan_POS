@@ -1,4 +1,4 @@
-import type { EmployeeProfile } from "@/types/profile.types";
+import type { EmployeeInfo } from "@/types/";
 import { format } from "date-fns";
 
 export const display = (val: string | null | undefined): string =>
@@ -13,14 +13,14 @@ export const formatDate = (val: string | null | undefined): string => {
   }
 };
 
-export const getInitials = (profile: EmployeeProfile): string => {
+export const getInitials = (profile: EmployeeInfo): string => {
   if (profile.firstName && profile.lastName)
     return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
   if (profile.name) return profile.name.slice(0, 2).toUpperCase();
   return "??";
 };
 
-export const getDisplayName = (profile: EmployeeProfile): string => {
+export const getDisplayName = (profile: EmployeeInfo): string => {
   if (profile.firstName && profile.lastName)
     return `${profile.firstName} ${profile.lastName}`;
   return display(profile.name);

@@ -1,4 +1,4 @@
-import type { EmployeeProfile } from "@/types/profile.types";
+import type { EmployeeInfo } from "@/types/";
 import {
   display,
   formatDate,
@@ -42,7 +42,7 @@ const stats = [
 ];
 
 interface Props {
-  profile: EmployeeProfile;
+  profile: EmployeeInfo;
   onEditClick: () => void;
 }
 

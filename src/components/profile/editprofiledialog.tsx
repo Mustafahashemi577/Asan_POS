@@ -4,13 +4,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { EmployeeProfile } from "@/types/profile.types";
+import type { EmployeeInfo } from "@/types/";
 import EditProfileForm from "./editprofileform";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  profile: EmployeeProfile;
+  profile: EmployeeInfo;
   onSaveSuccess: () => void;
   onEmailChange: (newEmail: string) => void;
 }
