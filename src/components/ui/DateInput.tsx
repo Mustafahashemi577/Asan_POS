@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { formatDate } from "@/utils/profile.helpers";
 
 interface Props {
   value: string;
@@ -31,6 +32,8 @@ const MONTHS = [
 
 export default function DateInput({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
+
+  const [format] = useState("MM/DD/YYYY");
 
   const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
@@ -59,13 +62,7 @@ export default function DateInput({ value, onChange }: Props) {
     setYearOpen(false);
   };
 
-  const displayValue = parsed
-    ? parsed.toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      })
-    : "";
+  const displayValue = parsed ? formatDate(parsed, format) : "";
 
   const selectedDay = parsed?.getDate();
   const selectedMonth = parsed?.getMonth();
