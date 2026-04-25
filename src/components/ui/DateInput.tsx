@@ -32,10 +32,15 @@ const MONTHS = [
 export default function DateInput({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
 
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [yearOpen, setYearOpen] = useState(false);
+
   const parsed = value ? new Date(value) : null;
+
   const [viewYear, setViewYear] = useState(
     parsed?.getFullYear() ?? new Date().getFullYear(),
   );
+
   const [viewMonth, setViewMonth] = useState(
     parsed?.getMonth() ?? new Date().getMonth(),
   );
@@ -46,8 +51,12 @@ export default function DateInput({ value, onChange }: Props) {
   const selectDay = (day: number) => {
     const mm = String(viewMonth + 1).padStart(2, "0");
     const dd = String(day).padStart(2, "0");
+
     onChange(`${viewYear}-${mm}-${dd}`);
+
     setOpen(false);
+    setMonthOpen(false);
+    setYearOpen(false);
   };
 
   const displayValue = parsed
@@ -82,7 +91,7 @@ export default function DateInput({ value, onChange }: Props) {
           {/* Header */}
           <div className="flex items-center gap-2 mb-3">
             {/* Month Dropdown */}
-            <Popover>
+            <Popover open={monthOpen} onOpenChange={setMonthOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -97,7 +106,13 @@ export default function DateInput({ value, onChange }: Props) {
                 <Command>
                   <CommandGroup>
                     {MONTHS.map((m, i) => (
-                      <CommandItem key={m} onSelect={() => setViewMonth(i)}>
+                      <CommandItem
+                        key={m}
+                        onSelect={() => {
+                          setViewMonth(i);
+                          setMonthOpen(false);
+                        }}
+                      >
                         {m}
                       </CommandItem>
                     ))}
@@ -107,7 +122,7 @@ export default function DateInput({ value, onChange }: Props) {
             </Popover>
 
             {/* Year Dropdown */}
-            <Popover>
+            <Popover open={yearOpen} onOpenChange={setYearOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -122,15 +137,18 @@ export default function DateInput({ value, onChange }: Props) {
                 <div className="max-h-60 overflow-y-auto">
                   {Array.from({ length: 120 }).map((_, i) => {
                     const year = new Date().getFullYear() - i;
+
                     return (
                       <Button
                         key={year}
                         type="button"
                         variant="outline"
-                        onClick={() => setViewYear(year)}
+                        onClick={() => {
+                          setViewYear(year);
+                          setYearOpen(false);
+                        }}
                         className={`w-full text-left px-3 py-1.5 text-xs rounded-md hover:bg-gray-100
-
-            ${year === viewYear ? "bg-gray-100 font-medium" : ""}`}
+                          ${year === viewYear ? "bg-gray-100 font-medium" : ""}`}
                       >
                         {year}
                       </Button>
@@ -141,7 +159,7 @@ export default function DateInput({ value, onChange }: Props) {
             </Popover>
           </div>
 
-          {/* Days */}
+          {/* Days Header */}
           <div className="grid grid-cols-7 mb-1">
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
               <div
@@ -153,6 +171,7 @@ export default function DateInput({ value, onChange }: Props) {
             ))}
           </div>
 
+          {/* Days Grid */}
           <div className="grid grid-cols-7 gap-y-1">
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={i} />
@@ -160,6 +179,7 @@ export default function DateInput({ value, onChange }: Props) {
 
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
+
               const isSelected =
                 day === selectedDay &&
                 viewMonth === selectedMonth &&
@@ -189,6 +209,8 @@ export default function DateInput({ value, onChange }: Props) {
               onClick={() => {
                 onChange("");
                 setOpen(false);
+                setMonthOpen(false);
+                setYearOpen(false);
               }}
               className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600"
               variant="outline"
