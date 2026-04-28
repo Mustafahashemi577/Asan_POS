@@ -13,12 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { orderFood } from '@/queries/products';
+import { orderFood } from "@/queries/products";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { CartItemCard } from './cart-item';
+import { CartItemCard } from "./cart-item";
 
 export interface CartItemType {
   id: number;
@@ -75,7 +75,7 @@ export function OrderDetails({
   }
 
   return (
-    <div className="p-2 bg-neutral-100 rounded-xl h-[calc(100vh-90px)]">
+    <div className="p-2 bg-neutral-100 justify-between rounded-xl h-[calc(100vh-90px)]">
       <div className="flex h-full flex-col rounded-lg bg-white p-2">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
@@ -168,7 +168,11 @@ export function OrderDetails({
         {/* Cart Items */}
         <div className="flex-1 space-y-3 overflow-auto">
           {cart.map((item) => (
-            <CartItemCard key={item.id} item={item} onRemoveItem={onRemoveItem} />
+            <CartItemCard
+              key={item.id}
+              item={item}
+              onRemoveItem={onRemoveItem}
+            />
           ))}
         </div>
 

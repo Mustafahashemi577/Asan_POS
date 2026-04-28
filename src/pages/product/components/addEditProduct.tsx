@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -8,9 +15,8 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { getCategories } from "@/queries/category";
-import { ChevronDown, ImageIcon, Plus } from "lucide-react";
+import { ImageIcon, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-
 interface AddEditProductProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -103,20 +109,19 @@ export function AddEditProduct({
 
           {/* Category Dropdown + Add */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm text-gray-500 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                <option value="">Choose Categories</option>
-                {categories.map((cat: any) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <div className="flex-1">
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500">
+                  <SelectValue placeholder="Choose Categories" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {categories.map((cat: any) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button
               variant="outline"
