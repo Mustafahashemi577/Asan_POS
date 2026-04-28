@@ -19,21 +19,19 @@ const schema = z
     role: z.string().optional(),
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
-    gender: z
-      .enum(["male", "female", "other", "prefer_not_to_say", ""])
-      .optional(),
+    gender: z.string().optional(),
     dob: z.string().optional(),
     storeName: z.string().optional(),
     oldPassword: z.string().optional(),
-    newPassword: z.string().optional(),
+    password: z.string().optional(),
   })
   .refine(
     (data) =>
-      !(data.newPassword && !data.oldPassword) &&
-      !(data.oldPassword && !data.newPassword),
+      !(data.password && !data.oldPassword) &&
+      !(data.oldPassword && !data.password),
     {
       message: "Both old and new password are required",
-      path: ["newPassword"],
+      path: ["password"],
     },
   );
 
@@ -58,6 +56,7 @@ export default function EditProfileForm({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     profile.imageUrl,
   );
+
   const [imageRemoved, setImageRemoved] = useState(false);
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
@@ -79,13 +78,15 @@ export default function EditProfileForm({
       role: profile.role ?? "",
       email: profile.email ?? "",
       phone: profile.phone ?? "",
-      gender: (profile.gender as FormValues["gender"]) ?? "",
+      gender: profile.gender as FormValues["gender"],
       dob: profile.dob ? profile.dob.split("T")[0] : "",
       storeName: profile.storeName ?? "",
       oldPassword: "",
-      newPassword: "",
+      password: "",
     },
   });
+
+  console.log("ERRORS", errors);
 
   const currentEmail = watch("email");
   const currentGender = watch("gender");
@@ -98,38 +99,45 @@ export default function EditProfileForm({
     setSuccess("");
 
     const formData = new FormData();
-    Object.keys(dirtyFields).forEach((key) => {
-      if (key === "email") return;
-      if (key === "newPassword") return;
-      if (key === "oldPassword") return;
-      const value = data[key as keyof FormValues];
 
-      if (value !== undefined && value !== null) {
-        formData.append(key, value as string);
-      }
+    const payload: Partial<FormValues> = {};
+
+    Object.keys(dirtyFields).forEach((key) => {
+      const k = key as keyof FormValues;
+
+      if (k === "password" || k === "oldPassword") return;
+
+      payload[k] = data[k];
     });
 
-    // file handling (separate from RHF)
     if (fileInputRef.current?.files?.[0]) {
-      formData.append("image", fileInputRef.current.files[0]);
+      const imageForm = new FormData();
+      imageForm.append("image", fileInputRef.current.files[0]);
+      const uploadRes = await api.post(
+        "/attachments/employee/upload",
+        imageForm,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+      await api.post("/attachments/employee/claim", {
+        attachmentId: uploadRes.data.id,
+      });
     }
-
     if (imageRemoved) {
-      formData.append("imageUrl", "");
+      await api.delete("/attachments/img");
     }
 
-    if (data.newPassword && data.oldPassword) {
-      formData.append("password", data.newPassword);
-      formData.append("oldPassword", data.oldPassword);
+    if (data.password && data.oldPassword) {
+      payload.oldPassword = data.oldPassword;
+      payload.password = data.password;
     }
 
     const emailChanged = data.email !== profile.email;
     if (emailChanged) formData.append("email", data.email);
 
     try {
-      await api.put("/employees/info", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.put("/employees/info", { ...payload, gender: data.gender });
 
       if (emailChanged) {
         onEmailChange(data.email);
@@ -342,7 +350,7 @@ export default function EditProfileForm({
             <div className="relative">
               <input
                 type={showNewPass ? "text" : "password"}
-                {...register("newPassword")}
+                {...register("password")}
                 placeholder="New Password"
                 className="w-full h-10 border border-gray-200 rounded-xl px-4 pr-10 text-sm bg-gray-50 outline-none hover:border-gray-300 focus:border-gray-400 transition-colors"
               />
@@ -354,9 +362,9 @@ export default function EditProfileForm({
                 {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            {errors.newPassword && (
+            {errors.password && (
               <p className="text-xs text-red-500 mt-1">
-                {errors.newPassword.message}
+                {errors.password.message}
               </p>
             )}
           </div>
