@@ -86,12 +86,12 @@ export default function TransactionTable() {
       <div className="hidden sm:block">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-gray-100 rounded-md">
               {["Id", "Customer", "Type", "Total", "Status", "Action"].map(
                 (h) => (
                   <TableHead
                     key={h}
-                    className="text-base font-medium py-4 text-left text-black bg-gray-100 rounded-md"
+                    className="text-base font-medium py-4 text-left text-black bg-gray-100 first:rounded-l-md first:pl-6 last:rounded-r-md last:pr-6"
                   >
                     {h}
                   </TableHead>
