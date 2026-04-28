@@ -1,15 +1,16 @@
-import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import GenderDropdown from "@/components/ui/GenderDropdown";
 import DateInput from "@/components/ui/DateInput";
+import GenderDropdown from "@/components/ui/GenderDropdown";
+import { Input } from "@/components/ui/input";
 import api from "@/lib/axios";
 import type { EmployeeInfo } from "@/types/";
 import { display, getInitials } from "@/utils/profile.helpers";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AxiosError } from 'axios';
+import { Eye, EyeOff } from "lucide-react";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 const schema = z
@@ -151,11 +152,12 @@ export default function EditProfileForm({
       onClose();
       reset();
       // }, 1200);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      setServerError(
-        Array.isArray(msg) ? msg[0] : msg || "Failed to save changes.",
-      );
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response?.data?.message) {
+        setServerError(err.response.data.message);
+      } else {
+        setServerError("Failed to save changes.");
+      }
     }
   };
 

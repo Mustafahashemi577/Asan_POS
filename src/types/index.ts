@@ -43,3 +43,10 @@ export interface EditProfile {
   dob: string;
   storeName: string;
 }
+
+export interface OrderFoodPayload {
+  serviceType: string;
+  name: string;
+  quantity: number;
+  description: string;
+}
