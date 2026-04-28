@@ -6,7 +6,7 @@ import api from "@/lib/axios";
 import type { EmployeeInfo } from "@/types/";
 import { display, getInitials } from "@/utils/profile.helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from 'axios';
+import { AxiosError } from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -64,6 +64,9 @@ export default function EditProfileForm({
   const [serverError, setServerError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [attachmentId, setAttachmentId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -94,6 +97,38 @@ export default function EditProfileForm({
   const currentDob = watch("dob");
   const currentFirstName = watch("firstName");
 
+  const onUpload = async (
+    e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarPreview(URL.createObjectURL(file));
+    setImageRemoved(false);
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await api.post("/attachments/employee/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setAttachmentId(res.data.id); // ✅ store for later claim
+    } catch (err) {
+      setAttachmentId(null);
+      setAvatarPreview(null);
+
+      // 👉 replace with your toast system
+      setServerError("Image upload failed");
+
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
     setServerError("");
@@ -111,18 +146,9 @@ export default function EditProfileForm({
       payload[k] = data[k];
     });
 
-    if (fileInputRef.current?.files?.[0]) {
-      const imageForm = new FormData();
-      imageForm.append("image", fileInputRef.current.files[0]);
-      const uploadRes = await api.post(
-        "/attachments/employee/upload",
-        imageForm,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
+    if (attachmentId) {
       await api.post("/attachments/employee/claim", {
-        attachmentId: uploadRes.data.id,
+        id: attachmentId,
       });
     }
     if (imageRemoved) {
@@ -199,12 +225,8 @@ export default function EditProfileForm({
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) {
-                setAvatarPreview(URL.createObjectURL(f));
-                setImageRemoved(false);
-              }
+            onChange={async (e) => {
+              onUpload(e);
             }}
           />
           <button
