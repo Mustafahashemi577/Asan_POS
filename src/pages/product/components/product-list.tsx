@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { AddEditProduct } from "./addEditProduct";
 import ProductCard from "./product-card";
 
 export interface Product {
@@ -21,6 +22,10 @@ interface ProductListProps {
 
 const categories = ["All", "Drinks", "Food"];
 
+const handleSave = (data: any) => {
+  console.log("Saved product data:", data);
+};
+
 export function ProductList({
   products,
   quantities,
@@ -28,6 +33,7 @@ export function ProductList({
 }: ProductListProps) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -69,10 +75,16 @@ export function ProductList({
         <Button
           variant="ghost"
           className="text-muted-foreground hover:text-foreground"
+          onClick={() => setSheetOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
+        <AddEditProduct
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          onSave={handleSave}
+        />
       </div>
 
       {/* Product Grid */}
