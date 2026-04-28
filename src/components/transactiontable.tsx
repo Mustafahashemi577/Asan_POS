@@ -91,7 +91,7 @@ export default function TransactionTable() {
                 (h) => (
                   <TableHead
                     key={h}
-                    className="text-xs text-gray-400 font-medium"
+                    className="text-base font-medium py-4 text-left text-black bg-gray-100 rounded-md"
                   >
                     {h}
                   </TableHead>
