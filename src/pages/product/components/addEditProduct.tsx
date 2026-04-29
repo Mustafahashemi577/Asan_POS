@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { getCategories } from "@/queries/category";
+import { useAddProduct } from "@/hooks/useAddProduct";
 import { ImageIcon, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -31,27 +32,35 @@ export function AddEditProduct({
   product,
   onSave,
 }: AddEditProductProps) {
-  const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(product?.price ?? "");
-  const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
-  const [inStock, setInStock] = useState(product?.inStock ?? true);
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    product?.imageUrl ?? null,
-  );
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [inStock, setInStock] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
 
-  // Reset form when product prop changes (add vs edit)
-  useEffect(() => {
-    setName(product?.name ?? "");
-    setPrice(product?.price ?? "");
-    setCategoryId(product?.categoryId ?? "");
-    setInStock(product?.inStock ?? true);
-    setImage(null);
-    setImagePreview(product?.imageUrl ?? null);
-  }, [product]);
+  const {
+    fileInputRef,
+    imagePreview,
+    isUploading,
+    error,
+    handleImageSelect,
+    handleSubmit,
+  } = useAddProduct(() => {
+    onSave(null);
+    onOpenChange(false);
+  });
 
-  // Fetch categories once on open
+  // Reset form when opening
+  useEffect(() => {
+    if (open) {
+      setName(product?.name ?? "");
+      setPrice(product?.price ?? "");
+      setCategoryId(product?.categoryId ?? "");
+      setInStock(product?.inStock ?? true);
+    }
+  }, [open, product]);
+
+  // Fetch categories on open
   useEffect(() => {
     if (!open) return;
     getCategories()
@@ -59,17 +68,20 @@ export function AddEditProduct({
       .catch(() => setCategories([]));
   }, [open]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+  const handleSubmitForm = async () => {
+    if (!name || !price || !categoryId) {
+      return;
     }
-  };
-
-  const handleSubmit = () => {
-    onSave({ name, price: Number(price), categoryId, inStock, image });
-    onOpenChange(false);
+    const selectedCategory = categories.find((c: any) => c.id === categoryId);
+    try {
+      await handleSubmit({
+        name,
+        price: Number(price),
+        categoryName: selectedCategory?.name,
+      });
+    } catch (err) {
+      // Error handled by hook
+    }
   };
 
   return (
@@ -86,8 +98,11 @@ export function AddEditProduct({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Error message */}
+          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+
           {/* Image upload */}
-          <label className="block w-full cursor-pointer">
+          <label className="block w-full cursor-pointer relative">
             <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors">
               {imagePreview ? (
                 <img
@@ -101,12 +116,18 @@ export function AddEditProduct({
                   <span className="text-xs">Click to upload image</span>
                 </div>
               )}
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                  <span className="text-white text-sm">Uploading...</span>
+                </div>
+              )}
             </div>
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleImageChange}
+              onChange={handleImageSelect}
             />
           </label>
 
@@ -165,13 +186,18 @@ export function AddEditProduct({
           </div>
         </div>
 
-        {/* Sticky footer button — uses flex layout, not absolute */}
+        {/* Sticky footer button */}
         <div className="px-5 py-4 border-t border-gray-100 bg-white">
           <Button
-            onClick={handleSubmit}
+            onClick={handleSubmitForm}
+            disabled={isUploading}
             className="w-full h-11 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-medium"
           >
-            {product ? "Save Changes" : "Add Product"}
+            {isUploading
+              ? "Uploading..."
+              : product
+                ? "Save Changes"
+                : "Add Product"}
           </Button>
         </div>
       </SheetContent>
