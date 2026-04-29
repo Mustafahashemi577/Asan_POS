@@ -18,7 +18,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   });
 
   return (
-    <div className="w-full bg-white border-b">
+    <div className="w-full bg-white">
       {/*Top row */}
       <div className="flex items-center justify-between px-4 py-3">
         {/*Logo + Name*/}

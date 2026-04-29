@@ -73,14 +73,17 @@ export function OrderDetails({
   }
 
   return (
-    <div className="p-2 bg-neutral-100  justify-between rounded-xl h-[calc(100vh-90px)]">
+    <div className="p-2 border-t-8 border-b-8 border-l-8 border-gray-200 justify-between rounded-xl h-[calc(100vh-90px)] sticky">
       <div className="flex h-full flex-col max-w-screen-2xl rounded-lg bg-white p-2">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg text-foreground">Order Details</h2>
-          <button className="text-sm text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             See Order
-          </button>
+          </Button>
         </div>
 
         {/* Order Type */}
@@ -100,10 +103,10 @@ export function OrderDetails({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Dine In</SelectLabel>
-                      <SelectItem value="Take Away">Take Away</SelectItem>
+                      <SelectLabel>Service Type</SelectLabel>
+                      <SelectItem value="Dine In">Dine In</SelectItem>
                       <SelectItem value="Delivery">Delivery</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
+                      <SelectItem value="Take Away">Take Away</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -116,7 +119,8 @@ export function OrderDetails({
               <Field>
                 <Input
                   id="name"
-                  placeholder="Qabli Palaw"
+                  className="bg-white"
+                  placeholder="Customer Name"
                   {...form.register("name")}
                 />
 
@@ -126,7 +130,8 @@ export function OrderDetails({
               <Field>
                 <Input
                   id="quantity"
-                  placeholder="Quantity"
+                  placeholder="Table"
+                  className="bg-white"
                   type="number"
                   {...form.register("quantity")}
                   onChange={(e) => {
@@ -144,6 +149,7 @@ export function OrderDetails({
                 <Input
                   id="description"
                   placeholder="Description"
+                  className="bg-white"
                   {...form.register("description")}
                 />
 
@@ -179,24 +185,24 @@ export function OrderDetails({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Sub Total</span>
             <span className="font-medium text-foreground">
-              ${subtotal.toFixed(2)}
+              {subtotal.toFixed(2)} Afn
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Tax/10%</span>
             <span className="font-medium text-foreground">
-              ${tax.toFixed(2)}
+              {tax.toFixed(2)} Afn
             </span>
           </div>
           <div className="flex items-center justify-between text-base font-semibold">
             <span className="text-foreground">Total</span>
-            <span className="text-foreground">${total.toFixed(2)}</span>
+            <span className="text-foreground">{total.toFixed(2)} Afn</span>
           </div>
         </div>
 
         {/* Pay Button */}
         <Button className="mt-4 w-full bg-foreground text-background hover:bg-foreground/90">
-          Pay ${total.toFixed(2)}
+          Pay {total.toFixed(2)} Afn
         </Button>
       </div>
     </div>

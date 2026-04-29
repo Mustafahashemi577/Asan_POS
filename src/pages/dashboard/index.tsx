@@ -69,7 +69,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Main content */}
       <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center gap-8">
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>

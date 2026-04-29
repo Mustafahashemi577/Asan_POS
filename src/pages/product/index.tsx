@@ -1,87 +1,102 @@
-import { getCategories } from "@/queries/category";
-import { getProducts } from "@/queries/products";
 import { useEffect, useState } from "react";
+
+import { AddEditProduct } from "./components/addEditProduct";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
 import { ProductList } from "./components/product-list";
 
+import { getCategories } from "@/queries/category";
+import { getProducts } from "@/queries/products";
+
 export default function Product() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [cart, setCart] = useState<CartItemType[]>([
-    {
-      id: 1,
-      name: "French Vanilla Fantasy",
-      price: 15,
-      quantity: 1,
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image.png-DGO1zNcfZDbIiAJWbB1sNmsvw6bqOJ.jpeg",
-    },
-    {
-      id: 2,
-      name: "French Vanilla Fantasy",
-      price: 17,
-      quantity: 1,
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image.png-DGO1zNcfZDbIiAJWbB1sNmsvw6bqOJ.jpeg",
-    },
-  ]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [cart, setCart] = useState<CartItemType[]>([]);
+  const [addProductOpen, setAddProductOpen] = useState(false);
 
-  const updateQuantity = (productId: number, delta: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] || 0) + delta),
-    }));
-  };
-
-  const [Categories, setCategories] = useState<any[]>([]);
-
+  // ── Fetch categories ────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        setCategories(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
+    getCategories()
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]));
   }, []);
-  const removeFromCart = (itemId: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== itemId));
+
+  // ── Filter products client-side ─────────────────────────────────────────
+  const allProducts = getProducts();
+  const products = allProducts.filter((p) => {
+    const matchesCat =
+      selectedCategory === "all" || p.category === selectedCategory;
+    const matchesSearch = p.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  // ── Cart handlers ────────────────────────────────────────────────────────
+  const updateQuantity = (productId: number, delta: number) => {
+    const next = Math.max(0, (quantities[productId] ?? 0) + delta);
+    setQuantities((prev) => ({ ...prev, [productId]: next }));
+
+    if (delta > 0) {
+      setCart((prev) => {
+        const existing = prev.find((i) => i.id === productId);
+        if (existing)
+          return prev.map((i) =>
+            i.id === productId ? { ...i, quantity: i.quantity + 1 } : i,
+          );
+        const product = allProducts.find((p) => p.id === productId);
+        if (!product) return prev;
+        return [...prev, { ...product, quantity: 1 }];
+      });
+    } else {
+      setCart((prev) =>
+        prev
+          .map((i) =>
+            i.id === productId ? { ...i, quantity: i.quantity - 1 } : i,
+          )
+          .filter((i) => i.quantity > 0),
+      );
+    }
   };
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const removeFromCart = (itemId: number) => {
+    setCart((prev) => prev.filter((i) => i.id !== itemId));
+    setQuantities((prev) => ({ ...prev, [itemId]: 0 }));
+  };
+
+  // ── Totals ───────────────────────────────────────────────────────────────
+  const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
-  const products = getProducts();
-
   return (
-    <div className="min-h-screen bg-gray-200">
-      <div className="m-2.5 bg-white relative">
-        {/* Mobile only: category sheet trigger */}
-        <div className="lg:hidden">
-          <CategoryFilter
-            categories={Categories}
-            selected={selectedCategory}
-            onSelect={setSelectedCategory}
-          />
-        </div>
+    // Gray background on all 4 sides — matches the screenshot border
+    <>
+      <div className="bg-gray-200 h-[calc(100vh-57px)]">
+        <div className="flex h-full bg-white rounded-b-xl overflow-hidden">
+          {/* ── LEFT ───────────────────────────────────────────────────── */}
+          <div className="flex-1 min-w-0 overflow-y-auto px-4 pt-4 pb-4 space-y-3">
+            {/* Search + category pills + Add Product — all one row */}
+            <CategoryFilter
+              categories={categories}
+              selected={selectedCategory}
+              onSelect={setSelectedCategory}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onAddProduct={() => setAddProductOpen(true)}
+            />
 
-        <div className="m-2.5 max-w-screen-2xl bg-white grid grid-cols-8 gap-4">
-          <div className="col-span-6">
             <ProductList
               products={products}
               quantities={quantities}
               onUpdateQuantity={updateQuantity}
             />
           </div>
-          <div className="col-span-2 sticky right-0 top-22.5 self-start">
+
+          {/* ── RIGHT: order sidebar ─────────────────────────────────── */}
+          <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0 border-gray-200 bg-white overflow-y-auto">
             <OrderDetails
               cart={cart}
               onRemoveItem={removeFromCart}
@@ -89,9 +104,16 @@ export default function Product() {
               tax={tax}
               total={total}
             />
-          </div>
+          </aside>
         </div>
+
+        {/* Add / Edit product sheet — page-level so it overlays everything */}
+        <AddEditProduct
+          open={addProductOpen}
+          onOpenChange={setAddProductOpen}
+          onSave={(data) => console.log("Saved product:", data)}
+        />
       </div>
-    </div>
+    </>
   );
 }

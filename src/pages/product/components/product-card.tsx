@@ -16,7 +16,7 @@ const ProductCard = ({
   return (
     <div
       key={product.id}
-      className="overflow-hidden rounded-xl bg-background border border-gray-200"
+      className="overflow-hidden rounded-xl border border-gray-200"
     >
       <div className="aspect-square ">
         <img

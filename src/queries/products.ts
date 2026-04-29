@@ -4,11 +4,11 @@ import type { OrderFoodPayload } from "@/types";
 const products: Product[] = [
   {
     id: 1,
-    name: "French Vanilla Fantasy",
+    name: "Protein Salad",
     price: 250,
     image:
       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    category: "food",
+    category: "Afghan",
   },
   {
     id: 2,

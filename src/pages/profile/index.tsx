@@ -41,53 +41,55 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setDropdownOpen(false)}
-        />
-      )}
+    <main>
+      <div className="min-h-screen bg-gray-50">
+        {dropdownOpen && (
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setDropdownOpen(false)}
+          />
+        )}
 
-      {/* ── Content ── */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-5">
-          <h1 className="text-3xl font-semibold text-gray-900">
-            Detail Profile
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Be a good and honest employee for everyone's happiness
-          </p>
+        {/* ── Content ── */}
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="mb-5">
+            <h1 className="text-3xl font-semibold text-gray-900">
+              Detail Profile
+            </h1>
+            <p className="text-sm text-gray-400 mt-1">
+              Be a good and honest employee for everyone's happiness
+            </p>
+          </div>
+
+          <ProfileCard profile={profile} onEditClick={openEdit} />
+          <TransactionTable />
         </div>
 
-        <ProfileCard profile={profile} onEditClick={openEdit} />
-        <TransactionTable />
+        {/* ── Dialogs ── */}
+        <EditProfileDialog
+          open={editOpen}
+          onClose={closeEdit}
+          profile={profile}
+          // editForm={editForm}
+          // setEditForm={setEditForm}
+          onSaveSuccess={() => mutate()}
+          onEmailChange={handleEmailChange}
+        />
+
+        <OtpDialog
+          open={otpOpen}
+          onClose={closeOtp}
+          title="Verify New Email"
+          description={`We sent a verification code to ${pendingEmail}`}
+          onVerify={async (code) => {
+            await api.post("/employees/verify-updated-email", {
+              email: pendingEmail,
+              code,
+            });
+            await mutate();
+          }}
+        />
       </div>
-
-      {/* ── Dialogs ── */}
-      <EditProfileDialog
-        open={editOpen}
-        onClose={closeEdit}
-        profile={profile}
-        // editForm={editForm}
-        // setEditForm={setEditForm}
-        onSaveSuccess={() => mutate()}
-        onEmailChange={handleEmailChange}
-      />
-
-      <OtpDialog
-        open={otpOpen}
-        onClose={closeOtp}
-        title="Verify New Email"
-        description={`We sent a verification code to ${pendingEmail}`}
-        onVerify={async (code) => {
-          await api.post("/employees/verify-updated-email", {
-            email: pendingEmail,
-            code,
-          });
-          await mutate();
-        }}
-      />
-    </div>
+    </main>
   );
 }

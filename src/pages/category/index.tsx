@@ -101,7 +101,7 @@ export default function Category() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="flex flex-col sm:flex-row ml-2 sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Category</h1>
       </div>

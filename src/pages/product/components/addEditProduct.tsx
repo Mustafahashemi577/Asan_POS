@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { getCategories } from "@/queries/category";
 import { ImageIcon, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+
 interface AddEditProductProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,29 +31,33 @@ export function AddEditProduct({
   product,
   onSave,
 }: AddEditProductProps) {
-  const [name, setName] = useState(product?.name || "");
-  const [price, setPrice] = useState(product?.price || "");
-  const [categoryId, setCategoryId] = useState(product?.categoryId || "");
+  const [name, setName] = useState(product?.name ?? "");
+  const [price, setPrice] = useState(product?.price ?? "");
+  const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
-    product?.imageUrl || null,
+    product?.imageUrl ?? null,
   );
-
   const [categories, setCategories] = useState<any[]>([]);
 
+  // Reset form when product prop changes (add vs edit)
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        setCategories(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, []);
+    setName(product?.name ?? "");
+    setPrice(product?.price ?? "");
+    setCategoryId(product?.categoryId ?? "");
+    setInStock(product?.inStock ?? true);
+    setImage(null);
+    setImagePreview(product?.imageUrl ?? null);
+  }, [product]);
+
+  // Fetch categories once on open
+  useEffect(() => {
+    if (!open) return;
+    getCategories()
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]));
+  }, [open]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,18 +76,19 @@ export function AddEditProduct({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="h-[95vh] rounded-t-2xl px-4 pt-4 pb-0 flex flex-col"
+        className="w-full m-2.5 rounded-lg sm:max-w-md flex flex-col p-0 gap-0"
       >
-        <SheetHeader className="mb-4">
-          <SheetTitle className="text-left text-lg font-semibold">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-gray-100">
+          <SheetTitle className="text-left text-base font-semibold">
             {product ? "Edit Product" : "Add Product"}
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pb-28">
-          {/* Image Upload */}
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Image upload */}
           <label className="block w-full cursor-pointer">
-            <div className="w-full h-48 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+            <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors">
               {imagePreview ? (
                 <img
                   src={imagePreview}
@@ -90,7 +96,10 @@ export function AddEditProduct({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <ImageIcon className="w-8 h-8 text-gray-400" />
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <ImageIcon className="w-8 h-8" />
+                  <span className="text-xs">Click to upload image</span>
+                </div>
               )}
             </div>
             <input
@@ -101,18 +110,18 @@ export function AddEditProduct({
             />
           </label>
 
-          {/* Stock Toggle */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Stock</span>
+          {/* Stock toggle */}
+          <div className="flex items-center justify-between py-1">
+            <span className="text-sm font-medium text-gray-700">In Stock</span>
             <Switch checked={inStock} onCheckedChange={setInStock} />
           </div>
 
-          {/* Category Dropdown + Add */}
+          {/* Category + Add category */}
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500">
-                  <SelectValue placeholder="Choose Categories" />
+                <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 text-sm">
+                  <SelectValue placeholder="Choose Category" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   {categories.map((cat: any) => (
@@ -124,28 +133,29 @@ export function AddEditProduct({
               </Select>
             </div>
             <Button
+              type="button"
               variant="outline"
               size="icon"
-              className="rounded-xl border-gray-200 h-12 w-12 shrink-0"
+              className="h-11 w-11 rounded-xl border-gray-200 shrink-0"
               onClick={() => {
-                /* open add category flow */
+                /* open add-category flow */
               }}
             >
               <Plus className="w-4 h-4" />
             </Button>
           </div>
 
-          {/* Product Name */}
+          {/* Product name */}
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name Product"
-            className="rounded-xl border-gray-200 px-4 py-3 text-sm"
+            placeholder="Product name"
+            className="h-11 rounded-xl border-gray-200 text-sm"
           />
 
           {/* Price */}
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
               $
             </span>
             <Input
@@ -153,16 +163,16 @@ export function AddEditProduct({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="0"
-              className="rounded-xl border-gray-200 pl-8 pr-4 py-3 text-sm"
+              className="h-11 rounded-xl border-gray-200 pl-8 text-sm"
             />
           </div>
         </div>
 
-        {/* Sticky Submit Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white">
+        {/* Sticky footer button — uses flex layout, not absolute */}
+        <div className="px-5 py-4 border-t border-gray-100 bg-white">
           <Button
             onClick={handleSubmit}
-            className="w-full bg-black text-white hover:bg-black/90 rounded-xl py-4 text-base font-medium"
+            className="w-full h-11 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-medium"
           >
             {product ? "Save Changes" : "Add Product"}
           </Button>
