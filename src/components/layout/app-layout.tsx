@@ -22,7 +22,7 @@ export default function AppLayout() {
 
   // ── Layout ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-200 p-2.5 flex flex-col h-calc(100vh-57px)">
+    <div className="min-h-screen rounded-xl bg-gray-200 p-2.5 flex flex-col h-calc(100vh-57px)">
       {/* Sticky top navbar — identical on every page */}
       <Navbar profile={profile} />
 

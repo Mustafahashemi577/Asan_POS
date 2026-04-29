@@ -150,20 +150,17 @@ export function AddEditProduct({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Product name"
-            className="h-11 rounded-xl border-gray-200 text-sm"
+            className="h-11 rounded-xl bg-white border-gray-200 text-sm"
           />
 
           {/* Price */}
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
-              $
-            </span>
             <Input
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              placeholder="0"
-              className="h-11 rounded-xl border-gray-200 pl-8 text-sm"
+              placeholder="Price"
+              className="h-11 rounded-xl bg-white border-gray-200 text-sm"
             />
           </div>
         </div>

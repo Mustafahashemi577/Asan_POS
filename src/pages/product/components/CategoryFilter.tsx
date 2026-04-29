@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ChevronDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 interface Category {
@@ -80,7 +80,7 @@ export function CategoryFilter({
         <Button
           variant="ghost"
           size="sm"
-          className="shrink-0 text-muted-foreground hover:text-foreground gap-1.5"
+          className="shrink-0  text-muted-foreground hover:text-foreground gap-1.5"
           onClick={onAddProduct}
         >
           <Plus className="h-4 w-4" />
@@ -110,11 +110,10 @@ export function CategoryFilter({
           {/* Category sheet trigger */}
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 shrink-0">
-                <SlidersHorizontal size={14} className="text-gray-500" />
+              <Button className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 shrink-0">
                 <span>{selectedName}</span>
                 <ChevronDown size={13} className="text-gray-400" />
-              </button>
+              </Button>
             </SheetTrigger>
 
             <SheetContent side="bottom" className="rounded-t-2xl">
@@ -123,7 +122,7 @@ export function CategoryFilter({
               </SheetHeader>
               <div className="grid grid-cols-2 gap-2 pb-6">
                 {all.map((cat) => (
-                  <button
+                  <Button
                     key={cat.id}
                     onClick={() => {
                       onSelect(cat.id);
@@ -137,7 +136,7 @@ export function CategoryFilter({
                     ].join(" ")}
                   >
                     {cat.name}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </SheetContent>
@@ -146,8 +145,7 @@ export function CategoryFilter({
           {/* Add Product — visible on mobile too */}
           <Button
             variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5 rounded-xl border-gray-200 h-10"
+            className="bg-white shrink-0 gap-1.5 rounded-xl border-gray-200 h-10"
             onClick={onAddProduct}
           >
             <Plus className="h-4 w-4" />
