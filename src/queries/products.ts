@@ -1,5 +1,6 @@
 import type { Product } from "@/pages/product/components/product-list";
 import type { OrderFoodPayload } from "@/types";
+import api from "@/lib/axios";
 
 const products: Product[] = [
   {
@@ -100,11 +101,43 @@ const products: Product[] = [
   },
 ];
 
-export const getProducts = () => {
-  // const response = await api.get("/products");
-  // return response.data;
-  return products;
+export const uploadProductImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await api.post("/products/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.id as string; // attachmentId
 };
+
+export const claimProductAttachment = (
+  attachmentId: string,
+  productId: string,
+) => api.post("/products/claim", { id: attachmentId, productId });
+
+export const createProduct = (data: {
+  name: string;
+  price: number;
+  categoryName: string;
+}) => api.post("/products", data);
+
+export const getProducts = () => api.get("/products");
+
+export const updateProduct = (
+  id: string,
+  data: {
+    name?: string;
+    price?: number;
+    categoryIds?: string[];
+  },
+) => api.put(`/products/${id}`, data);
+
+export const deleteProduct = (id: string) => api.delete(`/products/${id}`);
+// export const getProducts = () => {
+//   // const response = await api.get("/products");
+//   // return response.data;
+//   return products;
+// };
 
 export const orderFood = (payload: OrderFoodPayload) => {
   // const response = await api.post("/orders", payload);
