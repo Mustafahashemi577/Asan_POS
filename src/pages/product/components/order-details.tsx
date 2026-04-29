@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
@@ -75,8 +73,8 @@ export function OrderDetails({
   }
 
   return (
-    <div className="p-2 bg-neutral-100 justify-between rounded-xl h-[calc(100vh-90px)]">
-      <div className="flex h-full flex-col rounded-lg bg-white p-2">
+    <div className="p-2 bg-neutral-100  justify-between rounded-xl h-[calc(100vh-90px)]">
+      <div className="flex h-full flex-col max-w-screen-2xl rounded-lg bg-white p-2">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg text-foreground">Order Details</h2>

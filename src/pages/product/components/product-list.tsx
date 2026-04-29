@@ -54,7 +54,7 @@ export function ProductList({
       </div>
 
       {/* Categories and Add Product */}
-      <div className="flex items-center justify-between">
+      <div className="flex hidden-md items-center justify-between">
         <div className="flex items-center gap-2">
           {categories.map((category) => (
             <Button

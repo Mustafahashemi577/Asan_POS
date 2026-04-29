@@ -1,13 +1,12 @@
-import { useState } from "react";
-import { useProfile } from "@/hooks/useprofile";
-import ProfileCard from "@/components/profile/profilecard";
-import EditProfileDialog from "@/components/profile/editprofiledialog";
+import { Loading } from "@/components/loading";
 import OtpDialog from "@/components/otp-dialog";
+import EditProfileDialog from "@/components/profile/editprofiledialog";
+import ProfileCard from "@/components/profile/profilecard";
 import TransactionTable from "@/components/transactiontable";
 import { useEditProfile } from "@/hooks/useeditprofile";
-import { Loading } from "@/components/loading";
-import { Navbar } from "@/components/navbar";
+import { useProfile } from "@/hooks/useprofile";
 import api from "@/lib/axios";
+import { useState } from "react";
 
 export default function ProfilePage() {
   const { profile, isLoading, fetchError, mutate } = useProfile();
@@ -43,14 +42,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Navbar ── */}
-      <Navbar
-        profile={profile}
-        dropdownOpen={dropdownOpen}
-        setDropdownOpen={setDropdownOpen}
-        // openEdit={openEdit}
-      />
-
       {dropdownOpen && (
         <div
           className="fixed inset-0 z-10"

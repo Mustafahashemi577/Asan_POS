@@ -1,5 +1,3 @@
-import { Navbar } from "@/components/navbar";
-import { useProfile } from "@/hooks/useprofile";
 import { useEffect, useState } from "react";
 
 import {
@@ -101,21 +99,9 @@ export default function Category() {
       alert("Cannot delete: category is linked to products");
     }
   };
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const { profile } = useProfile(); // ← get profile data for Navbar
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      {profile && (
-        <Navbar
-          profile={profile}
-          dropdownOpen={dropdownOpen}
-          setDropdownOpen={setDropdownOpen}
-        />
-      )}
-
       <div className="flex flex-col sm:flex-row ml-2 sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Category</h1>
       </div>

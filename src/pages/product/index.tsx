@@ -1,13 +1,13 @@
-import { Navbar } from "@/components/navbar";
-import { useProfile } from "@/hooks/useprofile";
-import { getProducts } from '@/queries/products';
-import { useState } from "react";
+import { getCategories } from "@/queries/category";
+import { getProducts } from "@/queries/products";
+import { useEffect, useState } from "react";
+import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
 import { ProductList } from "./components/product-list";
 
 export default function Product() {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState<CartItemType[]>([
     {
       id: 1,
@@ -34,6 +34,20 @@ export default function Product() {
     }));
   };
 
+  const [Categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
   const removeFromCart = (itemId: number) => {
     setCart((prev) => prev.filter((item) => item.id !== itemId));
   };
@@ -45,21 +59,21 @@ export default function Product() {
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
-  const { profile } = useProfile();
   const products = getProducts();
 
   return (
     <div className="min-h-screen bg-gray-200">
       <div className="m-2.5 bg-white relative">
-        {/* Navbar */}
-        {profile && (
-          <Navbar
-            profile={profile}
-            dropdownOpen={dropdownOpen}
-            setDropdownOpen={setDropdownOpen}
+        {/* Mobile only: category sheet trigger */}
+        <div className="lg:hidden">
+          <CategoryFilter
+            categories={Categories}
+            selected={selectedCategory}
+            onSelect={setSelectedCategory}
           />
-        )}
-        <div className="m-2.5 bg-white grid grid-cols-8 gap-4">
+        </div>
+
+        <div className="m-2.5 max-w-screen-2xl bg-white grid grid-cols-8 gap-4">
           <div className="col-span-6">
             <ProductList
               products={products}

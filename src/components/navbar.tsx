@@ -18,8 +18,6 @@ import { format } from "date-fns";
 
 interface NavbarProps {
   profile: EmployeeInfo;
-  dropdownOpen: boolean;
-  setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const Navbar = ({ profile }: NavbarProps) => {
@@ -33,7 +31,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
   };
 
   const now = new Date();
-  const dateStr = format(new Date(now), "EEEE, dd, MMM, yyyy");
+  const dateStr = format(now, "EEEE, dd MMM yyyy");
   const timeStr = now.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -53,16 +51,12 @@ export const Navbar = ({ profile }: NavbarProps) => {
       <div className="md:hidden px-4 py-3 flex flex-col gap-3">
         {/* ROW 1 */}
         <div className="flex items-center justify-between">
-          {/* Left: Menu + Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <img src="/icons/logo.svg" className="w-6 h-6" />
-              <span className="font-bold text-gray-900">APOS</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <img src="/icons/logo.svg" className="w-6 h-6" alt="Logo" />
+            <span className="font-bold text-gray-900">APOS</span>
           </div>
 
-          {/* Right: Bell */}
-          <div>
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
@@ -79,19 +73,18 @@ export const Navbar = ({ profile }: NavbarProps) => {
               </SheetTrigger>
 
               <SheetContent side="right" className="w-64">
-                <div className="mt-6 flex flex-col gap-4">
+                <div className="mt-6 flex flex-col gap-2">
                   {items.map((item) => {
                     const isActive = location.pathname.startsWith(item.path);
-
                     return (
                       <Button
                         key={item.label}
                         onClick={() => navigate(item.path)}
-                        variant="outline"
-                        className={`justify-start text-gray-700 px-3 py-2 rounded-lg ${
+                        variant="ghost"
+                        className={`justify-start px-3 py-2 rounded-lg text-sm ${
                           isActive
-                            ? "bg-bg-light text-white font-medium"
-                            : "text-gray-500 hover:bg-gray-50"
+                            ? "bg-black text-white font-medium hover:bg-black"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                       >
                         {item.label}
@@ -106,20 +99,18 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
         {/* ROW 2 */}
         <div className="flex items-center justify-between">
-          {/* Date */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
             <Calendar size={13} />
             <span>
               {dateStr} at {timeStr}
             </span>
           </div>
 
-          {/* Avatar */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+                className="flex items-center gap-2 rounded-xl px-2 py-1.5"
               >
                 <Avatar className="w-7 h-7">
                   <AvatarImage src={profile.imageUrl ?? undefined} />
@@ -127,7 +118,6 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate("/profile")}>
                 View Profile
@@ -143,26 +133,25 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
       {/* ================= DESKTOP ================= */}
       <div className="hidden md:flex items-center justify-between px-8 py-3">
-        {/* LEFT */}
+        {/* LEFT: logo + nav */}
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <img src="/icons/logo.svg" className="w-6 h-6" />
+            <img src="/icons/logo.svg" className="w-6 h-6" alt="Logo" />
             <span className="font-bold text-gray-900">APOS</span>
           </div>
 
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-1">
             {items.map((item) => {
               const isActive = location.pathname.startsWith(item.path);
-
               return (
                 <Button
                   key={item.label}
                   variant="ghost"
                   onClick={() => navigate(item.path)}
-                  className={`text-sm px-3 py-1.5 rounded-lg text-gray-500  transition ${
+                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
                     isActive
-                      ? "bg-bg-light text-white font-medium"
-                      : "text-gray-400 hover:text-black hover:bg-gray-50"
+                      ? "bg-black text-white font-medium"
+                      : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   {item.label}
@@ -172,7 +161,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
           </nav>
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT: date, bell, avatar */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
             <Calendar size={13} />
@@ -199,7 +188,6 @@ export const Navbar = ({ profile }: NavbarProps) => {
                   <AvatarImage src={profile.imageUrl ?? undefined} />
                   <AvatarFallback>{getInitials(profile)}</AvatarFallback>
                 </Avatar>
-
                 <div className="text-left">
                   <p className="text-xs font-medium">
                     {getDisplayName(profile)}
@@ -208,11 +196,9 @@ export const Navbar = ({ profile }: NavbarProps) => {
                     {display(profile.email)}
                   </p>
                 </div>
-
                 <ChevronDown size={13} />
               </Button>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate("/profile")}>
                 View Profile

@@ -1,3 +1,5 @@
+import AppLayout from "@/components/layout/app-layout";
+
 import Login from "@/pages/(auth)/login";
 import Category from "@/pages/category";
 import Dashboard from "@/pages/dashboard";
@@ -18,53 +20,60 @@ export const router = createBrowserRouter([
       </PublicRoute>
     ), // logged-in users can't go back here
   },
-  {
-    path: "/dashboard",
-    element: (
-      <PrivateRoute>
-        <Dashboard />
-      </PrivateRoute>
-    ), // logged-out users can't access
-  },
-  {
-    path: "/profile",
-    element: (
-      <PrivateRoute>
-        <ProfilePage />
-      </PrivateRoute>
-    ),
-  },
-  {
-    path: "/category",
-    element: (
-      <PrivateRoute>
-        <Category />
-      </PrivateRoute>
-    ),
-  },
-  {
-    path: "/product",
-    element: (
-      <PrivateRoute>
-        <Product />
-      </PrivateRoute>
-    ),
-  },
-  {
-    path: "/transaction",
-    element: (
-      <PrivateRoute>
-        <Transaction />
-      </PrivateRoute>
-    ),
-  },
-  {
-    path: "/report",
-    element: (
-      <PrivateRoute>
-        <Report />
-      </PrivateRoute>
-    ),
-  },
+
   ...authRoutes,
+
+  {
+    element: <AppLayout />, // all routes below require auth and share the same layout
+    children: [
+      {
+        path: "/dashboard",
+        element: (
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <PrivateRoute>
+            <ProfilePage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/category",
+        element: (
+          <PrivateRoute>
+            <Category />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/product",
+        element: (
+          <PrivateRoute>
+            <Product />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/transaction",
+        element: (
+          <PrivateRoute>
+            <Transaction />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/report",
+        element: (
+          <PrivateRoute>
+            <Report />
+          </PrivateRoute>
+        ),
+      },
+    ],
+  },
 ]);

@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Shield, ShieldOff } from "lucide-react";
-import { enable2FA, verify2FASetup, disable2FA } from "@/queries/auth";
+import OtpDialog from "@/components/otp-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,19 +7,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuthStore } from "@/lib/store";
-import { Navbar } from "@/components/navbar";
-import { useProfile } from "@/hooks/useprofile";
-import OtpDialog from "@/components/otp-dialog";
+import { disable2FA, enable2FA, verify2FASetup } from "@/queries/auth";
+import { Shield, ShieldOff } from "lucide-react";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { twoFAEnabled, setTwoFAEnabled } = useAuthStore();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   // Enable 2FA flow — two steps
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   // const [enableStep, setEnableStep] = useState<"qr" | "otp">("qr");
 
-  const { profile } = useProfile(); // ← get profile data for Navbar
   // Disable 2FA flow
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [showVerifyOtp, setShowVerifyOtp] = useState(false);
@@ -74,14 +70,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      {profile && (
-        <Navbar
-          profile={profile}
-          dropdownOpen={dropdownOpen}
-          setDropdownOpen={setDropdownOpen}
-        />
-      )}
       {/* Main content */}
       <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center gap-8">
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
