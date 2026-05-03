@@ -148,3 +148,17 @@ export const orderFood = (payload: OrderFoodPayload) => {
   // return response.data;
   return { message: "Order placed successfully!", payload: payload };
 };
+
+export const getProductsByCategory = (categoryName: string): Promise<any[]> =>
+  api
+    .get("/products/search/by-category", { params: { category: categoryName } })
+    .then((r) => {
+      const data: any[] = Array.isArray(r.data) ? r.data : [];
+      return data.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        category: categoryName,
+        image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+      }));
+    });

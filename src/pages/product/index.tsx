@@ -5,11 +5,11 @@ import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
 import { ProductList } from "./components/product-list";
 import { getCategories } from "@/queries/category";
-import { getProducts } from "@/queries/products";
+import { getProducts, getProductsByCategory } from "@/queries/products";
 
 export default function Product() {
-  const [allProducts, setAllProducts] = useState<Product[]>([]); // ← async now
-  const [quantities, setQuantities] = useState<Record<string, number>>({}); // ← string keys
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
@@ -17,6 +17,7 @@ export default function Product() {
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Fetch all products on mount
   useEffect(() => {
     getProducts()
       .then(setAllProducts)
@@ -30,14 +31,36 @@ export default function Product() {
       .catch(() => setCategories([]));
   }, []);
 
-  const products = allProducts.filter((p) => {
-    const matchesCat =
-      selectedCategory === "all" || p.category === selectedCategory;
-    const matchesSearch = p.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesCat && matchesSearch;
-  });
+  // Called when a category pill is clicked
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setSearchQuery("");
+    setLoading(true);
+
+    if (categoryId === "all") {
+      getProducts()
+        .then(setAllProducts)
+        .catch(() => setAllProducts([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    const categoryName = categories.find((c) => c.id === categoryId)?.name;
+    if (!categoryName) {
+      setLoading(false);
+      return;
+    }
+
+    getProductsByCategory(categoryName)
+      .then(setAllProducts)
+      .catch(() => setAllProducts([]))
+      .finally(() => setLoading(false));
+  };
+
+  // Client-side search only — category filtering handled by API
+  const products = allProducts.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const updateQuantity = (productId: string, delta: number) => {
     const next = Math.max(0, (quantities[productId] ?? 0) + delta);
@@ -75,7 +98,6 @@ export default function Product() {
   };
 
   const removeFromCart = (itemId: string) => {
-    // ← was number
     setCart((prev) => prev.filter((i) => i.id !== itemId));
     setQuantities((prev) => ({ ...prev, [itemId]: 0 }));
   };
@@ -92,7 +114,7 @@ export default function Product() {
             <CategoryFilter
               categories={categories}
               selected={selectedCategory}
-              onSelect={setSelectedCategory}
+              onSelect={handleCategorySelect}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onAddProduct={() => setAddProductOpen(true)}
@@ -123,10 +145,7 @@ export default function Product() {
           open={addProductOpen}
           onOpenChange={setAddProductOpen}
           onSave={() => {
-            // Refetch products after new one is added
-            getProducts()
-              .then(setAllProducts)
-              .catch(() => {});
+            handleCategorySelect(selectedCategory);
           }}
         />
       </div>
