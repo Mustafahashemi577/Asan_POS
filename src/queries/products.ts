@@ -117,6 +117,32 @@ export const getProducts = () =>
       }),
     );
   });
+
+// Step 1: upload image to minio, returns attachmentId
+export const uploadProductImage = (file: File): Promise<{ id: string }> => {
+  const formData = new FormData();
+  formData.append("image", file);
+  return api
+    .post("/products/images/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((r) => r.data);
+};
+
+// Step 2: create the product, returns { id: string }
+export const createProduct = (data: {
+  name: string;
+  price: number;
+  categoryName: string;
+  inStock?: boolean;
+}): Promise<{ id: string }> => api.post("/products", data).then((r) => r.data);
+
+// Step 3: claim the uploaded image to the created product
+export const claimProductImage = (
+  id: string,
+  productId: string,
+): Promise<void> =>
+  api.post("/products/images/claim", { id, productId }).then((r) => r.data);
 export const orderFood = (payload: OrderFoodPayload) => {
   // const response = await api.post("/orders", payload);
   // return response.data;

@@ -122,7 +122,12 @@ export default function Product() {
         <AddEditProduct
           open={addProductOpen}
           onOpenChange={setAddProductOpen}
-          onSave={(data) => console.log("Saved product:", data)}
+          onSave={() => {
+            // Refetch products after new one is added
+            getProducts()
+              .then(setAllProducts)
+              .catch(() => {});
+          }}
         />
       </div>
     </>

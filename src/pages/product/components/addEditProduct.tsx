@@ -15,14 +15,20 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { getCategories } from "@/queries/category";
-import { ImageIcon, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  claimProductImage,
+  createProduct,
+  uploadProductImage,
+} from "@/queries/products";
+import { ImageIcon, Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface AddEditProductProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product?: any;
-  onSave: (data: any) => void;
+  onSave?: (data: any) => void;
 }
 
 export function AddEditProduct({
@@ -35,20 +41,26 @@ export function AddEditProduct({
   const [price, setPrice] = useState(product?.price ?? "");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
-  const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
     product?.imageUrl ?? null,
   );
   const [categories, setCategories] = useState<any[]>([]);
 
-  // Reset form when product prop changes (add vs edit)
+  // Track upload state separately from form submit
+  const [attachmentId, setAttachmentId] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset form when product prop changes
   useEffect(() => {
     setName(product?.name ?? "");
     setPrice(product?.price ?? "");
     setCategoryId(product?.categoryId ?? "");
     setInStock(product?.inStock ?? true);
-    setImage(null);
     setImagePreview(product?.imageUrl ?? null);
+    setAttachmentId(null);
   }, [product]);
 
   // Fetch categories once on open
@@ -59,18 +71,76 @@ export function AddEditProduct({
       .catch(() => setCategories([]));
   }, [open]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Step 1: upload image immediately on file select
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    // Show local preview instantly
+    setImagePreview(URL.createObjectURL(file));
+    setAttachmentId(null);
+    setImageUploading(true);
+
+    try {
+      const result = await uploadProductImage(file);
+      setAttachmentId(result.id);
+      toast.success("Image uploaded");
+    } catch {
+      toast.error("Image upload failed. Please try again.");
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } finally {
+      setImageUploading(false);
     }
   };
 
-  const handleSubmit = () => {
-    onSave({ name, price: Number(price), categoryId, inStock, image });
-    onOpenChange(false);
+  // Steps 2 + 3: create product then claim image
+  const handleSubmit = async () => {
+    if (!name.trim()) return toast.error("Product name is required");
+    if (!price) return toast.error("Price is required");
+
+    // Find category name from selected id
+    const selectedCategory = categories.find((c) => c.id === categoryId);
+    if (!selectedCategory) return toast.error("Please select a category");
+
+    // Block submit if image is still uploading
+    if (imageUploading)
+      return toast.error("Please wait for image to finish uploading");
+
+    setSubmitting(true);
+    try {
+      // Step 2: create product
+      const created = await createProduct({
+        name: name.trim(),
+        price: Number(price),
+        categoryName: selectedCategory.name,
+        inStock,
+      });
+
+      // Step 3: claim image if one was uploaded
+      if (attachmentId) {
+        await claimProductImage(attachmentId, created.id);
+      }
+
+      toast.success("Product added successfully");
+      onSave?.(created);
+      onOpenChange(false);
+
+      // Reset
+      setName("");
+      setPrice("");
+      setCategoryId("");
+      setInStock(true);
+      setImagePreview(null);
+      setAttachmentId(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to add product");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const isLoading = imageUploading || submitting;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -88,7 +158,7 @@ export function AddEditProduct({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Image upload */}
           <label className="block w-full cursor-pointer">
-            <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors">
+            <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors relative">
               {imagePreview ? (
                 <img
                   src={imagePreview}
@@ -101,12 +171,20 @@ export function AddEditProduct({
                   <span className="text-xs">Click to upload image</span>
                 </div>
               )}
+              {/* Upload spinner overlay */}
+              {imageUploading && (
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-xl">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
             </div>
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={handleImageChange}
+              disabled={isLoading}
             />
           </label>
 
@@ -151,6 +229,7 @@ export function AddEditProduct({
             onChange={(e) => setName(e.target.value)}
             placeholder="Product name"
             className="h-11 rounded-xl bg-white border-gray-200 text-sm"
+            disabled={isLoading}
           />
 
           {/* Price */}
@@ -161,16 +240,19 @@ export function AddEditProduct({
               onChange={(e) => setPrice(e.target.value)}
               placeholder="Price"
               className="h-11 rounded-xl bg-white border-gray-200 text-sm"
+              disabled={isLoading}
             />
           </div>
         </div>
 
-        {/* Sticky footer button — uses flex layout, not absolute */}
+        {/* Sticky footer */}
         <div className="px-5 py-4 border-t border-gray-100 bg-white">
           <Button
             onClick={handleSubmit}
-            className="w-full h-11 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-medium"
+            disabled={isLoading}
+            className="w-full h-11 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-medium flex items-center gap-2"
           >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             {product ? "Save Changes" : "Add Product"}
           </Button>
         </div>
