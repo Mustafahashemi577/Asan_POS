@@ -149,7 +149,9 @@ export const orderFood = (payload: OrderFoodPayload) => {
   return { message: "Order placed successfully!", payload: payload };
 };
 
-export const getProductsByCategory = (categoryName: string): Promise<any[]> =>
+export const getProductsByCategory = (
+  categoryName: string,
+): Promise<Product[]> =>
   api
     .get("/products/search/by-category", { params: { category: categoryName } })
     .then((r) => {
