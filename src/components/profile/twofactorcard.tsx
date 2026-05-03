@@ -68,7 +68,7 @@ export default function TwoFactorCard() {
   return (
     <>
       {/* ── Card ── */}
-      <div className="bg-bg-dark w-full rounded-2xl p-4 sm:p-6">
+      <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
         {/* Section heading */}
         <div className="mb-4">
           <h2 className="text-white text-base font-semibold">Security</h2>

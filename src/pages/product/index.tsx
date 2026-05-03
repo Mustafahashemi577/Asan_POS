@@ -108,8 +108,8 @@ export default function Product() {
 
   return (
     <>
-      <div className="bg-gray-200 pb-2.5 px-2.5 h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
-                {/* ── MOBILE: Order details card — appears at top when cart has items ── */}
+      <div className="bg-gray-200 h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
+        {/* ── MOBILE: Order details card — appears at top when cart has items ── */}
         {cart.length > 0 && (
           <div className="lg:hidden bg-white rounded-xl max-h-[45vh] overflow-y-auto shrink-0">
             <OrderDetails
@@ -121,31 +121,31 @@ export default function Product() {
             />
           </div>
         )}
-        
-          {/* ── Product list card ────────────────────────────────────────────── */}
+
+        {/* ── Product list card ────────────────────────────────────────────── */}
 
         <div className="flex-1 min-w-0 bg-white rounded-b-xl inv-rad-b-r-{8} overflow-y-auto p-4 space-y-3">
-            <CategoryFilter
-              categories={categories}
-              selected={selectedCategory}
-              onSelect={handleCategorySelect}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onAddProduct={() => setAddProductOpen(true)}
+          <CategoryFilter
+            categories={categories}
+            selected={selectedCategory}
+            onSelect={handleCategorySelect}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddProduct={() => setAddProductOpen(true)}
+          />
+          {loading ? (
+            <p className="text-center text-gray-400 py-16 text-sm">
+              Loading products…
+            </p>
+          ) : (
+            <ProductList
+              products={products}
+              quantities={quantities}
+              onUpdateQuantity={updateQuantity}
             />
-            {loading ? (
-              <p className="text-center text-gray-400 py-16 text-sm">
-                Loading products…
-              </p>
-            ) : (
-              <ProductList
-                products={products}
-                quantities={quantities}
-                onUpdateQuantity={updateQuantity}
-              />
-            )}
-          </div>
-           {/* ── Order details card (desktop only) ───────────────────────────── */}
+          )}
+        </div>
+        {/* ── Order details card (desktop only) ───────────────────────────── */}
         <div className="hidden lg:block mt-2.5 w-[300px] xl:w-[340px] shrink-0 bg-white rounded-xl overflow-y-auto">
           <OrderDetails
             cart={cart}

@@ -73,7 +73,7 @@ export function OrderDetails({
   }
 
   return (
-    <div className="p-2 border-t-8 border-b-8 border-l-8 border-gray-200 justify-between rounded-xl h-[calc(100vh-90px)] sticky">
+    <div className="p-2 justify-between rounded-xl h-[calc(100vh-90px)] sticky">
       <div className="flex h-full flex-col max-w-screen-2xl rounded-lg bg-white p-2">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
