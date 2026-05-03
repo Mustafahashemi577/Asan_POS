@@ -102,7 +102,7 @@ export default function EditProfileForm({
     try {
       const formData = new FormData();
       formData.append("image", file);
-      const res = await api.post("/attachments/employee/upload", formData, {
+      const res = await api.post("/employees/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setAttachmentId(res.data.id);
@@ -129,7 +129,7 @@ export default function EditProfileForm({
     });
 
     if (attachmentId) {
-      await api.post("/attachments/employee/claim", { id: attachmentId });
+      await api.post("/employees/claim", { id: attachmentId });
     }
 
     if (imageRemoved) {
