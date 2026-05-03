@@ -4,8 +4,8 @@ import type { Product } from "./product-list";
 
 interface ProductCardProps {
   product: Product;
-  quantities: Record<number, number>;
-  onUpdateQuantity: (productId: number, delta: number) => void;
+  quantities: Record<string, number>;
+  onUpdateQuantity: (productId: string, delta: number) => void;
 }
 
 const ProductCard = ({

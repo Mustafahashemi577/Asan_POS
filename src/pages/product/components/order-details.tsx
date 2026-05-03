@@ -19,16 +19,16 @@ import { z } from "zod";
 import { CartItemCard } from "./cart-item";
 
 export interface CartItemType {
-  id: number;
+  id: string;
   name: string;
   price: number;
   quantity: number;
-  image: string;
+  image?: string;
 }
 
 interface OrderDetailsProps {
   cart: CartItemType[];
-  onRemoveItem: (itemId: number) => void;
+  onRemoveItem: (itemId: string) => void;
   subtotal: number;
   tax: number;
   total: number;
@@ -59,7 +59,7 @@ export function OrderDetails({
   function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = orderFood({
-        serviceType: values.serviceType,
+        serviceType: values?.serviceType,
         name: values.name,
         quantity: values.quantity,
         description: values.description,

@@ -1,17 +1,18 @@
 import ProductCard from "./product-card";
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
   category?: string;
+  inStock?: boolean;
 }
 
 interface ProductListProps {
   products: Product[];
-  quantities: Record<number, number>;
-  onUpdateQuantity: (productId: number, delta: number) => void;
+  quantities: Record<string, number>;
+  onUpdateQuantity: (productId: string, delta: number) => void;
 }
 
 export function ProductList({

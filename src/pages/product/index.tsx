@@ -1,30 +1,35 @@
 import { useEffect, useState } from "react";
-
+import type { Product } from "./components/product-list";
 import { AddEditProduct } from "./components/addEditProduct";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
 import { ProductList } from "./components/product-list";
-
 import { getCategories } from "@/queries/category";
 import { getProducts } from "@/queries/products";
 
 export default function Product() {
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [allProducts, setAllProducts] = useState<Product[]>([]); // ← async now
+  const [quantities, setQuantities] = useState<Record<string, number>>({}); // ← string keys
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [cart, setCart] = useState<CartItemType[]>([]);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // ── Fetch categories ────────────────────────────────────────────────────
+  useEffect(() => {
+    getProducts()
+      .then(setAllProducts)
+      .catch(() => setAllProducts([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   useEffect(() => {
     getCategories()
       .then((data) => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]));
   }, []);
 
-  // ── Filter products client-side ─────────────────────────────────────────
-  const allProducts = getProducts();
   const products = allProducts.filter((p) => {
     const matchesCat =
       selectedCategory === "all" || p.category === selectedCategory;
@@ -34,8 +39,7 @@ export default function Product() {
     return matchesCat && matchesSearch;
   });
 
-  // ── Cart handlers ────────────────────────────────────────────────────────
-  const updateQuantity = (productId: number, delta: number) => {
+  const updateQuantity = (productId: string, delta: number) => {
     const next = Math.max(0, (quantities[productId] ?? 0) + delta);
     setQuantities((prev) => ({ ...prev, [productId]: next }));
 
@@ -48,7 +52,16 @@ export default function Product() {
           );
         const product = allProducts.find((p) => p.id === productId);
         if (!product) return prev;
-        return [...prev, { ...product, quantity: 1 }];
+        return [
+          ...prev,
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            quantity: 1,
+          },
+        ];
       });
     } else {
       setCart((prev) =>
@@ -61,24 +74,21 @@ export default function Product() {
     }
   };
 
-  const removeFromCart = (itemId: number) => {
+  const removeFromCart = (itemId: string) => {
+    // ← was number
     setCart((prev) => prev.filter((i) => i.id !== itemId));
     setQuantities((prev) => ({ ...prev, [itemId]: 0 }));
   };
 
-  // ── Totals ───────────────────────────────────────────────────────────────
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
   return (
-    // Gray background on all 4 sides — matches the screenshot border
     <>
       <div className="bg-gray-200 h-[calc(100vh-57px)]">
         <div className="flex h-full bg-white rounded-b-xl overflow-hidden">
-          {/* ── LEFT ───────────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0 overflow-y-auto px-4 pt-4 pb-4 space-y-3">
-            {/* Search + category pills + Add Product — all one row */}
             <CategoryFilter
               categories={categories}
               selected={selectedCategory}
@@ -87,15 +97,18 @@ export default function Product() {
               onSearchChange={setSearchQuery}
               onAddProduct={() => setAddProductOpen(true)}
             />
-
-            <ProductList
-              products={products}
-              quantities={quantities}
-              onUpdateQuantity={updateQuantity}
-            />
+            {loading ? (
+              <p className="text-center text-gray-400 py-16 text-sm">
+                Loading products…
+              </p>
+            ) : (
+              <ProductList
+                products={products}
+                quantities={quantities}
+                onUpdateQuantity={updateQuantity}
+              />
+            )}
           </div>
-
-          {/* ── RIGHT: order sidebar ─────────────────────────────────── */}
           <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0 border-gray-200 bg-white overflow-y-auto">
             <OrderDetails
               cart={cart}
@@ -106,8 +119,6 @@ export default function Product() {
             />
           </aside>
         </div>
-
-        {/* Add / Edit product sheet — page-level so it overlays everything */}
         <AddEditProduct
           open={addProductOpen}
           onOpenChange={setAddProductOpen}

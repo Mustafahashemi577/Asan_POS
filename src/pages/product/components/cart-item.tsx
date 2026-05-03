@@ -4,7 +4,7 @@ import type { CartItemType } from "./order-details";
 
 interface CartItemProps {
   item: CartItemType;
-  onRemoveItem: (itemId: number) => void;
+  onRemoveItem: (itemId: string) => void;
 }
 
 export const CartItemCard = ({ item, onRemoveItem }: CartItemProps) => {

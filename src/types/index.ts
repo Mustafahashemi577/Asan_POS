@@ -45,8 +45,8 @@ export interface EditProfile {
 }
 
 export interface OrderFoodPayload {
-  serviceType: string;
-  name: string;
-  quantity: number;
-  description: string;
+  serviceType?: string;
+  name?: string;
+  quantity?: number;
+  description?: string;
 }
