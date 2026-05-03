@@ -1,11 +1,11 @@
+import { getCategories } from "@/queries/category";
+import { getProducts, getProductsByCategory } from "@/queries/products";
 import { useEffect, useState } from "react";
-import type { Product } from "./components/product-list";
 import { AddEditProduct } from "./components/addEditProduct";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
+import type { Product } from "./components/product-list";
 import { ProductList } from "./components/product-list";
-import { getCategories } from "@/queries/category";
-import { getProducts, getProductsByCategory } from "@/queries/products";
 
 export default function Product() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
