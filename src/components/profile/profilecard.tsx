@@ -51,7 +51,7 @@ export default function ProfileCard({ profile, onEditClick }: Props) {
   const displayName = getDisplayName(profile);
 
   return (
-    <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6 mb-5">
+    <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
       {/* ── HEADER ── */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6">
         {/* LEFT — Avatar + name + email + edit button (desktop only) */}

@@ -2,6 +2,7 @@ import { Loading } from "@/components/loading";
 import OtpDialog from "@/components/otp-dialog";
 import EditProfileDialog from "@/components/profile/editprofiledialog";
 import ProfileCard from "@/components/profile/profilecard";
+import TwoFactorCard from "@/components/profile/twofactorcard";
 import TransactionTable from "@/components/transactiontable";
 import { useEditProfile } from "@/hooks/useeditprofile";
 import { useProfile } from "@/hooks/useprofile";
@@ -51,7 +52,7 @@ export default function ProfilePage() {
         )}
 
         {/* ── Content ── */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-5">
           <div className="mb-5">
             <h1 className="text-3xl font-semibold text-gray-900">
               Detail Profile
@@ -62,6 +63,7 @@ export default function ProfilePage() {
           </div>
 
           <ProfileCard profile={profile} onEditClick={openEdit} />
+          <TwoFactorCard />
           <TransactionTable />
         </div>
 
