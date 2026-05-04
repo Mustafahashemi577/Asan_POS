@@ -105,7 +105,7 @@ export const getProducts = () =>
   api.get("/products").then((r) => {
     const data: any[] = Array.isArray(r.data)
       ? r.data
-      : (r.data.data ?? r.data.products ?? []); // ← use r.data.data
+      : (r.data.data ?? r.data.products ?? []);
     return data.map(
       (p): Product => ({
         id: p.id,
@@ -113,11 +113,10 @@ export const getProducts = () =>
         price: p.price,
         category: p.category,
         inStock: p.inStock,
-        image: p.signedUrls?.[0] ?? "/placeholder.png", // ← was p.images?.[0]?.imageUrlSigned
+        image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
       }),
     );
   });
-
 
 // Step 1: upload image to minio, returns attachmentId
 export const uploadProductImage = (file: File): Promise<{ id: string }> => {
