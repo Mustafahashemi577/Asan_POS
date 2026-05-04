@@ -105,7 +105,7 @@ export const getProducts = () =>
   api.get("/products").then((r) => {
     const data: any[] = Array.isArray(r.data)
       ? r.data
-      : (r.data.products ?? []);
+      : (r.data.data ?? r.data.products ?? []); // ← use r.data.data
     return data.map(
       (p): Product => ({
         id: p.id,
@@ -113,10 +113,11 @@ export const getProducts = () =>
         price: p.price,
         category: p.category,
         inStock: p.inStock,
-        image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+        image: p.signedUrls?.[0] ?? "/placeholder.png", // ← was p.images?.[0]?.imageUrlSigned
       }),
     );
   });
+
 
 // Step 1: upload image to minio, returns attachmentId
 export const uploadProductImage = (file: File): Promise<{ id: string }> => {
@@ -152,15 +153,15 @@ export const orderFood = (payload: OrderFoodPayload) => {
 export const getProductsByCategory = (
   categoryName: string,
 ): Promise<Product[]> =>
-  api
-    .get("/products/search/by-category", { params: { category: categoryName } })
-    .then((r) => {
-      const data: any[] = Array.isArray(r.data) ? r.data : [];
-      return data.map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        category: categoryName,
-        image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
-      }));
-    });
+  api.get("/products", { params: { search: categoryName } }).then((r) => {
+    const data: any[] = Array.isArray(r.data)
+      ? r.data
+      : (r.data.data ?? r.data.products ?? []); // same fix as getProducts
+    return data.map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      category: categoryName,
+      image: p.signedUrls?.[0] ?? "/placeholder.png", // same fix as getProducts
+    }));
+  });
