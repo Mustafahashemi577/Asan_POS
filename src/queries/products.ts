@@ -155,12 +155,13 @@ export const getProductsByCategory = (
   api.get("/products", { params: { search: categoryName } }).then((r) => {
     const data: any[] = Array.isArray(r.data)
       ? r.data
-      : (r.data.data ?? r.data.products ?? []); // same fix as getProducts
+      : (r.data.data ?? r.data.products ?? []);
     return data.map((p) => ({
       id: p.id,
       name: p.name,
       price: p.price,
       category: categoryName,
-      image: p.signedUrls?.[0] ?? "/placeholder.png", // same fix as getProducts
+      inStock: p.inStock,
+      image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png", // ← fix
     }));
   });
