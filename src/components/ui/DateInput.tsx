@@ -32,9 +32,7 @@ const MONTHS = [
 
 export default function DateInput({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-
   const [format] = useState("MM/DD/YYYY");
-
   const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
 
@@ -43,7 +41,6 @@ export default function DateInput({ value, onChange }: Props) {
   const [viewYear, setViewYear] = useState(
     parsed?.getFullYear() ?? new Date().getFullYear(),
   );
-
   const [viewMonth, setViewMonth] = useState(
     parsed?.getMonth() ?? new Date().getMonth(),
   );
@@ -54,37 +51,38 @@ export default function DateInput({ value, onChange }: Props) {
   const selectDay = (day: number) => {
     const mm = String(viewMonth + 1).padStart(2, "0");
     const dd = String(day).padStart(2, "0");
-
     onChange(`${viewYear}-${mm}-${dd}`);
-
     setOpen(false);
     setMonthOpen(false);
     setYearOpen(false);
   };
 
   const displayValue = parsed ? formatDate(parsed, format) : "";
-
   const selectedDay = parsed?.getDate();
   const selectedMonth = parsed?.getMonth();
   const selectedYear = parsed?.getFullYear();
 
   return (
     <div className="relative">
-      {/* Trigger */}
-      <Button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        variant="outline"
-        className="w-full h-12 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300"
-      >
-        <span className={displayValue ? "text-gray-700" : "text-gray-400"}>
-          {displayValue || "Select date"}
-        </span>
-        <Calendar size={15} className="text-gray-400" />
-      </Button>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300"
+          >
+            <span className={displayValue ? "text-gray-700" : "text-gray-400"}>
+              {displayValue || "Select date"}
+            </span>
+            <Calendar size={15} className="text-gray-400" />
+          </Button>
+        </PopoverTrigger>
 
-      {open && (
-        <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 p-4 w-72">
+        <PopoverContent
+          className="p-4 w-72 rounded-2xl"
+          align="start"
+          sideOffset={4}
+        >
           {/* Header */}
           <div className="flex items-center gap-2 mb-3">
             {/* Month Dropdown */}
@@ -98,8 +96,11 @@ export default function DateInput({ value, onChange }: Props) {
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </PopoverTrigger>
-
-              <PopoverContent className="p-0 w-40 rounded-xl">
+              <PopoverContent
+                className="p-0 w-40 rounded-xl"
+                align="start"
+                sideOffset={4}
+              >
                 <Command>
                   <CommandGroup>
                     {MONTHS.map((m, i) => (
@@ -129,17 +130,22 @@ export default function DateInput({ value, onChange }: Props) {
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </PopoverTrigger>
-
-              <PopoverContent className="p-1 w-32 rounded-xl">
-                <div className="max-h-60 overflow-y-auto">
+              <PopoverContent
+                className="p-1 w-32 rounded-xl"
+                align="start"
+                sideOffset={4}
+              >
+                <div
+                  className="max-h-60 overflow-y-auto overscroll-contain"
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
                   {Array.from({ length: 120 }).map((_, i) => {
                     const year = new Date().getFullYear() - i;
-
                     return (
                       <Button
                         key={year}
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => {
                           setViewYear(year);
                           setYearOpen(false);
@@ -173,18 +179,16 @@ export default function DateInput({ value, onChange }: Props) {
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={i} />
             ))}
-
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
-
               const isSelected =
                 day === selectedDay &&
                 viewMonth === selectedMonth &&
                 viewYear === selectedYear;
-
               return (
                 <Button
                   key={day}
+                  type="button"
                   onClick={() => selectDay(day)}
                   variant="outline"
                   className={`w-8 h-8 mx-auto text-xs rounded-lg flex items-center justify-center
@@ -203,11 +207,10 @@ export default function DateInput({ value, onChange }: Props) {
           {/* Clear */}
           {value && (
             <Button
+              type="button"
               onClick={() => {
                 onChange("");
                 setOpen(false);
-                setMonthOpen(false);
-                setYearOpen(false);
               }}
               className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600"
               variant="outline"
@@ -215,8 +218,8 @@ export default function DateInput({ value, onChange }: Props) {
               Clear date
             </Button>
           )}
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
