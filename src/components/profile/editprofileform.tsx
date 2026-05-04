@@ -20,7 +20,7 @@ const schema = z
     role: z.string().optional(),
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
-    gender: z.string().optional(),
+    gender: z.string().optional().nullable(),
     dob: z.string().optional(),
     storeName: z.string().optional(),
     oldPassword: z.string().optional(),
@@ -85,6 +85,8 @@ export default function EditProfileForm({
       password: "",
     },
   });
+
+  // console.log("ERRORS: ", errors);
 
   const currentEmail = watch("email");
   const currentGender = watch("gender");
@@ -296,6 +298,11 @@ export default function EditProfileForm({
                 setValue("gender", val as FormValues["gender"])
               }
             />
+            {errors.gender && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.gender.message}
+              </p>
+            )}
           </div>
         </div>
 

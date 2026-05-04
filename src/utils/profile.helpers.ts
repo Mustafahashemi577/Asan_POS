@@ -21,7 +21,6 @@ export const getInitials = (profile: EmployeeInfo): string => {
 };
 
 export const getDisplayName = (profile: EmployeeInfo): string => {
-  if (profile.firstName && profile.lastName)
-    return `${profile.firstName} ${profile.lastName}`;
+  if (profile.firstName) return `${profile.firstName}`;
   return display(profile.name);
 };
