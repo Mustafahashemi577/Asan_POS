@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeInfo } from "@/types/index";
 import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
-import { Bell, Calendar, ChevronDown, Menu } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -101,7 +101,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
         {/* ROW 2 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
-            <Calendar size={13} />
+            <CalendarDays size={13} />
             <span>
               {dateStr} at {timeStr}
             </span>
@@ -165,7 +165,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
         {/* RIGHT: date, bell, avatar */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
-            <Calendar size={13} />
+            <CalendarDays size={13} />
             <span>
               {dateStr} at {timeStr}
             </span>
@@ -183,7 +183,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
             <DropdownMenuTrigger asChild>
               <Button
                 className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-                variant="outline"
+                variant="ghost"
               >
                 <Avatar className="w-7 h-7">
                   <AvatarImage src={profile.imageUrl ?? undefined} />

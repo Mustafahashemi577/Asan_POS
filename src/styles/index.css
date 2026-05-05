@@ -51,6 +51,7 @@
   --color-bg-dark2: #0a0a2a;
   --color-bg-light: #141c30;
   --color-bg-profile: #1a1d27;
+  --color-bg-main: #edeeef;
 }
 
 :root {
@@ -127,7 +128,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-main text-foreground;
     font-family: "Satoshi", "Arial";
   }
   html {
@@ -140,10 +141,6 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-}
-
-body {
-  @apply bg-white text-gray-900;
 }
 
 body {

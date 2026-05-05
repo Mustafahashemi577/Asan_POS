@@ -185,24 +185,24 @@ export function OrderDetails({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Sub Total</span>
             <span className="font-medium text-foreground">
-              {subtotal.toFixed(2)} Afn
+              {subtotal.toFixed(2)} AFN
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Tax/10%</span>
             <span className="font-medium text-foreground">
-              {tax.toFixed(2)} Afn
+              {tax.toFixed(2)} AFN
             </span>
           </div>
           <div className="flex items-center justify-between text-base font-semibold">
             <span className="text-foreground">Total</span>
-            <span className="text-foreground">{total.toFixed(2)} Afn</span>
+            <span className="text-foreground">{total.toFixed(2)} AFN</span>
           </div>
         </div>
 
         {/* Pay Button */}
         <Button className="mt-4 w-full bg-foreground text-background hover:bg-foreground/90">
-          Pay {total.toFixed(2)} Afn
+          Pay {total.toFixed(2)} AFN
         </Button>
       </div>
     </div>
