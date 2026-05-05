@@ -100,27 +100,55 @@ import type { OrderFoodPayload } from "@/types";
 //     category: "food",
 //   },
 //];
-export const getProducts = () =>
-  api.get("/products").then((r) => {
-    const data: any[] = Array.isArray(r.data)
-      ? r.data
-      : (r.data.data ?? r.data.products ?? []);
-    return data.map(
-      (p): Product => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        category: p.category,
-        inStock: p.inStock,
-        image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
-        // Full image objects so edit sheet can delete by imageId
-        images:
-          p.images
-            ?.filter((img: any) => img.imageUrlSigned)
-            .map((img: any) => ({ id: img.id, url: img.imageUrlSigned })) ?? [],
-      }),
-    );
-  });
+export interface PaginationMeta {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export const getProducts = (params?: {
+  page?: number;
+  itemsPerPage?: number;
+  search?: string;
+  categoryName?: string;
+}): Promise<{ data: Product[]; meta: PaginationMeta }> =>
+  api
+    .get("/products", {
+      params: {
+        page: params?.page ?? 1,
+        itemsPerPage: params?.itemsPerPage ?? 20,
+        ...(params?.search ? { search: params.search } : {}),
+        ...(params?.categoryName ? { search: params.categoryName } : {}),
+      },
+    })
+    .then((r) => {
+      const raw: any[] = Array.isArray(r.data)
+        ? r.data
+        : (r.data.data ?? r.data.products ?? []);
+      const meta: PaginationMeta = r.data.meta ?? {
+        currentPage: 1,
+        itemsPerPage: 20,
+        totalItems: raw.length,
+        totalPages: 1,
+      };
+      const data = raw.map(
+        (p): Product => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          category: p.category,
+          inStock: p.inStock,
+          image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+          images:
+            p.images
+              ?.filter((img: any) => img.imageUrlSigned)
+              .map((img: any) => ({ id: img.id, url: img.imageUrlSigned })) ??
+            [],
+        }),
+      );
+      return { data, meta };
+    });
 
 // Step 1: upload multiple images to minio at once, returns { ids: string[] }
 export const uploadProductImages = (
@@ -173,28 +201,5 @@ export const claimProductImages = (
   api.post("/products/images/claim", { ids, productId }).then((r) => r.data);
 
 export const orderFood = (payload: OrderFoodPayload) => {
-  // const response = await api.post("/orders", payload);
-  // return response.data;
   return { message: "Order placed successfully!", payload: payload };
 };
-
-export const getProductsByCategory = (
-  categoryName: string,
-): Promise<Product[]> =>
-  api.get("/products", { params: { search: categoryName } }).then((r) => {
-    const data: any[] = Array.isArray(r.data)
-      ? r.data
-      : (r.data.data ?? r.data.products ?? []);
-    return data.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      category: categoryName,
-      inStock: p.inStock,
-      image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
-      images:
-        p.images
-          ?.filter((img: any) => img.imageUrlSigned)
-          .map((img: any) => ({ id: img.id, url: img.imageUrlSigned })) ?? [],
-    }));
-  });
