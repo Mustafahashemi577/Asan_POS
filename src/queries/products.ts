@@ -149,6 +149,20 @@ export const orderFood = (payload: OrderFoodPayload) => {
   return { message: "Order placed successfully!", payload: payload };
 };
 
+export const updateProduct = (
+  id: string,
+  data: {
+    name: string;
+    price: number;
+    categoryName: string;
+    inStock?: boolean;
+  },
+): Promise<{ message: string }> =>
+  api.put(`/products/${id}`, data).then((r) => r.data);
+
+export const deleteProduct = (id: string): Promise<{ message: string }> =>
+  api.delete(`/products/${id}`).then((r) => r.data);
+
 export const getProductsByCategory = (
   categoryName: string,
 ): Promise<Product[]> =>

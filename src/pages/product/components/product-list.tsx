@@ -13,12 +13,14 @@ interface ProductListProps {
   products: Product[];
   quantities: Record<string, number>;
   onUpdateQuantity: (productId: string, delta: number) => void;
+  onEditProduct?: (product: Product) => void;
 }
 
 export function ProductList({
   products,
   quantities,
   onUpdateQuantity,
+  onEditProduct,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -36,6 +38,7 @@ export function ProductList({
           product={product}
           quantities={quantities}
           onUpdateQuantity={onUpdateQuantity}
+          onEditProduct={onEditProduct}
         />
       ))}
     </div>

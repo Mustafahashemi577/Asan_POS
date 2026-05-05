@@ -15,6 +15,7 @@ export default function Product() {
   const [categories, setCategories] = useState<any[]>([]);
   const [cart, setCart] = useState<CartItemType[]>([]);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch all products on mount
@@ -102,6 +103,16 @@ export default function Product() {
     setQuantities((prev) => ({ ...prev, [itemId]: 0 }));
   };
 
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setAddProductOpen(true);
+  };
+
+  const handleSheetOpenChange = (open: boolean) => {
+    setAddProductOpen(open);
+    if (!open) setSelectedProduct(null); // clear on close so Add mode is clean
+  };
+
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
@@ -123,7 +134,6 @@ export default function Product() {
         )}
 
         {/* ── Product list card ────────────────────────────────────────────── */}
-
         <div className="flex-1 min-w-0 bg-white rounded-b-xl inv-rad-b-r-{8} overflow-y-auto p-4 space-y-3">
           <CategoryFilter
             categories={categories}
@@ -142,9 +152,11 @@ export default function Product() {
               products={products}
               quantities={quantities}
               onUpdateQuantity={updateQuantity}
+              onEditProduct={handleEditProduct}
             />
           )}
         </div>
+
         {/* ── Order details card (desktop only) ───────────────────────────── */}
         <div className="hidden lg:block mt-2.5 w-[300px] xl:w-[340px] shrink-0 bg-white rounded-xl overflow-y-auto">
           <OrderDetails
@@ -155,10 +167,15 @@ export default function Product() {
             total={total}
           />
         </div>
+
         <AddEditProduct
           open={addProductOpen}
-          onOpenChange={setAddProductOpen}
+          onOpenChange={handleSheetOpenChange}
+          product={selectedProduct}
           onSave={() => {
+            handleCategorySelect(selectedCategory);
+          }}
+          onDelete={() => {
             handleCategorySelect(selectedCategory);
           }}
         />

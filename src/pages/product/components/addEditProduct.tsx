@@ -18,6 +18,8 @@ import { getCategories } from "@/queries/category";
 import {
   claimProductImage,
   createProduct,
+  deleteProduct,
+  updateProduct,
   uploadProductImage,
 } from "@/queries/products";
 import { ImageIcon, Loader2, Plus } from "lucide-react";
@@ -29,6 +31,7 @@ interface AddEditProductProps {
   onOpenChange: (open: boolean) => void;
   product?: any;
   onSave?: (data: any) => void;
+  onDelete?: () => void;
 }
 
 export function AddEditProduct({
@@ -36,13 +39,14 @@ export function AddEditProduct({
   onOpenChange,
   product,
   onSave,
+  onDelete,
 }: AddEditProductProps) {
   const [name, setName] = useState(product?.name ?? "");
   const [price, setPrice] = useState(product?.price ?? "");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
   const [imagePreview, setImagePreview] = useState<string | null>(
-    product?.imageUrl ?? null,
+    product?.imageUrl ?? product?.image ?? null,
   );
   const [categories, setCategories] = useState<any[]>([]);
 
@@ -50,16 +54,17 @@ export function AddEditProduct({
   const [attachmentId, setAttachmentId] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when product prop changes
+  // Reset form whenever product prop changes (covers both open-for-edit and open-for-add)
   useEffect(() => {
     setName(product?.name ?? "");
     setPrice(product?.price ?? "");
     setCategoryId(product?.categoryId ?? "");
     setInStock(product?.inStock ?? true);
-    setImagePreview(product?.imageUrl ?? null);
+    setImagePreview(product?.imageUrl ?? product?.image ?? null);
     setAttachmentId(null);
   }, [product]);
 
@@ -94,36 +99,50 @@ export function AddEditProduct({
     }
   };
 
-  // Steps 2 + 3: create product then claim image
+  // Steps 2 + 3: create or update product, then claim image
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Product name is required");
     if (!price) return toast.error("Price is required");
 
-    // Find category name from selected id
     const selectedCategory = categories.find((c) => c.id === categoryId);
     if (!selectedCategory) return toast.error("Please select a category");
 
-    // Block submit if image is still uploading
     if (imageUploading)
       return toast.error("Please wait for image to finish uploading");
 
     setSubmitting(true);
     try {
-      // Step 2: create product
-      const created = await createProduct({
-        name: name.trim(),
-        price: Number(price),
-        categoryName: selectedCategory.name,
-        inStock,
-      });
+      let saved: any;
 
-      // Step 3: claim image if one was uploaded
-      if (attachmentId) {
-        await claimProductImage(attachmentId, created.id);
+      if (product?.id) {
+        // ── EDIT mode ──
+        saved = await updateProduct(product.id, {
+          name: name.trim(),
+          price: Number(price),
+          categoryName: selectedCategory.name,
+          inStock,
+        });
+      } else {
+        // ── ADD mode ──
+        saved = await createProduct({
+          name: name.trim(),
+          price: Number(price),
+          categoryName: selectedCategory.name,
+          inStock,
+        });
       }
 
-      toast.success("Product added successfully");
-      onSave?.(created);
+      // Claim new image if one was uploaded during this session
+      if (attachmentId) {
+        await claimProductImage(attachmentId, saved.id);
+      }
+
+      toast.success(
+        product?.id
+          ? "Product updated successfully"
+          : "Product added successfully",
+      );
+      onSave?.(saved);
       onOpenChange(false);
 
       // Reset
@@ -134,13 +153,31 @@ export function AddEditProduct({
       setImagePreview(null);
       setAttachmentId(null);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Failed to add product");
+      toast.error(
+        err?.response?.data?.message ??
+          (product?.id ? "Failed to update product" : "Failed to add product"),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const isLoading = imageUploading || submitting;
+  const isLoading = imageUploading || submitting || deleting;
+
+  const handleDelete = async () => {
+    if (!product?.id) return;
+    setDeleting(true);
+    try {
+      await deleteProduct(product.id);
+      toast.success("Product deleted successfully");
+      onDelete?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to delete product");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -246,7 +283,18 @@ export function AddEditProduct({
         </div>
 
         {/* Sticky footer */}
-        <div className="px-5 py-4 border-t border-gray-100 bg-white">
+        <div className="px-5 py-4 border-t border-gray-100 bg-white space-y-2">
+          {/* Delete button — only shown in edit mode */}
+          {product?.id && (
+            <Button
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="w-full h-11 bg-white text-red-500 hover:bg-red-50 border border-red-200 rounded-xl text-sm font-medium flex items-center gap-2"
+            >
+              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Delete Product
+            </Button>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
