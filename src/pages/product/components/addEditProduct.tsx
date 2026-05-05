@@ -16,13 +16,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { getCategories } from "@/queries/category";
 import {
-  claimProductImage,
+  claimProductImages,
   createProduct,
   deleteProduct,
+  deleteProductImage,
   updateProduct,
-  uploadProductImage,
+  uploadProductImages,
 } from "@/queries/products";
-import { ImageIcon, Loader2, Plus } from "lucide-react";
+import { ImageIcon, ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -45,61 +46,122 @@ export function AddEditProduct({
   const [price, setPrice] = useState(product?.price ?? "");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    product?.imageUrl ?? product?.image ?? null,
-  );
   const [categories, setCategories] = useState<any[]>([]);
 
-  // Track upload state separately from form submit
-  const [attachmentId, setAttachmentId] = useState<string | null>(null);
+  // { preview: string, imageId?: string, file?: File }
+  // imageId present = existing backend image, file present = newly uploaded
+  const [imagePreviews, setImagePreviews] = useState<
+    { preview: string; imageId?: string; file?: File }[]
+  >([]);
+  const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form whenever product prop changes (covers both open-for-edit and open-for-add)
+  // Reset form when product prop changes
   useEffect(() => {
     setName(product?.name ?? "");
     setPrice(product?.price ?? "");
     setCategoryId(product?.categoryId ?? "");
     setInStock(product?.inStock ?? true);
-    setImagePreview(product?.imageUrl ?? product?.image ?? null);
-    setAttachmentId(null);
+    setAttachmentIds([]);
+
+    // Pre-populate all existing images with their imageId
+    if (product?.images && product.images.length > 0) {
+      setImagePreviews(
+        product.images
+          .filter((img: any) => {
+            const url = typeof img === "string" ? img : img.url;
+            return url && url !== "/placeholder.png";
+          })
+          .map((img: any) =>
+            typeof img === "string"
+              ? { preview: img }
+              : { preview: img.url, imageId: img.id },
+          ),
+      );
+    } else if (product?.image && product.image !== "/placeholder.png") {
+      setImagePreviews([{ preview: product.image, imageId: product.imageId }]);
+    } else {
+      setImagePreviews([]);
+    }
   }, [product]);
 
-  // Fetch categories once on open
+  // Fetch categories once on open, then match by name for edit mode
   useEffect(() => {
     if (!open) return;
     getCategories()
-      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setCategories(list);
+        // If categoryId not already set (product has category name but no categoryId)
+        // match by name so the Select shows the correct value
+        if (!product?.categoryId && product?.category) {
+          const match = list.find(
+            (c) => c.name.toLowerCase() === product.category.toLowerCase(),
+          );
+          if (match) setCategoryId(match.id);
+        }
+      })
       .catch(() => setCategories([]));
   }, [open]);
 
-  // Step 1: upload image immediately on file select
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
 
-    // Show local preview instantly
-    setImagePreview(URL.createObjectURL(file));
-    setAttachmentId(null);
+    const newPreviews = files.map((file) => ({
+      preview: URL.createObjectURL(file),
+      file,
+    }));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
     setImageUploading(true);
-
     try {
-      const result = await uploadProductImage(file);
-      setAttachmentId(result.id);
-      toast.success("Image uploaded");
+      const result = await uploadProductImages(files);
+      setAttachmentIds((prev) => [...prev, ...result.ids]);
+      toast.success(
+        files.length > 1 ? `${files.length} images uploaded` : "Image uploaded",
+      );
     } catch {
       toast.error("Image upload failed. Please try again.");
-      setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setImagePreviews((prev) => prev.slice(0, prev.length - files.length));
     } finally {
       setImageUploading(false);
     }
   };
 
-  // Steps 2 + 3: create or update product, then claim image
+  const handleRemovePreview = async (index: number) => {
+    const item = imagePreviews[index];
+
+    // If it's an existing backend image, delete it immediately via API
+    if (item.imageId) {
+      try {
+        await deleteProductImage(item.imageId);
+        toast.success("Image removed");
+      } catch {
+        toast.error("Failed to remove image");
+        return; // don't remove from UI if API failed
+      }
+    }
+
+    // If it's a newly uploaded (not yet claimed) image, remove its attachmentId
+    if (item.file) {
+      const newFileIndexBefore = imagePreviews
+        .slice(0, index)
+        .filter((p) => p.file).length;
+      setAttachmentIds((prev) =>
+        prev.filter((_, i) => i !== newFileIndexBefore),
+      );
+    }
+
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Product name is required");
     if (!price) return toast.error("Price is required");
@@ -108,22 +170,21 @@ export function AddEditProduct({
     if (!selectedCategory) return toast.error("Please select a category");
 
     if (imageUploading)
-      return toast.error("Please wait for image to finish uploading");
+      return toast.error("Please wait for images to finish uploading");
 
     setSubmitting(true);
     try {
       let saved: any;
 
       if (product?.id) {
-        // ── EDIT mode ──
         saved = await updateProduct(product.id, {
           name: name.trim(),
           price: Number(price),
           categoryName: selectedCategory.name,
           inStock,
         });
+        saved = { ...saved, id: product.id };
       } else {
-        // ── ADD mode ──
         saved = await createProduct({
           name: name.trim(),
           price: Number(price),
@@ -132,9 +193,8 @@ export function AddEditProduct({
         });
       }
 
-      // Claim new image if one was uploaded during this session
-      if (attachmentId) {
-        await claimProductImage(attachmentId, saved.id);
+      if (attachmentIds.length > 0) {
+        await claimProductImages(attachmentIds, saved.id);
       }
 
       toast.success(
@@ -145,13 +205,12 @@ export function AddEditProduct({
       onSave?.(saved);
       onOpenChange(false);
 
-      // Reset
       setName("");
       setPrice("");
       setCategoryId("");
       setInStock(true);
-      setImagePreview(null);
-      setAttachmentId(null);
+      setImagePreviews([]);
+      setAttachmentIds([]);
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ??
@@ -179,6 +238,10 @@ export function AddEditProduct({
     }
   };
 
+  const hasSingleImage = imagePreviews.length === 1;
+  const hasMultipleImages = imagePreviews.length > 1;
+  const hasNoImages = imagePreviews.length === 0;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -193,37 +256,126 @@ export function AddEditProduct({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* Image upload */}
-          <label className="block w-full cursor-pointer">
-            <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors relative">
-              {imagePreview ? (
+          {/* ── IMAGE SECTION ── */}
+
+          {/* CASE 1: No images — full tall upload box (original design) */}
+          {hasNoImages && (
+            <label className="block w-full cursor-pointer">
+              <div className="w-full h-44 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors relative">
+                {imageUploading ? (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-xl">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-400">
+                    <ImageIcon className="w-8 h-8" />
+                    <span className="text-xs">Click to upload images</span>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleImageChange}
+                disabled={isLoading}
+              />
+            </label>
+          )}
+
+          {/* CASE 2: Single image — full tall box + add more icon below */}
+          {hasSingleImage && (
+            <div className="space-y-2">
+              <div className="relative w-full h-44 rounded-xl overflow-hidden border border-gray-200">
                 <img
-                  src={imagePreview}
-                  alt="Preview"
+                  src={imagePreviews[0].preview}
+                  alt="Product"
                   className="w-full h-full object-cover"
                 />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-400">
-                  <ImageIcon className="w-8 h-8" />
-                  <span className="text-xs">Click to upload image</span>
-                </div>
-              )}
-              {/* Upload spinner overlay */}
-              {imageUploading && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-xl">
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                </div>
-              )}
+                {/* Remove button */}
+                <button
+                  type="button"
+                  onClick={() => handleRemovePreview(0)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                {/* Upload spinner overlay */}
+                {imageUploading && (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              {/* Add more photos icon — between image and In Stock */}
+              <label className="flex items-center gap-2 cursor-pointer w-fit text-gray-400 hover:text-gray-600 transition-colors">
+                {imageUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="w-4 h-4" />
+                )}
+                <span className="text-xs">Add more photos</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageChange}
+                  disabled={isLoading}
+                />
+              </label>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-              disabled={isLoading}
-            />
-          </label>
+          )}
+
+          {/* CASE 3: Multiple images — grid of thumbnails + add more tile */}
+          {hasMultipleImages && (
+            <div className="flex flex-wrap gap-2">
+              {imagePreviews.map((item, index) => (
+                <div
+                  key={index}
+                  className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shrink-0"
+                >
+                  <img
+                    src={item.preview}
+                    alt={`Product ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePreview(index)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Add more tile */}
+              <label className="w-20 h-20 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors shrink-0 gap-1">
+                {imageUploading ? (
+                  <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                ) : (
+                  <>
+                    <ImagePlus className="w-5 h-5 text-gray-400" />
+                    <span className="text-[10px] text-gray-400">Add</span>
+                  </>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageChange}
+                  disabled={isLoading}
+                />
+              </label>
+            </div>
+          )}
 
           {/* Stock toggle */}
           <div className="flex items-center justify-between py-1">

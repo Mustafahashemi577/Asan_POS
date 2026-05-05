@@ -100,7 +100,6 @@ import type { OrderFoodPayload } from "@/types";
 //     category: "food",
 //   },
 //];
-
 export const getProducts = () =>
   api.get("/products").then((r) => {
     const data: any[] = Array.isArray(r.data)
@@ -114,14 +113,21 @@ export const getProducts = () =>
         category: p.category,
         inStock: p.inStock,
         image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+        // Full image objects so edit sheet can delete by imageId
+        images:
+          p.images
+            ?.filter((img: any) => img.imageUrlSigned)
+            .map((img: any) => ({ id: img.id, url: img.imageUrlSigned })) ?? [],
       }),
     );
   });
 
-// Step 1: upload image to minio, returns attachmentId
-export const uploadProductImage = (file: File): Promise<{ id: string }> => {
+// Step 1: upload multiple images to minio at once, returns { ids: string[] }
+export const uploadProductImages = (
+  files: File[],
+): Promise<{ ids: string[] }> => {
   const formData = new FormData();
-  formData.append("image", file);
+  files.forEach((file) => formData.append("images", file));
   return api
     .post("/products/images/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -137,18 +143,7 @@ export const createProduct = (data: {
   inStock?: boolean;
 }): Promise<{ id: string }> => api.post("/products", data).then((r) => r.data);
 
-// Step 3: claim the uploaded image to the created product
-export const claimProductImage = (
-  id: string,
-  productId: string,
-): Promise<void> =>
-  api.post("/products/images/claim", { id, productId }).then((r) => r.data);
-export const orderFood = (payload: OrderFoodPayload) => {
-  // const response = await api.post("/orders", payload);
-  // return response.data;
-  return { message: "Order placed successfully!", payload: payload };
-};
-
+// Update an existing product by id
 export const updateProduct = (
   id: string,
   data: {
@@ -160,8 +155,28 @@ export const updateProduct = (
 ): Promise<{ message: string }> =>
   api.put(`/products/${id}`, data).then((r) => r.data);
 
+// Delete a product by id
 export const deleteProduct = (id: string): Promise<{ message: string }> =>
   api.delete(`/products/${id}`).then((r) => r.data);
+
+// Delete a single product image by imageId
+export const deleteProductImage = (
+  imageId: string,
+): Promise<{ message: string }> =>
+  api.delete(`/products/images/${imageId}`).then((r) => r.data);
+
+// Step 3: claim all uploaded images to the product in one request
+export const claimProductImages = (
+  ids: string[],
+  productId: string,
+): Promise<void> =>
+  api.post("/products/images/claim", { ids, productId }).then((r) => r.data);
+
+export const orderFood = (payload: OrderFoodPayload) => {
+  // const response = await api.post("/orders", payload);
+  // return response.data;
+  return { message: "Order placed successfully!", payload: payload };
+};
 
 export const getProductsByCategory = (
   categoryName: string,
@@ -176,6 +191,10 @@ export const getProductsByCategory = (
       price: p.price,
       category: categoryName,
       inStock: p.inStock,
-      image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png", // ← fix
+      image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+      images:
+        p.images
+          ?.filter((img: any) => img.imageUrlSigned)
+          .map((img: any) => ({ id: img.id, url: img.imageUrlSigned })) ?? [],
     }));
   });
