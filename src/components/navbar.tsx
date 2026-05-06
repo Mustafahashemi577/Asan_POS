@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
+import { Separator } from "./ui/separator";
 
 interface NavbarProps {
   profile: EmployeeInfo;
@@ -171,11 +172,9 @@ export const Navbar = ({ profile }: NavbarProps) => {
             </span>
           </div>
 
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-8 h-8 rounded-full"
-          >
+          <Separator orientation="vertical" className="mt-1.5 h-6" />
+
+          <Button variant="outline" size="icon" className="w-8 h-8 bg-white">
             <Bell size={14} />
           </Button>
 
