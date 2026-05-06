@@ -403,7 +403,7 @@ export default function Inventory() {
                           {item.quantity.toLocaleString()} {item.unit}
                         </TableCell>
                         <TableCell className="text-xs text-gray-800 whitespace-nowrap">
-                          Rp. {item.price.toLocaleString("id-ID")}
+                          {item.price.toLocaleString("id-ID")} AFN
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           <span
@@ -504,7 +504,7 @@ export default function Inventory() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-gray-500">
-                        Rp. {item.price.toLocaleString("id-ID")}
+                        {item.price.toLocaleString("id-ID")} AFN
                       </span>
                       {/* Mobile actions */}
                       <div
