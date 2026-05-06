@@ -498,7 +498,7 @@ export default function Inventory() {
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-500">
-                      Rp. {item.price.toLocaleString("id-ID")}
+                      AFN {item.price.toLocaleString("id-ID")}
                     </span>
                     {/* Mobile actions */}
                     <div
