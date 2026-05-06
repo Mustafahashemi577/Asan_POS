@@ -141,7 +141,7 @@
 }
 
 body {
-  @apply antialiased;
+  @apply antialiased bg-bg-main;
 }
 
 .satoshi {
