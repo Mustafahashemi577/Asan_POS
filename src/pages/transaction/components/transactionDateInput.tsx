@@ -3,7 +3,7 @@
 // range string like "27 Mar 2024 - 27 Apr 2024" while only picking a start date).
 // The original DateInput.tsx is left completely untouched.
 
-import { Calendar, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -83,9 +83,9 @@ export default function TransactionDateInput({
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center gap-2 hover:border-gray-300"
+            className="w-full h-9 border border-gray-200 rounded-sm px-4 text-sm text-left bg-white flex items-center gap-2 hover:border-gray-300"
           >
-            <Calendar size={15} className="text-gray-400 shrink-0" />
+            <CalendarDays size={15} className="text-gray-400 shrink-0" />
             <span
               className={`flex-1 truncate ${triggerLabel ? "text-gray-700" : "text-gray-400"}`}
             >

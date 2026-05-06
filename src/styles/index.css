@@ -127,10 +127,7 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-bg-main text-foreground;
-    font-family: "Satoshi", "Arial";
-  }
+
   html {
     @apply font-sans;
   }
