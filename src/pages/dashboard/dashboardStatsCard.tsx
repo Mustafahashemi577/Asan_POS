@@ -20,7 +20,7 @@ const stats = [
     pct: "",
     pctColor: "",
     date: "Saturday, 06 Sep 2024",
-    sub: "$521,00",
+    sub: "521 AFN",
   },
   {
     label: "Total Order",
@@ -28,15 +28,15 @@ const stats = [
     pct: "",
     pctColor: "",
     date: "Saturday, 06 Sep 2024",
-    sub: "$521,00",
+    sub: "521 AFN",
   },
   {
     label: "Total Income",
-    value: "$1.200,00",
+    value: "1.200 AFN",
     pct: "0,5%",
     pctColor: "text-green-400",
     date: "Saturday, 06 Sep 2024",
-    sub: "$1,234.00",
+    sub: "1,234 AFN",
   },
 ];
 

@@ -1,8 +1,6 @@
 // pages/Dashboard/index.tsx
 import { Loading } from "@/components/loading";
 import TransactionTable from "@/components/transactiontable";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -43,36 +41,36 @@ const monthlyData = [
   { day: "W4", income: 700 },
 ];
 
-const mockEmployees = [
-  {
-    id: "1",
-    name: "Mangcoding",
-    email: "hello@mangcoding.com",
-    initials: "MI",
-    color: "bg-violet-600",
-  },
-  {
-    id: "2",
-    name: "Purwa Adi W",
-    email: "purwaadi361@gmail.com",
-    initials: "PA",
-    color: "bg-pink-500",
-  },
-  {
-    id: "3",
-    name: "Deni Setiawan",
-    email: "deni.s@gmail.com",
-    initials: "DS",
-    color: "bg-amber-500",
-  },
-  {
-    id: "4",
-    name: "Relastini",
-    email: "relastini@gmail.com",
-    initials: "RL",
-    color: "bg-teal-500",
-  },
-];
+// const mockEmployees = [
+//   {
+//     id: "1",
+//     name: "Mangcoding",
+//     email: "hello@mangcoding.com",
+//     initials: "MI",
+//     color: "bg-violet-600",
+//   },
+//   {
+//     id: "2",
+//     name: "Purwa Adi W",
+//     email: "purwaadi361@gmail.com",
+//     initials: "PA",
+//     color: "bg-pink-500",
+//   },
+//   {
+//     id: "3",
+//     name: "Deni Setiawan",
+//     email: "deni.s@gmail.com",
+//     initials: "DS",
+//     color: "bg-amber-500",
+//   },
+//   {
+//     id: "4",
+//     name: "Relastini",
+//     email: "relastini@gmail.com",
+//     initials: "RL",
+//     color: "bg-teal-500",
+//   },
+// ];
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
@@ -142,7 +140,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Balance</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                    ${totalIncome.toLocaleString()},00
+                    ${totalIncome.toLocaleString()}
                   </p>
                 </div>
 
@@ -165,7 +163,7 @@ export default function Dashboard() {
               {/* Chart is horizontally scrollable on very small screens */}
               <div className="overflow-x-auto">
                 <div className="min-w-[260px]">
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={250}>
                     <BarChart
                       data={chartData}
                       barSize={22}
@@ -202,7 +200,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ── Employee List ── */}
+            {/* ── Employee List ──
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900">
@@ -238,7 +236,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

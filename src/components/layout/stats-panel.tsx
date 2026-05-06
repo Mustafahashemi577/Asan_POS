@@ -6,7 +6,7 @@ const stats = [
   { title: "Total Order", value: "120", badge: "", icon: Briefcase },
   {
     title: "Total Income",
-    value: "$1,200.00",
+    value: "1,200.00",
     badge: "0.5%",
     icon: BadgeDollarSign,
   },
