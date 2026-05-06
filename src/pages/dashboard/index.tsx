@@ -1,5 +1,4 @@
 // pages/Dashboard/index.tsx
-import PageWrapper from "@/components/layout/pagewrapper";
 import { Loading } from "@/components/loading";
 import TransactionTable from "@/components/transactiontable";
 import {
@@ -114,95 +113,94 @@ export default function Dashboard() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     // Outer wrapper: fills viewport, scrollable on mobile
-    <PageWrapper>
-      <div className="min-h-screen bg-white rounded-b-xl overflow-y-auto">
-        <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-          {/* ── Stats card (welcome + 4 stat tiles) — NO profile info ── */}
-          <DashboardStatsCard
-            profile={profile}
-            //onMakeOrder={() => navigate("/transaction/new")}
-          />
+    <div className="min-h-screen bg-white rounded-b-xl overflow-y-auto">
+      <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* ── Stats card (welcome + 4 stat tiles) — NO profile info ── */}
+        <DashboardStatsCard
+          profile={profile}
+          //onMakeOrder={() => navigate("/transaction/new")}
+        />
 
-          {/* ── Main content: stacks on mobile, side-by-side on xl ── */}
-          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-            {/* LEFT — Transaction table (full width on mobile) */}
-            <div className="flex-1 min-w-0">
-              <TransactionTable />
-            </div>
+        {/* ── Main content: stacks on mobile, side-by-side on xl ── */}
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+          {/* LEFT — Transaction table (full width on mobile) */}
+          <div className="flex-1 min-w-0">
+            <TransactionTable />
+          </div>
 
-            {/* RIGHT — chart + employees (full width on mobile, fixed 300px on xl) */}
-            <div className="flex flex-col gap-4 sm:gap-6 xl:w-[300px] xl:shrink-0">
-              {/* ── Income Chart ── */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                  Total Income
-                </h3>
+          {/* RIGHT — chart + employees (full width on mobile, fixed 300px on xl) */}
+          <div className="flex flex-col gap-4 sm:gap-6 xl:w-[300px] xl:shrink-0">
+            {/* ── Income Chart ── */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                Total Income
+              </h3>
 
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Balance</p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {totalIncome.toLocaleString() + " "}AFN
-                    </p>
-                  </div>
-
-                  <Select
-                    value={chartRange}
-                    onValueChange={(v) =>
-                      setChartRange(v as "weekly" | "monthly")
-                    }
-                  >
-                    <SelectTrigger className="w-24 h-8 text-xs rounded-lg border-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Balance</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                    {totalIncome.toLocaleString() + " "}AFN
+                  </p>
                 </div>
 
-                {/* Chart is horizontally scrollable on very small screens */}
-                <div className="overflow-x-auto">
-                  <div className="min-w-[260px]">
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart
-                        data={chartData}
-                        barSize={22}
-                        margin={{ top: 4, right: 0, left: -28, bottom: 0 }}
-                      >
-                        <CartesianGrid
-                          vertical={false}
-                          stroke="#f0f0f0"
-                          strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="day"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 10, fill: "#9ca3af" }}
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 10, fill: "#9ca3af" }}
-                        />
-                        <Tooltip
-                          content={<CustomTooltip />}
-                          cursor={{ fill: "rgba(0,0,0,0.04)", radius: 6 }}
-                        />
-                        <Bar
-                          dataKey="income"
-                          fill="#111827"
-                          radius={[6, 6, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                <Select
+                  value={chartRange}
+                  onValueChange={(v) =>
+                    setChartRange(v as "weekly" | "monthly")
+                  }
+                >
+                  <SelectTrigger className="w-24 h-8 text-xs rounded-lg border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* ── Employee List ──
+              {/* Chart is horizontally scrollable on very small screens */}
+              <div className="overflow-x-auto">
+                <div className="min-w-[260px]">
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={chartData}
+                      barSize={22}
+                      margin={{ top: 4, right: 0, left: -28, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        stroke="#f0f0f0"
+                        strokeDasharray="3 3"
+                      />
+                      <XAxis
+                        dataKey="day"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                      />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        cursor={{ fill: "rgba(0,0,0,0.04)", radius: 6 }}
+                      />
+                      <Bar
+                        dataKey="income"
+                        fill="#111827"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Employee List ──
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900">
@@ -239,10 +237,9 @@ export default function Dashboard() {
                 ))}
               </div>
             </div> */}
-            </div>
           </div>
         </div>
       </div>
-    </PageWrapper>
+    </div>
   );
 }

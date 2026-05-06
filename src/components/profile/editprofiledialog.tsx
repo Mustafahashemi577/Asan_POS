@@ -5,7 +5,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { EmployeeInfo } from "@/types/";
-import PageWrapper from "../layout/pagewrapper";
 import EditProfileForm from "./editprofileform";
 
 interface Props {
@@ -24,29 +23,27 @@ export default function EditProfileDialog({
   onEmailChange,
 }: Props) {
   return (
-    <PageWrapper>
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent
-          className="rounded-2xl p-0 overflow-hidden"
-          style={{ maxWidth: "min(85vw, 1000px)", width: "85vw" }}
-        >
-          <div className="p-7">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-lg font-semibold">
-                Edit Profile
-              </DialogTitle>
-              <p className="text-xs text-gray-400">Change Profile</p>
-            </DialogHeader>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent
+        className="rounded-2xl p-0 overflow-hidden"
+        style={{ maxWidth: "min(85vw, 1000px)", width: "85vw" }}
+      >
+        <div className="p-7">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-lg font-semibold">
+              Edit Profile
+            </DialogTitle>
+            <p className="text-xs text-gray-400">Change Profile</p>
+          </DialogHeader>
 
-            <EditProfileForm
-              profile={profile}
-              onSaveSuccess={onSaveSuccess}
-              onEmailChange={onEmailChange}
-              onClose={onClose}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </PageWrapper>
+          <EditProfileForm
+            profile={profile}
+            onSaveSuccess={onSaveSuccess}
+            onEmailChange={onEmailChange}
+            onClose={onClose}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
