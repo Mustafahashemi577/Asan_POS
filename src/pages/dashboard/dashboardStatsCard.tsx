@@ -12,7 +12,7 @@ const stats = [
     pct: "0,5%",
     pctColor: "text-green-400",
     date: "Saturday, 06 Sep 2024",
-    sub: "1,300",
+    sub: "1,300 AFN",
   },
   {
     label: "Order Done",

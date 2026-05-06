@@ -25,20 +25,20 @@ import {
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
 const weeklyData = [
-  { day: "Sun", income: 130 },
-  { day: "Mon", income: 130 },
-  { day: "Tue", income: 150 },
-  { day: "Wed", income: 130 },
-  { day: "Thu", income: 170 },
-  { day: "Fri", income: 185 },
-  { day: "Sat", income: 200 },
+  { day: "Sun", income: 840 },
+  { day: "Mon", income: 760 },
+  { day: "Tue", income: 820 },
+  { day: "Wed", income: 980 },
+  { day: "Thu", income: 1700 },
+  { day: "Fri", income: 2000 },
+  { day: "Sat", income: 900 },
 ];
 
 const monthlyData = [
-  { day: "W1", income: 520 },
-  { day: "W2", income: 610 },
-  { day: "W3", income: 480 },
-  { day: "W4", income: 700 },
+  { day: "W1", income: 6400 },
+  { day: "W2", income: 12000 },
+  { day: "W3", income: 8200 },
+  { day: "W4", income: 7000 },
 ];
 
 // const mockEmployees = [
