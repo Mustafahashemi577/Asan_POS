@@ -11,7 +11,7 @@ import {
 import { useProfile } from "@/hooks/useprofile";
 import DashboardStatsCard from "@/pages/dashboard/dashboardStatsCard";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+//import { useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -89,7 +89,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   // SWR deduplicates — reuses AppLayout's cached /auth/me, no extra request
   const { profile, isLoading, fetchError } = useProfile();
 
@@ -118,7 +118,7 @@ export default function Dashboard() {
         {/* ── Stats card (welcome + 4 stat tiles) — NO profile info ── */}
         <DashboardStatsCard
           profile={profile}
-          onMakeOrder={() => navigate("/transaction/new")}
+          //onMakeOrder={() => navigate("/transaction/new")}
         />
 
         {/* ── Main content: stacks on mobile, side-by-side on xl ── */}
