@@ -166,7 +166,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
         {/* RIGHT: date, bell, avatar */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-sm px-3 py-2">
             <CalendarDays size={13} />
             <span>
               {dateStr} at {timeStr}

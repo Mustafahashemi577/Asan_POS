@@ -50,7 +50,7 @@ export default function Transaction() {
 
   return (
     <div className="bg-white rounded-b-xl min-h-[calc(100vh-57px)]">
-      <div className="p-5 lg:p-7 space-y-5">
+      <div className="p-2.5 lg:p-2.5 space-y-5">
         {/* ── HEADER ──────────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
