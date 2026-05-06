@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/lib/store";
-import { Eye, EyeOff } from "lucide-react";
 import TwoFADialog from "@/pages/(auth)/two-fa-dialog";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ export default function LoginForm() {
         <div className="space-y-4">
           <Input
             name="email"
-            className="h-12"
+            className="h-12 bg-white border-gray-150"
             type="email"
             placeholder="Your Email"
             value={form.email}
@@ -96,7 +96,7 @@ export default function LoginForm() {
           <div className="relative">
             <Input
               name="password"
-              className="h-12"
+              className="h-12 bg-white border-gray-150"
               type={showPassword ? "password" : "text"}
               placeholder="Your Password"
               autoComplete="new-password"
@@ -168,7 +168,7 @@ export default function LoginForm() {
           <Button
             type="button"
             variant="outline"
-            className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
+            className="flex bg-white border-gray-150 items-center justify-center gap-2 rounded-sm py-3 h-12"
           >
             <img
               src="icons/google_color.svg"
@@ -181,7 +181,7 @@ export default function LoginForm() {
           <Button
             type="button"
             variant="outline"
-            className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
+            className="flex items-center bg-white border-gray-150 justify-center gap-2 rounded-sm py-3 h-12"
           >
             <img src="/icons/apple_black.svg" alt="Apple" className="w-5 h-5" />
             <span className="text-sm font-medium">Apple</span>

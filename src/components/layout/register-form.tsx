@@ -2,14 +2,14 @@ import api from "@/lib/axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import OtpDialog from "@/components/otp-dialog";
+import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
+import { Separator } from "../ui/separator";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -96,7 +96,7 @@ export default function RegisterForm() {
                   <FormControl>
                     <Input
                       placeholder="Full Name"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                   </FormControl>
@@ -112,7 +112,7 @@ export default function RegisterForm() {
                   <FormControl>
                     <Input
                       placeholder="Store Name"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                   </FormControl>
@@ -132,7 +132,7 @@ export default function RegisterForm() {
                     <Input
                       type="email"
                       placeholder="Your Email"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                   </FormControl>
@@ -148,7 +148,7 @@ export default function RegisterForm() {
                   <FormControl>
                     <Input
                       placeholder="Phone number"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                   </FormControl>
@@ -169,7 +169,7 @@ export default function RegisterForm() {
                       type={showPassword ? "password" : "text"}
                       placeholder="Password"
                       autoComplete="new-password"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                     <Button
@@ -198,7 +198,7 @@ export default function RegisterForm() {
                       type={showConfirm ? "password" : "text"}
                       placeholder="Confirm Password"
                       autoComplete="new-password"
-                      className="min-h-12 w-full"
+                      className="min-h-12 w-full bg-white border-gray-150"
                       {...field}
                     />
                     <Button
@@ -247,7 +247,7 @@ export default function RegisterForm() {
         <Button
           type="button"
           variant="outline"
-          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
+          className="flex items-center justify-center gap-2 bg-white border-gray-150 rounded-sm py-3 h-12"
         >
           <img src="icons/google_color.svg" alt="Google" className="w-5 h-5" />
           <span className="text-sm font-medium">Google</span>
@@ -256,7 +256,7 @@ export default function RegisterForm() {
         <Button
           type="button"
           variant="outline"
-          className="flex items-center justify-center gap-2 rounded-sm py-3 h-12"
+          className="flex items-center justify-center gap-2 bg-white border-gray-150 rounded-sm py-3 h-12"
         >
           <img src="/icons/apple_black.svg" alt="Apple" className="w-5 h-5" />
           <span className="text-sm font-medium">Apple</span>
