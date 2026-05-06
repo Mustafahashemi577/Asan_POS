@@ -111,7 +111,7 @@ const ProductCard = ({
             {product.name}
           </h3>
           <span className="text-sm font-semibold text-foreground">
-            {product.price} Afs
+            {product.price} AFN
           </span>
         </div>
         <div className="mt-3 flex items-center gap-2 bg-neutral-100 p-1 rounded-lg">
