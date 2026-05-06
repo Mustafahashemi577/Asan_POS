@@ -193,7 +193,7 @@ export default function TransactionTable({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-150 ">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
@@ -233,7 +233,7 @@ export default function TransactionTable({
                 rows.map((row, i) => (
                   <TableRow
                     key={i}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 h-10 transition-colors"
                   >
                     <TableCell className="text-xs text-gray-600 font-mono pl-6 whitespace-nowrap">
                       {row.id}

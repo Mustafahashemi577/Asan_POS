@@ -22,7 +22,7 @@ export const CartItemCard = ({ item, onRemoveItem }: CartItemProps) => {
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">{item.quantity}X</span>
           <span className="font-semibold text-foreground">
-            {item.price} AfN
+            {item.price} AFN
           </span>
         </div>
       </div>
