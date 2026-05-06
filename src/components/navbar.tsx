@@ -63,7 +63,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
             <Button
               variant="outline"
               size="icon"
-              className="w-8 h-8 rounded-full"
+              className="bg-white w-9 h-9 rounded-sm"
             >
               <Bell size={14} />
             </Button>
@@ -175,7 +175,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
           <Separator orientation="vertical" className="mt-1.5 h-6" />
 
-          <Button variant="outline" size="icon" className="w-8 h-8 bg-white">
+          <Button variant="outline" size="icon" className="w-9 h-9 bg-white">
             <Bell size={14} />
           </Button>
 
