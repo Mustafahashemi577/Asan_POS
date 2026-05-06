@@ -116,7 +116,7 @@ export default function Dashboard() {
     // Outer wrapper: fills viewport, scrollable on mobile
     <PageWrapper>
       <div className="min-h-screen bg-white rounded-b-xl overflow-y-auto">
-        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {/* ── Stats card (welcome + 4 stat tiles) — NO profile info ── */}
           <DashboardStatsCard
             profile={profile}
