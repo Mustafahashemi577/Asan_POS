@@ -285,10 +285,7 @@ export default function TransactionTable({
             </p>
           ) : (
             rows.map((row, i) => (
-              <div
-                key={i}
-                className="border border-gray-100 rounded-xl p-3 shadow-sm mx-4 my-3"
-              >
+              <div key={i} className="px-4 py-4">
                 <div className="flex justify-between mb-1">
                   <span className="text-xs text-gray-500 font-mono">
                     {row.id}

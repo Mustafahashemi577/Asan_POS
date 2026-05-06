@@ -50,3 +50,16 @@ export interface OrderFoodPayload {
   quantity?: number;
   description?: string;
 }
+
+export type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  price: number;
+  status: StockStatus;
+  lastUpdated: string; // ISO yyyy-mm-dd
+}
