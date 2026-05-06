@@ -1,5 +1,5 @@
 import AuthLayout from "@/components/layout/auth-layout";
-import Navbar from "@/components/layout/navbar";
+import Navbar from "@/components/layout/authNavbar";
 import RegisterForm from "@/components/layout/register-form";
 import StatsPanel from "@/components/layout/stats-panel";
 
