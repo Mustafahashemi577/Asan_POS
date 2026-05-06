@@ -79,7 +79,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
         <p className="font-medium">{label}</p>
-        <p className="text-green-400">${payload[0].value}</p>
+        <p className="text-green-400">{payload[0].value} AFN</p>
       </div>
     );
   }
@@ -140,7 +140,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Balance</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                    ${totalIncome.toLocaleString()}
+                    {totalIncome.toLocaleString() + " "}AFN
                   </p>
                 </div>
 
