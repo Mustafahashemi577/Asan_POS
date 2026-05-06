@@ -74,7 +74,7 @@ export default function Transaction() {
             </div>
 
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-12 sm:w-44 rounded-xl border-gray-200 text-sm">
+              <SelectTrigger className="h-9 sm:w-44 rounded-sm border-gray-200 text-sm">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -94,7 +94,7 @@ export default function Transaction() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search Recent Transaction..."
-                className="h-12 pl-9 rounded-xl border-gray-200 text-sm bg-white"
+                className="h-9 pl-9 rounded-sm border-gray-200 text-sm bg-white"
               />
             </div>
           </div>

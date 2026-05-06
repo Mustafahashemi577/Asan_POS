@@ -186,7 +186,7 @@ export default function TransactionTable({
     "Customer",
     "Date",
     "Type Services",
-    "Total Belanja",
+    "Total Balance",
     ...(showStatus ? ["Status"] : []),
     ...(showAction ? ["Action"] : []),
   ];
