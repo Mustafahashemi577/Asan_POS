@@ -34,7 +34,7 @@ const stats = [
   },
   {
     label: "Total Income",
-    value: "1.200 AFN",
+    value: "2000 AFN",
     pct: "0,5%",
     pctColor: "text-green-400",
     date: "Yesterday, 26 Mar 2024",
