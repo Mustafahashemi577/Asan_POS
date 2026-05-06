@@ -163,7 +163,7 @@ export default function Dashboard() {
               {/* Chart is horizontally scrollable on very small screens */}
               <div className="overflow-x-auto">
                 <div className="min-w-[260px]">
-                  <ResponsiveContainer width="100%" height={250}>
+                  <ResponsiveContainer width="100%" height={200}>
                     <BarChart
                       data={chartData}
                       barSize={22}
