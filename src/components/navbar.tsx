@@ -48,7 +48,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
   ];
 
   return (
-    <header className="bg-white rounded-t-xl sticky top-0 z-20">
+    <header className="bg-white md:rounded-t-xl top-0 z-20">
       {/* ================= MOBILE ================= */}
 
       <div className="md:hidden px-4 py-3 flex flex-col gap-3">

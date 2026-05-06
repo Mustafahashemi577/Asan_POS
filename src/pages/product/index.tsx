@@ -139,7 +139,7 @@ export default function ProductPage() {
 
   return (
     <>
-      <div className="bg-bg-main rounded-b-xl h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
+      <div className="bg-bg-main h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
         {/* ── MOBILE: Order details card ── */}
         {cart.length > 0 && (
           <div className="lg:hidden bg-white rounded-xl max-h-[45vh] overflow-y-auto shrink-0">

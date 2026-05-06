@@ -9,7 +9,7 @@ export default function AppLayout() {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-bg-main flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
@@ -22,11 +22,12 @@ export default function AppLayout() {
 
   // ── Layout ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen rounded-xl bg-bg-main p-2.5 flex flex-col h-calc(100vh-57px)">
+    <div className="min-h-screen rounded-xl bg-bg-main sm:p-2.5 pb-2.5 lg:pb-2.5 flex flex-col h-calc(100vh-57px)">
       {/* Sticky top navbar — identical on every page */}
       <Navbar profile={profile} />
 
       {/* Page content injected here by React Router */}
+
       <main className="flex-1">
         <Outlet />
       </main>

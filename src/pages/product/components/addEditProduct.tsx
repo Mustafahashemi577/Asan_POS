@@ -110,7 +110,7 @@ export function AddEditProduct({
           <div className="flex-1">
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 text-sm">
-                <SelectValue placeholder="Dropdown" />
+                <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 {categories.map((cat: any) => (
@@ -187,7 +187,7 @@ export function AddEditProduct({
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent
             side="right"
-            className="w-full m-2.5 rounded-lg sm:max-w-md flex flex-col p-0 gap-0"
+            className=" m-2.5 rounded-md flex flex-col p-0 gap-0"
           >
             <SheetHeader className="px-5 pt-5 pb-3 border-b border-gray-100">
               <SheetTitle className="text-left text-base font-semibold">
@@ -201,14 +201,14 @@ export function AddEditProduct({
         // Mobile — plain fixed overlay + card, no Dialog/Sheet at all
         open && (
           <>
-            {/* Backdrop — blurs only the content behind it */}
+            {/* Backdrop — starts below navbar so only page content is blurred */}
             <div
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+              className="fixed top-[105px] inset-x-0 bottom-0 z-40 bg-black/20 backdrop-blur-[4px]"
               onClick={() => onOpenChange(false)}
             />
 
-            {/* Card — sits just below the navbar (top-4 = 16px gap) */}
-            <div className="fixed top-4 left-4 right-4 z-50 bg-white rounded-2xl shadow-xl flex flex-col max-h-[85dvh] overflow-hidden">
+            {/* Card — 16px below the navbar */}
+            <div className="fixed top-[112px] left-4 right-4 z-50 bg-white rounded-2xl shadow-xl flex flex-col max-h-[calc(100dvh-89px)] overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
                 <span className="text-base font-semibold text-gray-900">
