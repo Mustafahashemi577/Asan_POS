@@ -182,7 +182,7 @@ export default function TransactionTable({
 
   // Build desktop column headers dynamically
   const headers = [
-    "Id Transaksi",
+    "Transaction ID",
     "Customer",
     "Date",
     "Type Services",
@@ -193,7 +193,7 @@ export default function TransactionTable({
 
   return (
     <>
-      <div className="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
@@ -252,7 +252,7 @@ export default function TransactionTable({
                       {row.typeService}
                     </TableCell>
                     <TableCell className="text-xs text-gray-800 font-medium whitespace-nowrap">
-                      Rp. {(row.total * 1000).toLocaleString("id-ID")},00
+                      AFN {(row.total * 1000).toLocaleString("id-ID")},00
                     </TableCell>
                     {showStatus && (
                       <TableCell className="whitespace-nowrap">
@@ -307,7 +307,7 @@ export default function TransactionTable({
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>{row.typeService}</span>
                   <span>
-                    Rp. {(row.total * 1000).toLocaleString("id-ID")},00
+                    AFN {(row.total * 1000).toLocaleString("id-ID")},00
                   </span>
                 </div>
                 {showAction && (
@@ -327,9 +327,8 @@ export default function TransactionTable({
             Total Payment
           </span>
           <span className="text-base font-bold text-gray-900">
-            $
             {totalPayment.toLocaleString("id-ID", { minimumFractionDigits: 2 })}
-            ,00
+            AFN
           </span>
         </div>
       )}
