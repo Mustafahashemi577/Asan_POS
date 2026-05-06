@@ -42,10 +42,10 @@ const stats = [
 
 interface Props {
   profile: EmployeeInfo;
-  onMakeOrder?: () => void;
+  //onMakeOrder?: () => void;
 }
 
-export default function DashboardStatsCard({ profile, onMakeOrder }: Props) {
+export default function DashboardStatsCard({ profile }: Props) {
   const displayName = getDisplayName(profile);
 
   return (
@@ -61,12 +61,12 @@ export default function DashboardStatsCard({ profile, onMakeOrder }: Props) {
           </p>
         </div>
 
-        <button
+        {/* <button
           onClick={onMakeOrder}
           className="shrink-0 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-xl"
         >
           Make an order
-        </button>
+        </button> */}
       </div>
 
       {/* Stats grid — 2 cols on mobile, 4 on desktop */}
