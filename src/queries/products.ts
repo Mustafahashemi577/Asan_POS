@@ -7,6 +7,9 @@ export interface PaginationMeta {
   itemsPerPage: number;
   totalItems: number;
   totalPages: number;
+  search?: string;
+  filters?: Record<string, any>;
+  sorts?: Record<string, any>;
 }
 
 export const getProducts = (params?: {
@@ -20,9 +23,12 @@ export const getProducts = (params?: {
       params: {
         page: params?.page ?? 1,
         itemsPerPage: params?.itemsPerPage ?? 20,
-        // Fix: search and categoryName are separate query params, not both "search"
-        ...(params?.search ? { search: params.search } : {}),
-        ...(params?.categoryName ? { categoryName: params.categoryName } : {}),
+        // Both text search and category filter use the same ?search= param
+        ...(params?.categoryName
+          ? { search: params.categoryName }
+          : params?.search
+            ? { search: params.search }
+            : {}),
       },
     })
     .then((r) => {
@@ -84,9 +90,7 @@ export const createProduct = (data: {
   price: number;
   categoryName: string;
   inStock?: boolean;
-  attachmentIds?: string[];
-}): Promise<{ message: string }> =>
-  api.post("/products", data).then((r) => r.data);
+}): Promise<{ id: string }> => api.post("/products", data).then((r) => r.data);
 
 /**
  * Step 3 — Claim the uploaded attachment IDs to the newly created product.
@@ -116,7 +120,6 @@ export const updateProduct = (
     price: number;
     categoryName: string;
     inStock?: boolean;
-    attachmentIds?: string[];
   },
 ): Promise<{ message: string }> =>
   api.put(`/products/${id}`, data).then((r) => r.data);
