@@ -139,7 +139,7 @@ export default function ProductPage() {
 
   return (
     <>
-      <div className="bg-bg-main h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
+      <div className="h-[calc(100vh-57px)] flex flex-col gap-2.5 lg:flex-row">
         {/* ── MOBILE: Order details card ── */}
         {cart.length > 0 && (
           <div className="lg:hidden bg-white rounded-xl max-h-[45vh] overflow-y-auto shrink-0">
@@ -154,7 +154,7 @@ export default function ProductPage() {
         )}
 
         {/* ── Product list card ── */}
-        <div className="flex-1 min-w-0 bg-white rounded-b-xl overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-3">
           <CategoryFilter
             categories={categories}
             selected={selectedCategory}
