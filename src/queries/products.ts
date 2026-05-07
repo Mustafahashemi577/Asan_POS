@@ -26,10 +26,6 @@ export const getProducts = (params?: {
       },
     })
     .then((r) => {
-      console.log(
-        "RAW product[0]:",
-        JSON.stringify(r.data.data?.[0] ?? r.data[0], null, 2),
-      );
       const raw: any[] = Array.isArray(r.data)
         ? r.data
         : (r.data.data ?? r.data.products ?? []);
@@ -44,13 +40,8 @@ export const getProducts = (params?: {
           id: p.id,
           name: p.name,
           price: p.price,
-          // categories can come back as an array or a single object depending on populate
-          category: Array.isArray(p.categories)
-            ? p.categories[0]?.name
-            : (p.category ?? p.categories?.name),
-          categoryId: Array.isArray(p.categories)
-            ? p.categories[0]?.id
-            : (p.categoryId ?? p.categories?.id),
+          category: p.categories?.[0]?.name,
+          categoryId: p.categories?.[0]?.id,
           inStock: p.inStock,
           image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
           images:

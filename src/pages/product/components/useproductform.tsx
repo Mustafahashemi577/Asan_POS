@@ -66,7 +66,7 @@ export function useProductForm({
   useEffect(() => {
     setName(product?.name ?? "");
     setPrice(product?.price ?? "");
-    // categoryId is resolved in the categories effect below (needs the category list to name-match)
+    setCategoryId(product?.categoryId ?? "");
     setInStock(product?.inStock ?? true);
     setAttachmentIds([]);
 
@@ -98,19 +98,9 @@ export function useProductForm({
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setCategories(list);
-
-        // Match category by id first, then fall back to name string
-        if (product?.categoryId) {
-          setCategoryId(product.categoryId);
-        } else if (product?.category) {
-          const match = list.find(
-            (c: any) => c.name.toLowerCase() === product.category.toLowerCase(),
-          );
-          if (match) setCategoryId(match.id);
-        }
       })
       .catch(() => setCategories([]));
-  }, [open, product]);
+  }, [open]);
 
   // ── Image upload handler ──
   // Flow: user picks files → show previews immediately → POST /attachments/upload
