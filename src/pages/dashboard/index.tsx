@@ -12,15 +12,15 @@ import { useProfile } from "@/hooks/useprofile";
 import DashboardStatsCard from "@/pages/dashboard/dashboardStatsCard";
 import { useState } from "react";
 //import { useNavigate } from "react-router-dom";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+// import {
+//   Bar,
+//   BarChart,
+//   CartesianGrid,
+//   ResponsiveContainer,
+//   Tooltip,
+//   XAxis,
+//   YAxis,
+// } from "recharts";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -74,17 +74,17 @@ const monthlyData = [
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload?.length) {
-    return (
-      <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
-        <p className="font-medium">{label}</p>
-        <p className="text-green-400">{payload[0].value} AFN</p>
-      </div>
-    );
-  }
-  return null;
-};
+// const CustomTooltip = ({ active, payload, label }: any) => {
+//   if (active && payload?.length) {
+//     return (
+//       <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
+//         <p className="font-medium">{label}</p>
+//         <p className="text-green-400">{payload[0].value} AFN</p>
+//       </div>
+//     );
+//   }
+//   return null;
+// };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -158,7 +158,7 @@ export default function Dashboard() {
             </div>
 
             {/* Chart is horizontally scrollable on very small screens */}
-            <div className="overflow-x-auto">
+            {/* <div className="overflow-x-auto">
               <div className="min-w-[260px]">
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart
@@ -194,7 +194,7 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* ── Employee List ──

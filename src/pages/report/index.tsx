@@ -1,4 +1,5 @@
 import TransactionTable, { TRANSACTIONS } from "@/components/transactiontable";
+import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import TransactionDateInput from "@/pages/transaction/components/transactionDateInput";
-import { Search } from "lucide-react";
+import { Search, SearchIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 function addOneMonth(dateStr: string): string {
@@ -30,6 +31,7 @@ export default function Report() {
   const endDate = addOneMonth(startDate);
   const [exports, setExport] = useState("pdf");
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -70,8 +72,12 @@ export default function Report() {
                 displayValue={dateRangeLabel}
               />
             </div>
+            <div className='flex items-center gap-2'>
 
-            <div className="relative sm:w-64">
+             {!searchOpen && <Button onClick={() => setSearchOpen(true)}>
+                <SearchIcon size={20} />
+              </Button>}
+            {searchOpen && <div className="relative sm:w-64">
               <Search
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -82,6 +88,14 @@ export default function Report() {
                 placeholder="Search Recent Transaction..."
                 className="h-9 pl-9 rounded-sm border-gray-200 text-sm bg-white"
               />
+              <XIcon
+                size={15}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchOpen(false)}}
+              />
+            </div>}
             </div>
 
             <Select value={exports} onValueChange={setExport}>

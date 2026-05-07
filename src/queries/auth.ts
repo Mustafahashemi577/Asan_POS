@@ -9,6 +9,19 @@ import type { Verify, Login, Register } from "@/types";
 export const register = (payload: Register) =>
   api.post("/auth/register", payload);
 
+interface LoginResponse {
+  message: string;
+  token?: string;
+  twoFactorRequired?: boolean;
+}
+
+// POST /auth/login
+// Logs in an employee
+// If 2FA enabled and no code provided → returns { twoFactorRequired: true }
+// If 2FA enabled and code provided → returns { token: string }
+// If 2FA disabled → returns { token: string }
+export const login = (payload: Login) => api.post<LoginResponse>("/auth/login", payload);
+
 export const getMe = () => api.get("/auth/me");
 
 // POST /auth/verify-register
@@ -16,13 +29,6 @@ export const getMe = () => api.get("/auth/me");
 // Returns: { message: "Registration successful", employee_id: string }
 export const verifyRegister = (payload: Verify) =>
   api.post("/auth/verify-register", payload);
-
-// POST /auth/login
-// Logs in an employee
-// If 2FA enabled and no code provided → returns { twoFactorRequired: true }
-// If 2FA enabled and code provided → returns { token: string }
-// If 2FA disabled → returns { token: string }
-export const login = (payload: Login) => api.post("/auth/login", payload);
 
 // POST /auth/enable-2fa  (requires JWT)
 // Step 1 of 2FA setup — generates QR code

@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/lib/store";
 import TwoFADialog from "@/pages/(auth)/two-fa-dialog";
+import { login } from '@/queries/auth';
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,19 +44,9 @@ export default function LoginForm() {
 
     try {
       setLoading(true);
-      const res = await api.post("/auth/login", {
-        email: form.email,
-        password: form.password,
-      });
+      const res = await login({email: form.email, password: form.password})
 
-      // Backend sends twoFactorRequired:true if 2FA is enabled
-      if (res.data.twoFactorRequired) {
-        setTwoFAOpen(true);
-        return;
-      }
-
-      const { token } = res.data;
-      setAuth({ id: "", email: form.email }, token);
+      setAuth({ id: "", email: form.email || "" }, res.data.token);
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
       const msg = err?.response?.data?.message;
