@@ -1,4 +1,4 @@
-import { Calendar, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ export default function DateInput({ value, onChange }: Props) {
             <span className={displayValue ? "text-gray-700" : "text-gray-400"}>
               {displayValue || "Select date"}
             </span>
-            <Calendar size={15} className="text-gray-400" />
+            <CalendarDays size={15} className="text-gray-400" />
           </Button>
         </PopoverTrigger>
 

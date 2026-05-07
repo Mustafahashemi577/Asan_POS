@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { format } from "date-fns";
-import { Separator } from "./ui/separator";
 
 interface NavbarProps {
   profile: EmployeeInfo;
@@ -45,6 +44,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
     { label: "Transaction", path: "/transaction" },
     { label: "Report", path: "/report" },
     { label: "Inventory", path: "/inventory" },
+    { label: "Purchase", path: "/Purchase" },
   ];
 
   return (
@@ -166,14 +166,14 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
         {/* RIGHT: date, bell, avatar */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-sm px-3 py-2">
+          {/* <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-sm px-3 py-2">
             <CalendarDays size={13} />
             <span>
               {dateStr} at {timeStr}
             </span>
-          </div>
+          </div> */}
 
-          <Separator orientation="vertical" className="mt-1.5 h-6" />
+          {/* <Separator orientation="vertical" className="mt-1.5 h-6" /> */}
 
           <Button variant="outline" size="icon" className="w-9 h-9 bg-white">
             <Bell size={14} />
