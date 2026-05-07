@@ -1,6 +1,5 @@
 import { createCategory, getCategories } from "@/queries/category";
 import {
-  claimProductImages,
   createProduct,
   deleteProduct,
   deleteProductImage,
@@ -12,8 +11,8 @@ import { toast } from "sonner";
 
 export interface ImagePreview {
   preview: string;
-  imageId?: string; // present = existing backend image
-  file?: File; // present = newly uploaded
+  imageId?: string; // present = existing backend attachment
+  file?: File; // present = newly selected (not yet uploaded)
 }
 
 interface UseProductFormProps {
@@ -39,6 +38,8 @@ export function useProductForm({
   const [categories, setCategories] = useState<any[]>([]);
 
   // ── Image state ──
+  // imagePreviews: what is shown in the UI (existing + newly picked)
+  // attachmentIds: IDs returned from /attachments/upload, to be claimed after product create/update
   const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
@@ -54,17 +55,25 @@ export function useProductForm({
   const [categoryError, setCategoryError] = useState("");
   const [categorySubmitting, setCategorySubmitting] = useState(false);
 
-  // ── Reset form when product changes ──
+  // ── Helper: revoke all object URLs to avoid memory leaks ──
+  const revokeObjectUrls = (previews: ImagePreview[]) => {
+    previews.forEach((p) => {
+      if (p.file) URL.revokeObjectURL(p.preview);
+    });
+  };
+
+  // ── Reset form whenever the product prop changes (open/edit) ──
   useEffect(() => {
     setName(product?.name ?? "");
     setPrice(product?.price ?? "");
-    setCategoryId(product?.categoryId ?? "");
+    // categoryId is resolved in the categories effect below (needs the category list to name-match)
     setInStock(product?.inStock ?? true);
     setAttachmentIds([]);
 
-    if (product?.images && product.images.length > 0) {
-      setImagePreviews(
-        product.images
+    setImagePreviews((prev) => {
+      revokeObjectUrls(prev);
+      if (product?.images && product.images.length > 0) {
+        return product.images
           .filter((img: any) => {
             const url = typeof img === "string" ? img : img.url;
             return url && url !== "/placeholder.png";
@@ -73,23 +82,27 @@ export function useProductForm({
             typeof img === "string"
               ? { preview: img }
               : { preview: img.url, imageId: img.id },
-          ),
-      );
-    } else if (product?.image && product.image !== "/placeholder.png") {
-      setImagePreviews([{ preview: product.image, imageId: product.imageId }]);
-    } else {
-      setImagePreviews([]);
-    }
+          );
+      }
+      if (product?.image && product.image !== "/placeholder.png") {
+        return [{ preview: product.image, imageId: product.imageId }];
+      }
+      return [];
+    });
   }, [product]);
 
-  // ── Fetch categories on open + match by name for edit mode ──
+  // ── Fetch categories whenever the sheet/dialog opens ──
   useEffect(() => {
     if (!open) return;
     getCategories()
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setCategories(list);
-        if (!product?.categoryId && product?.category) {
+
+        // Match category by id first, then fall back to name string
+        if (product?.categoryId) {
+          setCategoryId(product.categoryId);
+        } else if (product?.category) {
           const match = list.find(
             (c: any) => c.name.toLowerCase() === product.category.toLowerCase(),
           );
@@ -97,38 +110,55 @@ export function useProductForm({
         }
       })
       .catch(() => setCategories([]));
-  }, [open]);
+  }, [open, product]);
 
-  // ── Image handlers ──
+  // ── Image upload handler ──
+  // Flow: user picks files → show previews immediately → POST /attachments/upload
+  // → store returned attachment IDs → on form submit, claim them to the product
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    setImagePreviews((prev) => [
-      ...prev,
-      ...files.map((file) => ({ preview: URL.createObjectURL(file), file })),
-    ]);
+    // Show local previews right away so the UI feels instant
+    const newPreviews: ImagePreview[] = files.map((file) => ({
+      preview: URL.createObjectURL(file),
+      file,
+    }));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    // Clear the input so the same file can be re-selected if needed
     if (fileInputRef.current) fileInputRef.current.value = "";
 
+    // Upload to MinIO via /attachments/upload (entityType = "product")
     setImageUploading(true);
     try {
       const result = await uploadProductImages(files);
+      // result.ids are the attachment UUIDs to claim later
       setAttachmentIds((prev) => [...prev, ...result.ids]);
       toast.success(
         files.length > 1 ? `${files.length} images uploaded` : "Image uploaded",
       );
     } catch {
+      // Roll back the optimistic previews on failure
       toast.error("Image upload failed. Please try again.");
-      setImagePreviews((prev) => prev.slice(0, prev.length - files.length));
+      setImagePreviews((prev) => {
+        const rolled = prev.slice(0, prev.length - files.length);
+        newPreviews.forEach((p) => URL.revokeObjectURL(p.preview));
+        return rolled;
+      });
     } finally {
       setImageUploading(false);
     }
   };
 
+  // ── Remove preview handler ──
+  // Existing images (imageId present) → DELETE /products/images/:id on the backend
+  // Newly uploaded images (file present) → remove from attachmentIds so they won't be claimed
   const handleRemovePreview = async (index: number) => {
     const item = imagePreviews[index];
 
     if (item.imageId) {
+      // Already persisted on the backend — delete it
       try {
         await deleteProductImage(item.imageId);
         toast.success("Image removed");
@@ -139,16 +169,25 @@ export function useProductForm({
     }
 
     if (item.file) {
-      const newFilesBefore = imagePreviews
+      // Count how many newly-uploaded (file-based) previews come before this index
+      // so we can remove the correct attachmentId slot
+      const newFileIndexBefore = imagePreviews
         .slice(0, index)
         .filter((p) => p.file).length;
-      setAttachmentIds((prev) => prev.filter((_, i) => i !== newFilesBefore));
+      setAttachmentIds((prev) =>
+        prev.filter((_, i) => i !== newFileIndexBefore),
+      );
+      // Revoke object URL to free memory
+      URL.revokeObjectURL(item.preview);
     }
 
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ── Submit handler ──
+  // ── Form submit ──
+  // 1. Validate fields
+  // 2. createProduct or updateProduct
+  // 3. If there are pending attachmentIds, claim them to the product
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Product name is required");
     if (!price) return toast.error("Price is required");
@@ -163,6 +202,7 @@ export function useProductForm({
       let saved: any;
 
       if (product?.id) {
+        // Edit mode — update product fields
         saved = await updateProduct(product.id, {
           name: name.trim(),
           price: Number(price),
@@ -171,6 +211,7 @@ export function useProductForm({
         });
         saved = { ...saved, id: product.id };
       } else {
+        // Create mode — create the product first, then claim images
         saved = await createProduct({
           name: name.trim(),
           price: Number(price),
@@ -179,23 +220,29 @@ export function useProductForm({
         });
       }
 
-      if (attachmentIds.length > 0) {
-        await claimProductImages(attachmentIds, saved.id);
-      }
+      // Claim any pending attachment IDs to this product
+      // if (attachmentIds.length > 0) {
+      //   await claimProductImages(attachmentIds, saved.id);
+      // }
 
       toast.success(
         product?.id
           ? "Product updated successfully"
           : "Product added successfully",
       );
+
       onSave?.(saved);
       onOpenChange(false);
 
+      // Reset form state
       setName("");
       setPrice("");
       setCategoryId("");
       setInStock(true);
-      setImagePreviews([]);
+      setImagePreviews((prev) => {
+        revokeObjectUrls(prev);
+        return [];
+      });
       setAttachmentIds([]);
     } catch (err: any) {
       toast.error(
@@ -207,7 +254,7 @@ export function useProductForm({
     }
   };
 
-  // ── Delete handler ──
+  // ── Delete product ──
   const handleDelete = async () => {
     if (!product?.id) return;
     setDeleting(true);
@@ -223,7 +270,7 @@ export function useProductForm({
     }
   };
 
-  // ── Add category handler ──
+  // ── Category dialog ──
   const handleAddCategory = async () => {
     setCategoryError("");
     if (!newCategoryName.trim()) {

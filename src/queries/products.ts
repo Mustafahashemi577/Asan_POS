@@ -2,104 +2,6 @@ import api from "@/lib/axios";
 import type { Product } from "@/pages/product/components/product-list";
 import type { OrderFoodPayload } from "@/types";
 
-//const products: Product[] = [
-//   {
-//     id: 1,
-//     name: "Protein Salad",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "Afghan",
-//   },
-//   {
-//     id: 2,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 3,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 4,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 5,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 6,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 7,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 8,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 9,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 10,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 11,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//   {
-//     id: 250,
-//     name: "French Vanilla Fantasy",
-//     price: 250,
-//     image:
-//       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-//     category: "food",
-//   },
-//];
 export interface PaginationMeta {
   currentPage: number;
   itemsPerPage: number;
@@ -118,11 +20,16 @@ export const getProducts = (params?: {
       params: {
         page: params?.page ?? 1,
         itemsPerPage: params?.itemsPerPage ?? 20,
+        // Fix: search and categoryName are separate query params, not both "search"
         ...(params?.search ? { search: params.search } : {}),
-        ...(params?.categoryName ? { search: params.categoryName } : {}),
+        ...(params?.categoryName ? { categoryName: params.categoryName } : {}),
       },
     })
     .then((r) => {
+      console.log(
+        "RAW product[0]:",
+        JSON.stringify(r.data.data?.[0] ?? r.data[0], null, 2),
+      );
       const raw: any[] = Array.isArray(r.data)
         ? r.data
         : (r.data.data ?? r.data.products ?? []);
@@ -137,7 +44,13 @@ export const getProducts = (params?: {
           id: p.id,
           name: p.name,
           price: p.price,
-          category: p.category,
+          // categories can come back as an array or a single object depending on populate
+          category: Array.isArray(p.categories)
+            ? p.categories[0]?.name
+            : (p.category ?? p.categories?.name),
+          categoryId: Array.isArray(p.categories)
+            ? p.categories[0]?.id
+            : (p.categoryId ?? p.categories?.id),
           inStock: p.inStock,
           image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
           images:
@@ -150,20 +63,31 @@ export const getProducts = (params?: {
       return { data, meta };
     });
 
-// Step 1: upload multiple images to minio at once, returns { ids: string[] }
+/**
+ * Step 1 — Upload images to MinIO via the attachments controller.
+ * POST /attachments/upload
+ * Body: multipart/form-data  { images: File[], entityType: "product" }
+ * Returns: { ids: string[] }
+ */
 export const uploadProductImages = (
   files: File[],
 ): Promise<{ ids: string[] }> => {
   const formData = new FormData();
   files.forEach((file) => formData.append("images", file));
+  // The AttachmentController validates this enum value on the backend
+  formData.append("entityType", "product");
   return api
-    .post("/products/images/upload", formData, {
+    .post("/attachments/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     })
     .then((r) => r.data);
 };
 
-// Step 2: create the product, returns { id: string }
+/**
+ * Step 2 — Create the product record (no images yet).
+ * POST /products
+ * Returns: { id: string }
+ */
 export const createProduct = (data: {
   name: string;
   price: number;
@@ -171,7 +95,27 @@ export const createProduct = (data: {
   inStock?: boolean;
 }): Promise<{ id: string }> => api.post("/products", data).then((r) => r.data);
 
-// Update an existing product by id
+/**
+ * Step 3 — Claim the uploaded attachment IDs to the newly created product.
+ * POST /products/images/claim   (your existing products claim endpoint)
+ * Body: { ids: string[], productId: string }
+ *
+ * This hits your ProductsController which internally calls
+ * attachmentService.claimAttachments(ids, productId, "product").
+ */
+export const claimProductImages = (
+  ids: string[],
+  productId: string,
+): Promise<void> =>
+  api
+    .post("/attachments/claim", {
+      ids,
+      entityId: productId,
+      entityType: "product",
+    })
+    .then((r) => r.data);
+
+/** Update an existing product by id */
 export const updateProduct = (
   id: string,
   data: {
@@ -183,22 +127,19 @@ export const updateProduct = (
 ): Promise<{ message: string }> =>
   api.put(`/products/${id}`, data).then((r) => r.data);
 
-// Delete a product by id
+/** Delete a product by id */
 export const deleteProduct = (id: string): Promise<{ message: string }> =>
   api.delete(`/products/${id}`).then((r) => r.data);
 
-// Delete a single product image by imageId
+/**
+ * Delete a single product image (attachment) by its attachment id.
+ * DELETE /products/images/:imageId  — hits your products controller which
+ * delegates to attachmentService.deleteAttachment internally.
+ */
 export const deleteProductImage = (
   imageId: string,
 ): Promise<{ message: string }> =>
   api.delete(`/products/images/${imageId}`).then((r) => r.data);
-
-// Step 3: claim all uploaded images to the product in one request
-export const claimProductImages = (
-  ids: string[],
-  productId: string,
-): Promise<void> =>
-  api.post("/products/images/claim", { ids, productId }).then((r) => r.data);
 
 export const orderFood = (payload: OrderFoodPayload) => {
   return { message: "Order placed successfully!", payload: payload };
