@@ -84,7 +84,9 @@ export const createProduct = (data: {
   price: number;
   categoryName: string;
   inStock?: boolean;
-}): Promise<{ id: string }> => api.post("/products", data).then((r) => r.data);
+  attachmentIds?: string[];
+}): Promise<{ message: string }> =>
+  api.post("/products", data).then((r) => r.data);
 
 /**
  * Step 3 — Claim the uploaded attachment IDs to the newly created product.
@@ -114,6 +116,7 @@ export const updateProduct = (
     price: number;
     categoryName: string;
     inStock?: boolean;
+    attachmentIds?: string[];
   },
 ): Promise<{ message: string }> =>
   api.put(`/products/${id}`, data).then((r) => r.data);

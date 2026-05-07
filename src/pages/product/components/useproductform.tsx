@@ -192,28 +192,25 @@ export function useProductForm({
       let saved: any;
 
       if (product?.id) {
-        // Edit mode — update product fields
+        // Edit mode — pass new attachment IDs so backend claims + creates ProductImages
         saved = await updateProduct(product.id, {
           name: name.trim(),
           price: Number(price),
           categoryName: selectedCategory.name,
           inStock,
+          ...(attachmentIds.length > 0 ? { attachmentIds } : {}),
         });
         saved = { ...saved, id: product.id };
       } else {
-        // Create mode — create the product first, then claim images
+        // Create mode — backend claims attachments atomically inside create
         saved = await createProduct({
           name: name.trim(),
           price: Number(price),
           categoryName: selectedCategory.name,
           inStock,
+          ...(attachmentIds.length > 0 ? { attachmentIds } : {}),
         });
       }
-
-      // Claim any pending attachment IDs to this product
-      // if (attachmentIds.length > 0) {
-      //   await claimProductImages(attachmentIds, saved.id);
-      // }
 
       toast.success(
         product?.id
