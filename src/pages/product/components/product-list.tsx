@@ -5,8 +5,9 @@ export interface Product {
   name: string;
   price: number;
   image: string;
-  images?: { id: string; url: string }[]; // full image objects with id for deletion
+  images?: { id: string; url: string }[];
   category?: string;
+  categoryId?: string;
   inStock?: boolean;
 }
 
