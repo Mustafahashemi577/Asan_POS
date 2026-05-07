@@ -135,21 +135,21 @@ export function AddEditProduct({
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name Product"
+          placeholder="Product Name"
           className="h-11 rounded-xl bg-white border-gray-200 text-sm"
           disabled={isLoading}
         />
 
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
-            $
+          <span className="absolute left-2 top-12/23 -translate-y-1/2 text-sm text-gray-500 pointer-events-none">
+            AFN:
           </span>
           <Input
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             placeholder="0"
-            className="h-11 rounded-xl bg-white border-gray-200 text-sm pl-8"
+            className="h-11 rounded-xl bg-white border-gray-200 text-sm pl-12"
             disabled={isLoading}
           />
         </div>
