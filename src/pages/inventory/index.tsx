@@ -229,7 +229,7 @@ export default function Inventory() {
   };
 
   return (
-    <div className="min-h-screen bg-white rounded-b-xl overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
         {/* ── STATS CARDS ─────────────────────────────────────────────── */}
         <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">

@@ -48,7 +48,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
   ];
 
   return (
-    <header className="bg-white md:rounded-t-xl top-0 z-20">
+    <header className="bg-white sm:rounded-t-xl sm:mt-2.5 sm:mx-2.5 sticky top-0 z-20">
       {/* ================= MOBILE ================= */}
 
       <div className="md:hidden px-4 py-3 flex flex-col gap-3">
@@ -63,7 +63,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
             <Button
               variant="outline"
               size="icon"
-              className="bg-white w-9 h-9 rounded-sm"
+              className="w-8 h-8 rounded-full"
             >
               <Bell size={14} />
             </Button>
@@ -175,7 +175,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
           <Separator orientation="vertical" className="mt-1.5 h-6" />
 
-          <Button variant="outline" size="icon" className="w-9 h-9 bg-white">
+          <Button variant="outline" size="icon" className="w-8 h-8 bg-white">
             <Bell size={14} />
           </Button>
 
