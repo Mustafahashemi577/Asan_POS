@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/category",
+        path: "/categories",
         element: (
           <PrivateRoute>
             <Category />
@@ -53,7 +53,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/product",
+        path: "/products",
         element: (
           <PrivateRoute>
             <Product />
@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/transaction",
+        path: "/transactions",
         element: (
           <PrivateRoute>
             <Transaction />
@@ -69,7 +69,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/report",
+        path: "/reports",
         element: (
           <PrivateRoute>
             <Report />
@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/inventory",
+        path: "/inventories",
         element: (
           <PrivateRoute>
             <Inventory />
