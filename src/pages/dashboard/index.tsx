@@ -11,16 +11,15 @@ import {
 import { useProfile } from "@/hooks/useprofile";
 import DashboardStatsCard from "@/pages/dashboard/dashboardStatsCard";
 import { useState } from "react";
-//import { useNavigate } from "react-router-dom";
-// import {
-//   Bar,
-//   BarChart,
-//   CartesianGrid,
-//   ResponsiveContainer,
-//   Tooltip,
-//   XAxis,
-//   YAxis,
-// } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -74,17 +73,17 @@ const monthlyData = [
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
-// const CustomTooltip = ({ active, payload, label }: any) => {
-//   if (active && payload?.length) {
-//     return (
-//       <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
-//         <p className="font-medium">{label}</p>
-//         <p className="text-green-400">{payload[0].value} AFN</p>
-//       </div>
-//     );
-//   }
-//   return null;
-// };
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload?.length) {
+    return (
+      <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
+        <p className="font-medium">{label}</p>
+        <p className="text-green-400">{payload[0].value} AFN</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -134,7 +133,6 @@ export default function Dashboard() {
             <h3 className="text-sm font-semibold text-gray-900 mb-1">
               Total Income
             </h3>
-
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-gray-400 mb-0.5">Balance</p>
@@ -156,48 +154,48 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Chart is horizontally scrollable on very small screens */}
-            {/* <div className="overflow-x-auto">
-              <div className="min-w-[260px]">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
-                    data={chartData}
-                    barSize={22}
-                    margin={{ top: 4, right: 0, left: -28, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      vertical={false}
-                      stroke="#f0f0f0"
-                      strokeDasharray="3 3"
-                    />
-                    <XAxis
-                      dataKey="day"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: "#9ca3af" }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: "#9ca3af" }}
-                    />
-                    <Tooltip
-                      content={<CustomTooltip />}
-                      cursor={{ fill: "rgba(0,0,0,0.04)", radius: 6 }}
-                    />
-                    <Bar
-                      dataKey="income"
-                      fill="#111827"
-                      radius={[6, 6, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+            {
+              <div className="overflow-x-auto">
+                <div className="min-w-[260px]">
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={chartData}
+                      barSize={22}
+                      margin={{ top: 4, right: 0, left: -28, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        stroke="#f0f0f0"
+                        strokeDasharray="3 3"
+                      />
+                      <XAxis
+                        dataKey="day"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                      />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        cursor={{ fill: "rgba(0,0,0,0.04)", radius: 6 }}
+                      />
+                      <Bar
+                        dataKey="income"
+                        fill="#111827"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div> */}
+            }
           </div>
 
-          {/* ── Employee List ──
+          {/* { ── Employee List ──
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900">
@@ -212,7 +210,7 @@ export default function Dashboard() {
                 </Button>
               </div>
 
-              <div className="space-y-3">
+              { <div className="space-y-3">
                 {mockEmployees.map((emp) => (
                   <div key={emp.id} className="flex items-center gap-3">
                     <Avatar className="w-9 h-9 shrink-0">
@@ -232,8 +230,9 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div> */}
+              </div> }
+            </div>
+        </div> */}
         </div>
       </div>
     </div>

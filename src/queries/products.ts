@@ -8,8 +8,8 @@ export interface PaginationMeta {
   totalItems: number;
   totalPages: number;
   search?: string;
-  filters?: Record<string, any>;
-  sorts?: Record<string, any>;
+  filters?: Record<string, string>;
+  sorts?: Record<string, string>;
 }
 
 export const getProducts = (params?: {
