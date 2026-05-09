@@ -2,10 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import api from "@/lib/axios";
 import { useAuthStore } from "@/lib/store";
 import TwoFADialog from "@/pages/(auth)/two-fa-dialog";
-import { login } from '@/queries/auth';
+import { login } from "@/queries/auth";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +43,12 @@ export default function LoginForm() {
 
     try {
       setLoading(true);
-      const res = await login({email: form.email, password: form.password})
+      const res = await login({ email: form.email, password: form.password });
+      if (res.data.twoFactorRequired) {
+        setTwoFAOpen(true);
+        setLoading(false);
+        return;
+      }
 
       setAuth({ id: "", email: form.email || "" }, res.data.token);
       navigate("/dashboard", { replace: true });

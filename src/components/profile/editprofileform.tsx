@@ -2,7 +2,11 @@ import { Button } from "@/components/ui/button";
 import DateInput from "@/components/ui/DateInput";
 import GenderDropdown from "@/components/ui/GenderDropdown";
 import { Input } from "@/components/ui/input";
-import api from "@/lib/axios";
+import {
+  removeEmployeeImage,
+  updateEmployeeInfo,
+  uploadEmployeeImage,
+} from "@/queries/employee";
 import type { EmployeeInfo } from "@/types/";
 import { display, getInitials } from "@/utils/profile.helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -104,9 +108,8 @@ export default function EditProfileForm({
     try {
       const formData = new FormData();
       formData.append("image", file);
-      const res = await api.post("/employees/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      formData.append("entityType", "employee");
+      const res = await uploadEmployeeImage(formData);
       setAttachmentId(res.data.id);
     } catch {
       setAttachmentId(null);
@@ -131,11 +134,11 @@ export default function EditProfileForm({
     });
 
     if (attachmentId) {
-      await api.post("/employees/claim", { id: attachmentId });
+      (payload as Record<string, unknown>).attachmentId = attachmentId;
     }
 
     if (imageRemoved) {
-      await api.delete("/attachments/img");
+      await removeEmployeeImage();
     }
 
     if (data.password && data.oldPassword) {
@@ -147,7 +150,10 @@ export default function EditProfileForm({
     if (emailChanged) payload.email = data.email;
 
     try {
-      await api.put("/employees/info", { ...payload, gender: data.gender });
+      await updateEmployeeInfo({
+        ...payload,
+        gender: data.gender,
+      } as Parameters<typeof updateEmployeeInfo>[0]);
 
       if (emailChanged) {
         onEmailChange(data.email);
