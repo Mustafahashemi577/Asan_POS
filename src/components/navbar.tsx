@@ -39,11 +39,11 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
   const items = [
     { label: "Dashboard", path: "/dashboard" },
-    { label: "Category", path: "/category" },
-    { label: "Product", path: "/product" },
-    { label: "Transaction", path: "/transaction" },
-    { label: "Report", path: "/report" },
-    { label: "Inventory", path: "/inventory" },
+    { label: "Categories", path: "/categories" },
+    { label: "Products", path: "/products" },
+    { label: "Transactions", path: "/transactions" },
+    { label: "Reports", path: "/reports" },
+    { label: "Inventories", path: "/inventories" },
     { label: "Purchase", path: "/Purchase" },
   ];
 
