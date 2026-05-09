@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 
 export default function AppLayout() {
-  const { profile, isLoading, error } = useProfile();
+  const { profile, isLoading, fetchError } = useProfile();
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -16,7 +16,7 @@ export default function AppLayout() {
   }
 
   // ── Auth guard — redirect to login if profile fetch failed ───────────────
-  if (error || !profile) {
+  if (fetchError || !profile) {
     return <Navigate to="/" replace />;
   }
 
