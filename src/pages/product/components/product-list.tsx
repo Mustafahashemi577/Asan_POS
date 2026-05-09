@@ -26,9 +26,13 @@ export function ProductList({
 }: ProductListProps) {
   if (products.length === 0) {
     return (
-      <p className="text-center text-gray-400 py-16 text-sm">
-        No products found
-      </p>
+      <div className="items-center">
+        <img
+          src="../../../public/photos/NotFound.jpeg"
+          alt="Not Found!"
+          className="max-h-100 max-w-150 absolute right-200 items-center text-center mt-20"
+        />
+      </div>
     );
   }
 

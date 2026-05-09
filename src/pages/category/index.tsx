@@ -101,12 +101,12 @@ export default function Category() {
   };
 
   return (
-    <div className="p-2.5">
-      <div className="flex flex-col sm:flex-row ml-2 sm:items-center sm:justify-between gap-3 mb-6">
+    <div className="p-2.5 m-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Category</h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row ml-3 sm:items-center sm:justify-between gap-3 mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
         <Input
           placeholder="Search category..."
           value={search}
@@ -121,11 +121,27 @@ export default function Category() {
 
       {/* CONTENT */}
       {!categories ? (
-        <p className="text-sm text-gray-500">No Categories found</p>
+        <div className="justify-center items-center absolute-right-180 max-w-200 max-h-200">
+          <p className="text-sm text-gray-600">No Categories found</p>
+          <img src="../../../public/photos/NotFound2.jpeg" alt="Not Found" />
+        </div>
       ) : categories.length === 0 ? (
-        <p className="text-sm text-gray-500">No categories yet</p>
+        <div className="justify-center absolute right-180 items-center max-w-100 max-h-100">
+          <p className="text-center text-gray-500">
+            No categories yet! <br />
+          </p>
+          <img
+            src="../../../public/photos/NotFound2.jpeg"
+            alt="Not Found"
+            className="max-w-100 max-h-100"
+          />
+          <p className="text-center text-gray-600">
+            {" "}
+            Create Your first Category to get Started
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mx-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat: any) => (
             <div
               key={cat.id}
