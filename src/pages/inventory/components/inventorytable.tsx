@@ -21,7 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getCategories } from "@/queries/category";
 import { MoreHorizontal, Search, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import type {
   InventoryItem,
   StockStatus,
@@ -47,7 +49,6 @@ type Props = ReturnType<typeof useInventory>;
 export default function InventoryTable({
   selectedInventory,
   filtered,
-  categories,
   category,
   setCategory,
   status,
@@ -63,7 +64,6 @@ export default function InventoryTable({
   Props,
   | "selectedInventory"
   | "filtered"
-  | "categories"
   | "category"
   | "setCategory"
   | "status"
@@ -76,6 +76,25 @@ export default function InventoryTable({
   | "setSelectedRow"
   | "setItemDialogOpen"
 >) {
+  // Fetch categories from the API
+  type Category = {
+    id: string | number;
+    name: string;
+    store?: unknown;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  useEffect(() => {
+    setCategoriesLoading(true);
+    getCategories()
+      .then((data) => setCategories(data ?? []))
+      .catch(() => setCategories([]))
+      .finally(() => setCategoriesLoading(false));
+  }, []);
+
   // Row action handlers — wire up your own modals here
   const handleView = (item: InventoryItem) => console.log("View:", item);
   const handleEdit = (item: InventoryItem) => console.log("Edit:", item);
@@ -95,18 +114,24 @@ export default function InventoryTable({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:shrink-0">
-          {/* Category filter */}
+          {/* Category filter — loaded from API */}
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
+              {categoriesLoading ? (
+                <SelectItem value="__loading__" disabled>
+                  Loading…
                 </SelectItem>
-              ))}
+              ) : (
+                categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
 

@@ -113,7 +113,6 @@ export default function Inventory() {
           <InventoryTable
             selectedInventory={inv.selectedInventory}
             filtered={inv.filtered}
-            categories={inv.categories}
             category={inv.category}
             setCategory={inv.setCategory}
             status={inv.status}
