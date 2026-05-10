@@ -9,6 +9,7 @@ import {
   type Inventory,
 } from "@/queries/inventory";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { Building2, Loader2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -21,6 +22,10 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type ApiErrorResponse = {
+  message?: string;
+};
 
 interface AddInventoryFormProps {
   /** Pass an existing inventory to switch into edit mode */
@@ -63,11 +68,15 @@ export default function AddInventoryForm({
         toast.success("Inventory created successfully!");
         onSuccess(result.id);
       }
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error.message ??
-        `Failed to ${isEdit ? "update" : "create"} inventory`;
+    } catch (error: unknown) {
+      let message = `Failed to ${isEdit ? "update" : "create"} inventory`;
+
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        message = error.response?.data?.message ?? error.message ?? message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       toast.error(message);
     }
   }
@@ -82,15 +91,20 @@ export default function AddInventoryForm({
     }
 
     setDeleteLoading(true);
+
     try {
       await deleteInventory(inventory.id);
       toast.success("Inventory deleted successfully!");
       onDeleted?.();
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error.message ??
-        "Failed to delete inventory";
+    } catch (error: unknown) {
+      let message = "Failed to delete inventory";
+
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        message = error.response?.data?.message ?? error.message ?? message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       toast.error(message);
       setConfirmingDelete(false);
     } finally {
@@ -109,10 +123,12 @@ export default function AddInventoryForm({
             <Building2 size={20} className="text-black-600" />
           )}
         </div>
+
         <div>
           <p className="text-sm font-medium text-gray-900">
             {isEdit ? "Edit inventory" : "Add inventory"}
           </p>
+
           <p className="text-xs text-gray-400 mt-0.5">
             {isEdit
               ? "Update the details for this inventory location"
@@ -130,10 +146,12 @@ export default function AddInventoryForm({
           >
             Inventory name
           </FieldLabel>
+
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
               <Building2 size={15} />
             </span>
+
             <Input
               id="inv-name"
               placeholder="e.g. Main Warehouse"
@@ -141,6 +159,7 @@ export default function AddInventoryForm({
               {...form.register("name")}
             />
           </div>
+
           <FieldError>{form.formState.errors.name?.message}</FieldError>
         </Field>
 
@@ -152,10 +171,12 @@ export default function AddInventoryForm({
           >
             Address
           </FieldLabel>
+
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
               <MapPin size={15} />
             </span>
+
             <Input
               id="inv-address"
               placeholder="e.g. Kabul, Kart-e-4, Street No. 11"
@@ -163,9 +184,11 @@ export default function AddInventoryForm({
               {...form.register("address")}
             />
           </div>
+
           <p className="text-[11px] text-gray-400 mt-1">
             Enter the full street address of this inventory location
           </p>
+
           <FieldError>{form.formState.errors.address?.message}</FieldError>
         </Field>
 
@@ -201,7 +224,6 @@ export default function AddInventoryForm({
               )}
             </Button>
           ) : (
-            // spacer so the right-side buttons stay right-aligned on add mode
             <span />
           )}
 
@@ -221,6 +243,7 @@ export default function AddInventoryForm({
                 Cancel
               </Button>
             )}
+
             <Button
               type="submit"
               size="sm"
@@ -235,6 +258,7 @@ export default function AddInventoryForm({
               ) : (
                 <>
                   {isEdit ? <Pencil size={13} /> : <Plus size={13} />}
+
                   {isEdit ? "Save changes" : "Add inventory"}
                 </>
               )}
