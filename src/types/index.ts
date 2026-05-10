@@ -63,3 +63,8 @@ export interface InventoryItem {
   status: StockStatus;
   lastUpdated: string; // ISO yyyy-mm-dd
 }
+
+export interface Category {
+  id: string;
+  name: string;
+}

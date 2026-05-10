@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Plus, Search, XIcon } from "lucide-react";
+import { MoreHorizontal, Search, XIcon } from "lucide-react";
 import type {
   InventoryItem,
   StockStatus,
@@ -58,7 +58,7 @@ export default function InventoryTable({
   setSearchOpen,
   selectedRow,
   setSelectedRow,
-  setItemDialogOpen,
+  //setItemDialogOpen,
 }: Pick<
   Props,
   | "selectedInventory"
@@ -95,16 +95,6 @@ export default function InventoryTable({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:shrink-0">
-          {/* Add Item — left of category filter */}
-          <Button
-            onClick={() => setItemDialogOpen(true)}
-            size="sm"
-            className="rounded-xl gap-1.5 text-xs h-10"
-          >
-            <Plus size={13} />
-            Add Item
-          </Button>
-
           {/* Category filter */}
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">

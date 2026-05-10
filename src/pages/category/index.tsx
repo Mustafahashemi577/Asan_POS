@@ -16,8 +16,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { Category } from "@/types";
 
-export default function Category() {
+export default function category() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -45,7 +46,7 @@ export default function Category() {
     setError("");
   };
 
-  const openEdit = (cat: any) => {
+  const openEdit = (cat: Category) => {
     setEditing(cat);
     setName(cat.name);
     setOpen(true);
@@ -62,7 +63,7 @@ export default function Category() {
 
     // OPTIONAL: frontend duplicate check (fast UX)
     const exists = categories?.some(
-      (c: any) =>
+      (c: Category) =>
         c.name.toLowerCase() === name.trim().toLowerCase() &&
         c.id !== editing?.id,
     );
