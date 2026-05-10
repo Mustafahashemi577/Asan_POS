@@ -2,11 +2,13 @@ import AppLayout from "@/components/layout/app-layout";
 
 import Login from "@/pages/(auth)/login";
 import Category from "@/pages/category";
+import Contacts from "@/pages/contacts";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Product from "@/pages/product";
 import ProfilePage from "@/pages/profile";
-import Purchase from "@/pages/purchase";
+import Purchases from "@/pages/Purchases";
+import NewPurchasePage from "@/pages/Purchases/new";
 import Report from "@/pages/report";
 import Transaction from "@/pages/transaction";
 import { createBrowserRouter } from "react-router-dom";
@@ -85,10 +87,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/purchase",
+        path: "/Purchases",
         element: (
           <PrivateRoute>
-            <Purchase />
+            <Purchases />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/Purchases/new",
+        element: (
+          <PrivateRoute>
+            <NewPurchasePage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/contacts",
+        element: (
+          <PrivateRoute>
+            <Contacts />
           </PrivateRoute>
         ),
       },

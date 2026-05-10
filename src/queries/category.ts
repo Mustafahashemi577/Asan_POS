@@ -2,7 +2,7 @@ import api from "@/lib/axios";
 
 export const getCategories = async (search?: string) => {
   const res = await api.get("/categories", {
-    params: { search },
+    params: search ? { search } : {},
   });
   return res.data;
 };
