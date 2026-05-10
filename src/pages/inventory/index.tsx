@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import AddInventoryForm from "./components/addinventoryform";
 import InventoryStats from "./components/inventorystats";
 import InventoryTable from "./components/inventorytable";
@@ -14,7 +14,7 @@ import { useInventory } from "./hooks/useinventory";
 export default function Inventory() {
   const inv = useInventory();
 
-  // ── Dialogs defined once, shared across all render branches
+  // ── Add Inventory dialog
   const inventoryDialog = (
     <Dialog
       open={inv.inventoryDialogOpen}
@@ -32,7 +32,7 @@ export default function Inventory() {
     </Dialog>
   );
 
-  // Swap <div>Placeholder</div> with your AddItemForm component when ready
+  // ── Add Item dialog
   const itemDialog = (
     <Dialog open={inv.itemDialogOpen} onOpenChange={inv.setItemDialogOpen}>
       <DialogContent className="sm:max-w-lg rounded-2xl">
@@ -47,12 +47,71 @@ export default function Inventory() {
     </Dialog>
   );
 
+  // ── Delete Inventory confirmation dialog
+  const deleteDialog = (
+    <Dialog
+      open={inv.deleteDialogOpen}
+      onOpenChange={(open) => {
+        if (!open) inv.cancelDelete();
+      }}
+    >
+      <DialogContent className="sm:max-w-sm rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Trash2 size={16} className="text-red-500" />
+            Delete Inventory
+          </DialogTitle>
+        </DialogHeader>
+
+        <p className="text-sm text-gray-500 mt-1">
+          Are you sure you want to delete{" "}
+          <span className="font-semibold text-gray-900">
+            {inv.inventoryToDelete?.name}
+          </span>
+          ? This action cannot be undone and all items within it will be lost.
+        </p>
+
+        <div className="flex justify-end gap-2 mt-4">
+          <Button
+            variant="default"
+            size="sm"
+            className="rounded-xl"
+            onClick={inv.cancelDelete}
+            disabled={inv.deleteLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="rounded-xl gap-1.5"
+            onClick={inv.handleDeleteInventory}
+            disabled={inv.deleteLoading}
+          >
+            {inv.deleteLoading ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                Deleting…
+              </>
+            ) : (
+              <>
+                <Trash2 size={13} />
+                Delete
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   // ── Loading
   if (inv.loading) {
     return (
       <>
         {inventoryDialog}
         {itemDialog}
+        {deleteDialog}
         <div className="flex items-center justify-center h-64 text-gray-400 gap-2">
           <Loader2 className="animate-spin size-5" />
           <span className="text-sm">Loading inventories…</span>
@@ -67,6 +126,7 @@ export default function Inventory() {
       <>
         {inventoryDialog}
         {itemDialog}
+        {deleteDialog}
         <div className="flex items-center justify-center h-64">
           <p className="text-sm text-red-500">{inv.error}</p>
         </div>
@@ -80,6 +140,7 @@ export default function Inventory() {
       <>
         {inventoryDialog}
         {itemDialog}
+        {deleteDialog}
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <p className="text-sm text-gray-400">No inventories found.</p>
           <Button
@@ -100,6 +161,7 @@ export default function Inventory() {
     <>
       {inventoryDialog}
       {itemDialog}
+      {deleteDialog}
 
       <div className="overflow-y-auto">
         <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
@@ -109,6 +171,7 @@ export default function Inventory() {
             stats={inv.stats}
             switchInventory={inv.switchInventory}
             setInventoryDialogOpen={inv.setInventoryDialogOpen}
+            confirmDelete={inv.confirmDelete}
           />
           <InventoryTable
             selectedInventory={inv.selectedInventory}

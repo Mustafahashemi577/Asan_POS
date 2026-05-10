@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import type { useInventory } from "../hooks/useinventory";
 
 type Props = ReturnType<typeof useInventory>;
@@ -16,6 +16,7 @@ export default function InventoryStats({
   stats,
   switchInventory,
   setInventoryDialogOpen,
+  confirmDelete,
 }: Pick<
   Props,
   | "inventories"
@@ -23,6 +24,7 @@ export default function InventoryStats({
   | "stats"
   | "switchInventory"
   | "setInventoryDialogOpen"
+  | "confirmDelete"
 >) {
   return (
     <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
@@ -54,10 +56,19 @@ export default function InventoryStats({
               {inventories.map((inv) => (
                 <DropdownMenuItem
                   key={inv.id}
-                  className="text-xs cursor-pointer"
+                  className="text-xs cursor-pointer flex items-center justify-between gap-2 pr-1"
                   onClick={() => switchInventory(inv.id)}
                 >
-                  {inv.name}
+                  <span className="truncate">{inv.name}</span>
+                  <button
+                    className="shrink-0 text-gray-400 hover:text-red-500 transition-colors p-0.5 rounded"
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent switchInventory from firing
+                      confirmDelete(inv);
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

@@ -3,7 +3,10 @@ import type {
   InventoryItem,
   StockStatus,
 } from "@/queries/inventory";
-import { getInventories } from "@/queries/inventory";
+import {
+  deleteInventory as deleteInventoryApi,
+  getInventories,
+} from "@/queries/inventory";
 import { useEffect, useMemo, useState } from "react";
 
 export type { Inventory, InventoryItem, StockStatus };
@@ -17,6 +20,13 @@ export function useInventory() {
   // ── Dialog state
   const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
+
+  // ── Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [inventoryToDelete, setInventoryToDelete] = useState<Inventory | null>(
+    null,
+  );
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // ── Selection & filter state
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
@@ -72,6 +82,43 @@ export function useInventory() {
     setCategory("all");
     setStatus("all");
     setSearch("");
+  };
+
+  // ── Delete callbacks
+  const confirmDelete = (inv: Inventory) => {
+    setInventoryToDelete(inv);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteInventory = async () => {
+    if (!inventoryToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await deleteInventoryApi(inventoryToDelete.id);
+      const remaining = inventories.filter(
+        (i) => i.id !== inventoryToDelete.id,
+      );
+      setInventories(remaining);
+      // If the deleted inventory was selected, fall back to the first remaining one
+      if (selectedInventoryId === inventoryToDelete.id) {
+        setSelectedInventoryId(remaining[0]?.id ?? null);
+      }
+      setDeleteDialogOpen(false);
+      setInventoryToDelete(null);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ??
+          err.message ??
+          "Failed to delete inventory",
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setInventoryToDelete(null);
   };
 
   // ── Derived: selected inventory
@@ -152,6 +199,14 @@ export function useInventory() {
     setInventoryDialogOpen,
     itemDialogOpen,
     setItemDialogOpen,
+    // delete dialog state
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    inventoryToDelete,
+    deleteLoading,
+    confirmDelete,
+    handleDeleteInventory,
+    cancelDelete,
     // filter state
     category,
     setCategory,

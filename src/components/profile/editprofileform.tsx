@@ -130,7 +130,7 @@ export default function EditProfileForm({
     Object.keys(dirtyFields).forEach((key) => {
       const k = key as keyof FormValues;
       if (k === "password" || k === "oldPassword") return;
-      payload[k] = data[k];
+      payload[k] = data[k] ?? undefined;
     });
 
     if (attachmentId) {
