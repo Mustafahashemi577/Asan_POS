@@ -2,9 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { createInventory } from "@/queries/inventory";
+import {
+  createInventory,
+  deleteInventory,
+  updateInventory,
+  type Inventory,
+} from "@/queries/inventory";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, MapPin, Plus } from "lucide-react";
+import { Building2, Loader2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -17,32 +23,78 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface AddInventoryFormProps {
-  onSuccess: (newId: string) => void;
+  /** Pass an existing inventory to switch into edit mode */
+  inventory?: Inventory;
+  onSuccess: (id: string) => void;
+  onDeleted?: () => void;
   onCancel?: () => void;
 }
 
 export default function AddInventoryForm({
+  inventory,
   onSuccess,
+  onDeleted,
   onCancel,
 }: AddInventoryFormProps) {
+  const isEdit = !!inventory;
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", address: "" },
+    defaultValues: {
+      name: inventory?.name ?? "",
+      address: inventory?.address ?? "",
+    },
   });
 
   const { isSubmitting } = form.formState;
 
+  // ── Submit: create or update
   async function onSubmit(values: FormValues) {
     try {
-      const result = await createInventory(values);
-      toast.success("Inventory created successfully!");
-      onSuccess(result.id);
+      if (isEdit) {
+        await updateInventory(inventory.id, values);
+        toast.success("Inventory updated successfully!");
+        onSuccess(inventory.id);
+      } else {
+        const result = await createInventory(values);
+        toast.success("Inventory created successfully!");
+        onSuccess(result.id);
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.message ??
         error.message ??
-        "Failed to create inventory";
+        `Failed to ${isEdit ? "update" : "create"} inventory`;
       toast.error(message);
+    }
+  }
+
+  // ── Delete: two-step (click once to arm, click again to confirm)
+  async function handleDelete() {
+    if (!inventory) return;
+
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      await deleteInventory(inventory.id);
+      toast.success("Inventory deleted successfully!");
+      onDeleted?.();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ??
+        error.message ??
+        "Failed to delete inventory";
+      toast.error(message);
+      setConfirmingDelete(false);
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -51,12 +103,20 @@ export default function AddInventoryForm({
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center justify-center w-11 h-11 rounded-sm">
-          <Building2 size={20} className="text-black-600" />
+          {isEdit ? (
+            <Pencil size={20} className="text-gray-600" />
+          ) : (
+            <Building2 size={20} className="text-black-600" />
+          )}
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Add inventory</p>
+          <p className="text-sm font-medium text-gray-900">
+            {isEdit ? "Edit inventory" : "Add inventory"}
+          </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            Create a new inventory location for your store
+            {isEdit
+              ? "Update the details for this inventory location"
+              : "Create a new inventory location for your store"}
           </p>
         </div>
       </div>
@@ -112,28 +172,74 @@ export default function AddInventoryForm({
         {/* Divider */}
         <div className="border-t border-gray-100 pt-2" />
 
-        {/* Actions — centred */}
-        <div className="flex items-center justify-center gap-4.5">
-          {onCancel && (
+        {/* Actions */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Delete — only in edit mode */}
+          {isEdit ? (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={onCancel}
-              disabled={isSubmitting}
+              disabled={isSubmitting || deleteLoading}
+              onClick={handleDelete}
+              className={
+                confirmingDelete
+                  ? "text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-700"
+                  : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+              }
             >
-              Cancel
+              {deleteLoading ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                <>
+                  <Trash2 size={13} />
+                  {confirmingDelete ? "Sure? Click to confirm" : "Delete"}
+                </>
+              )}
             </Button>
+          ) : (
+            // spacer so the right-side buttons stay right-aligned on add mode
+            <span />
           )}
-          <Button
-            type="submit"
-            size="sm"
-            variant="default"
-            disabled={isSubmitting}
-          >
-            <Plus size={13} />
-            {isSubmitting ? "Adding…" : "Add inventory"}
-          </Button>
+
+          {/* Cancel + Save/Add */}
+          <div className="flex items-center gap-2">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setConfirmingDelete(false);
+                  onCancel();
+                }}
+                disabled={isSubmitting || deleteLoading}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="sm"
+              variant="default"
+              disabled={isSubmitting || deleteLoading}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  {isEdit ? "Saving…" : "Adding…"}
+                </>
+              ) : (
+                <>
+                  {isEdit ? <Pencil size={13} /> : <Plus size={13} />}
+                  {isEdit ? "Save changes" : "Add inventory"}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

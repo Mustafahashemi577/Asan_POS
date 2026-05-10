@@ -5,27 +5,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import type { useInventory } from "../hooks/useinventory";
+import type { Inventory } from "@/queries/inventory";
+import { ChevronDown, Pencil, Plus } from "lucide-react";
 
-type Props = ReturnType<typeof useInventory>;
+interface InventoryStatsProps {
+  inventories: Inventory[];
+  selectedInventory: Inventory | null;
+  stats: { label: string; value: string; date: string; sub: string }[];
+  switchInventory: (id: string) => void;
+  openAddInventoryDialog: () => void;
+  openEditInventoryDialog: (inv: Inventory) => void;
+}
 
 export default function InventoryStats({
   inventories,
   selectedInventory,
   stats,
   switchInventory,
-  setInventoryDialogOpen,
-  confirmDelete,
-}: Pick<
-  Props,
-  | "inventories"
-  | "selectedInventory"
-  | "stats"
-  | "switchInventory"
-  | "setInventoryDialogOpen"
-  | "confirmDelete"
->) {
+  openAddInventoryDialog,
+  openEditInventoryDialog,
+}: InventoryStatsProps) {
   return (
     <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
       {/* Header */}
@@ -59,15 +58,16 @@ export default function InventoryStats({
                   className="text-xs cursor-pointer flex items-center justify-between gap-2 pr-1"
                   onClick={() => switchInventory(inv.id)}
                 >
-                  <span className="truncate">{inv.name}</span>
+                  <span className="pencil">{inv.name}</span>
+                  {/* Trash icon → opens the edit dialog (which has delete inside) */}
                   <button
                     className="shrink-0 text-gray-400 hover:text-red-500 transition-colors p-0.5 rounded"
                     onClick={(e) => {
-                      e.stopPropagation(); // prevent switchInventory from firing
-                      confirmDelete(inv);
+                      e.stopPropagation(); // don't fire switchInventory
+                      openEditInventoryDialog(inv);
                     }}
                   >
-                    <Trash2 size={12} />
+                    <Pencil size={12} />
                   </button>
                 </DropdownMenuItem>
               ))}
@@ -75,7 +75,7 @@ export default function InventoryStats({
           </DropdownMenu>
 
           <Button
-            onClick={() => setInventoryDialogOpen(true)}
+            onClick={openAddInventoryDialog}
             size="sm"
             className="rounded-xl gap-1.5 text-xs"
           >

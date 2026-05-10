@@ -3,10 +3,7 @@ import type {
   InventoryItem,
   StockStatus,
 } from "@/queries/inventory";
-import {
-  deleteInventory as deleteInventoryApi,
-  getInventories,
-} from "@/queries/inventory";
+import { getInventories } from "@/queries/inventory";
 import { useEffect, useMemo, useState } from "react";
 
 export type { Inventory, InventoryItem, StockStatus };
@@ -17,16 +14,15 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Dialog state
+  // ── Inventory dialog: unified for add + edit
+  // inventoryDialogTarget = null     → add mode
+  // inventoryDialogTarget = Inventory → edit mode
   const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
-  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [inventoryDialogTarget, setInventoryDialogTarget] =
+    useState<Inventory | null>(null);
 
-  // ── Delete dialog state
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [inventoryToDelete, setInventoryToDelete] = useState<Inventory | null>(
-    null,
-  );
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  // ── Item dialog state
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
 
   // ── Selection & filter state
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
@@ -66,10 +62,40 @@ export function useInventory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Dialog helpers
+  const openAddInventoryDialog = () => {
+    setInventoryDialogTarget(null);
+    setInventoryDialogOpen(true);
+  };
+
+  const openEditInventoryDialog = (inv: Inventory) => {
+    setInventoryDialogTarget(inv);
+    setInventoryDialogOpen(true);
+  };
+
+  const closeInventoryDialog = () => {
+    setInventoryDialogOpen(false);
+    setInventoryDialogTarget(null);
+  };
+
   // ── Callbacks
   const handleInventoryAdded = (newId: string) => {
-    setInventoryDialogOpen(false);
+    closeInventoryDialog();
     fetchInventories(newId);
+  };
+
+  const handleInventoryUpdated = (id: string) => {
+    closeInventoryDialog();
+    fetchInventories(id);
+  };
+
+  const handleInventoryDeleted = () => {
+    const remaining = inventories.filter(
+      (i) => i.id !== inventoryDialogTarget?.id,
+    );
+    setSelectedInventoryId(remaining[0]?.id ?? null);
+    closeInventoryDialog();
+    fetchInventories(remaining[0]?.id);
   };
 
   const handleItemAdded = () => {
@@ -82,43 +108,6 @@ export function useInventory() {
     setCategory("all");
     setStatus("all");
     setSearch("");
-  };
-
-  // ── Delete callbacks
-  const confirmDelete = (inv: Inventory) => {
-    setInventoryToDelete(inv);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteInventory = async () => {
-    if (!inventoryToDelete) return;
-    setDeleteLoading(true);
-    try {
-      await deleteInventoryApi(inventoryToDelete.id);
-      const remaining = inventories.filter(
-        (i) => i.id !== inventoryToDelete.id,
-      );
-      setInventories(remaining);
-      // If the deleted inventory was selected, fall back to the first remaining one
-      if (selectedInventoryId === inventoryToDelete.id) {
-        setSelectedInventoryId(remaining[0]?.id ?? null);
-      }
-      setDeleteDialogOpen(false);
-      setInventoryToDelete(null);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ??
-          err.message ??
-          "Failed to delete inventory",
-      );
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const cancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setInventoryToDelete(null);
   };
 
   // ── Derived: selected inventory
@@ -194,19 +183,15 @@ export function useInventory() {
     categories,
     loading,
     error,
-    // dialog state
+    // inventory dialog (unified add / edit)
     inventoryDialogOpen,
-    setInventoryDialogOpen,
+    inventoryDialogTarget, // null = add mode, Inventory = edit mode
+    openAddInventoryDialog,
+    openEditInventoryDialog,
+    closeInventoryDialog,
+    // item dialog
     itemDialogOpen,
     setItemDialogOpen,
-    // delete dialog state
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    inventoryToDelete,
-    deleteLoading,
-    confirmDelete,
-    handleDeleteInventory,
-    cancelDelete,
     // filter state
     category,
     setCategory,
@@ -220,6 +205,8 @@ export function useInventory() {
     setSelectedRow,
     // callbacks
     handleInventoryAdded,
+    handleInventoryUpdated,
+    handleInventoryDeleted,
     handleItemAdded,
     switchInventory,
   };
