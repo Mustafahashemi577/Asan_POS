@@ -18,6 +18,7 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddCategoryDialog } from "./addcategorydialog";
 import { ProductImageUpload } from "./productimageupload";
+import type { ProductFormData, SavedProduct } from "./useproductform";
 import { useProductForm } from "./useproductform";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -25,8 +26,8 @@ import { useProductForm } from "./useproductform";
 interface AddEditProductProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product?: any;
-  onSave?: (data: any) => void;
+  product?: ProductFormData;
+  onSave?: (data: SavedProduct) => void;
   onDelete?: () => void;
 }
 
@@ -113,7 +114,7 @@ export function AddEditProduct({
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                {categories.map((cat: any) => (
+                {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </SelectItem>
@@ -201,13 +202,13 @@ export function AddEditProduct({
         // Mobile — plain fixed overlay + card, no Dialog/Sheet at all
         open && (
           <>
-            {/* Backdrop — starts below navbar so only page content is blurred */}
+            {/* Backdrop */}
             <div
               className="fixed top-[105px] inset-x-0 bottom-0 z-40 bg-black/20 backdrop-blur-[4px]"
               onClick={() => onOpenChange(false)}
             />
 
-            {/* Card — 16px below the navbar */}
+            {/* Card */}
             <div className="fixed top-[112px] left-4 right-4 z-50 bg-white rounded-2xl shadow-xl flex flex-col max-h-[calc(100dvh-89px)] overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">

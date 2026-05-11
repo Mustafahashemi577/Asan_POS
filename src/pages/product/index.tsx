@@ -1,21 +1,27 @@
 import { getCategories } from "@/queries/category";
 import { getProducts, type PaginationMeta } from "@/queries/products";
-import { useCallback, useEffect, useState } from "react";
+import type { Category } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AddEditProduct } from "./components/addEditProduct";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { OrderDetails, type CartItemType } from "./components/order-details";
 import type { Product } from "./components/product-list";
 import { ProductList } from "./components/product-list";
+import type {
+  ProductFormData,
+  SavedProduct,
+} from "./components/useproductform";
 
 export default function ProductPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [cart, setCart] = useState<CartItemType[]>([]);
   const [addProductOpen, setAddProductOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductFormData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Pagination state
@@ -23,16 +29,18 @@ export default function ProductPage() {
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const ITEMS_PER_PAGE = 12;
 
-  // Single fetch function — handles all combinations of page, search, category
+  // A ref that always holds the latest categories list.
+  // Using a ref (not state) in fetchProducts breaks the dependency chain
+  // that was causing categories to load → fetchProducts ref to change → double fetch.
+  const categoriesRef = useRef<Category[]>([]);
+
   const fetchProducts = useCallback(
     (page: number, search: string, categoryId: string) => {
       setLoading(true);
-
       const categoryName =
         categoryId !== "all"
-          ? categories.find((c) => c.id === categoryId)?.name
+          ? categoriesRef.current.find((c) => c.id === categoryId)?.name
           : undefined;
-
       getProducts({
         page,
         itemsPerPage: ITEMS_PER_PAGE,
@@ -49,18 +57,22 @@ export default function ProductPage() {
         })
         .finally(() => setLoading(false));
     },
-    [categories],
+    [], // stable forever — categoriesRef.current is always up-to-date without being a dep
   );
 
-  // Fetch categories on mount
+  // Fetch categories on mount only
   useEffect(() => {
     getCategories()
-      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .then((data: unknown) => {
+        const list = Array.isArray(data) ? (data as Category[]) : [];
+        categoriesRef.current = list;
+        setCategories(list);
+      })
       .catch(() => setCategories([]));
   }, []);
 
-  // Fetch products whenever page, search, or category changes
-  // (also re-runs when categories load since fetchProducts depends on it)
+  // Fetch products whenever page, search, or category changes.
+  // fetchProducts is stable so this never fires spuriously.
   useEffect(() => {
     fetchProducts(currentPage, searchQuery, selectedCategory);
   }, [currentPage, searchQuery, selectedCategory, fetchProducts]);
@@ -127,7 +139,7 @@ export default function ProductPage() {
     if (!open) setSelectedProduct(null);
   };
 
-  const handleSaveOrDelete = () => {
+  const handleSaveOrDelete = (_data?: SavedProduct) => {
     fetchProducts(currentPage, searchQuery, selectedCategory);
   };
 
@@ -192,7 +204,6 @@ export default function ProductPage() {
               {/* Page numbers */}
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                 (page) => {
-                  // Always show first, last, current, and neighbors; collapse others to "..."
                   const showPage =
                     page === 1 ||
                     page === totalPages ||
@@ -259,7 +270,7 @@ export default function ProductPage() {
         <AddEditProduct
           open={addProductOpen}
           onOpenChange={handleSheetOpenChange}
-          product={selectedProduct}
+          product={selectedProduct ?? undefined}
           onSave={handleSaveOrDelete}
           onDelete={handleSaveOrDelete}
         />

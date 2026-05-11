@@ -6,8 +6,11 @@ import {
   updateProduct,
   uploadProductImages,
 } from "@/queries/products";
+import type { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+// ── Domain types ──────────────────────────────────────────────────────────────
 
 export interface ImagePreview {
   preview: string;
@@ -15,13 +18,68 @@ export interface ImagePreview {
   file?: File; // present = newly selected (not yet uploaded)
 }
 
+export interface ProductImage {
+  id: string;
+  url: string;
+}
+
+export interface ProductFormData {
+  id?: string;
+  name?: string;
+  price?: number | string;
+  categoryId?: string;
+  categoryName?: string;
+  inStock?: boolean;
+  image?: string;
+  imageId?: string;
+  images?: ProductImage[];
+}
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+interface ApiErrorResponse {
+  message?: string;
+}
+
+export interface SavedProduct {
+  id: string;
+  name: string;
+  price: number;
+  categoryId?: string;
+  categoryName?: string;
+  inStock?: boolean;
+  image?: string;
+  images?: ProductImage[];
+}
+
+/** Shape returned by createProduct / updateProduct endpoints */
+interface ApiMessageResponse {
+  message: string;
+}
+
+interface UploadResult {
+  ids: string[];
+}
+
 interface UseProductFormProps {
   open: boolean;
-  product?: any;
-  onSave?: (data: any) => void;
+  product?: ProductFormData;
+  onSave?: (data: SavedProduct) => void;
   onDelete?: () => void;
   onOpenChange: (open: boolean) => void;
 }
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+function getAxiosErrorMessage(err: unknown, fallback: string): string {
+  const axiosErr = err as AxiosError<ApiErrorResponse>;
+  return axiosErr?.response?.data?.message ?? fallback;
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useProductForm({
   open,
@@ -32,14 +90,12 @@ export function useProductForm({
 }: UseProductFormProps) {
   // ── Form fields ──
   const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(product?.price ?? "");
+  const [price, setPrice] = useState<number | string>(product?.price ?? "");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [inStock, setInStock] = useState(product?.inStock ?? true);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // ── Image state ──
-  // imagePreviews: what is shown in the UI (existing + newly picked)
-  // attachmentIds: IDs returned from /attachments/upload, to be claimed after product create/update
   const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
@@ -74,15 +130,8 @@ export function useProductForm({
       revokeObjectUrls(prev);
       if (product?.images && product.images.length > 0) {
         return product.images
-          .filter((img: any) => {
-            const url = typeof img === "string" ? img : img.url;
-            return url && url !== "/placeholder.png";
-          })
-          .map((img: any) =>
-            typeof img === "string"
-              ? { preview: img }
-              : { preview: img.url, imageId: img.id },
-          );
+          .filter((img) => img.url && img.url !== "/placeholder.png")
+          .map((img) => ({ preview: img.url, imageId: img.id }));
       }
       if (product?.image && product.image !== "/placeholder.png") {
         return [{ preview: product.image, imageId: product.imageId }];
@@ -95,41 +144,34 @@ export function useProductForm({
   useEffect(() => {
     if (!open) return;
     getCategories()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
+      .then((data: unknown) => {
+        const list = Array.isArray(data) ? (data as Category[]) : [];
         setCategories(list);
       })
       .catch(() => setCategories([]));
   }, [open]);
 
   // ── Image upload handler ──
-  // Flow: user picks files → show previews immediately → POST /attachments/upload
-  // → store returned attachment IDs → on form submit, claim them to the product
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    // Show local previews right away so the UI feels instant
     const newPreviews: ImagePreview[] = files.map((file) => ({
       preview: URL.createObjectURL(file),
       file,
     }));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
 
-    // Clear the input so the same file can be re-selected if needed
     if (fileInputRef.current) fileInputRef.current.value = "";
 
-    // Upload to MinIO via /attachments/upload (entityType = "product")
     setImageUploading(true);
     try {
-      const result = await uploadProductImages(files);
-      // result.ids are the attachment UUIDs to claim later
+      const result: UploadResult = await uploadProductImages(files);
       setAttachmentIds((prev) => [...prev, ...result.ids]);
       toast.success(
         files.length > 1 ? `${files.length} images uploaded` : "Image uploaded",
       );
     } catch {
-      // Roll back the optimistic previews on failure
       toast.error("Image upload failed. Please try again.");
       setImagePreviews((prev) => {
         const rolled = prev.slice(0, prev.length - files.length);
@@ -142,13 +184,10 @@ export function useProductForm({
   };
 
   // ── Remove preview handler ──
-  // Existing images (imageId present) → DELETE /products/images/:id on the backend
-  // Newly uploaded images (file present) → remove from attachmentIds so they won't be claimed
   const handleRemovePreview = async (index: number) => {
     const item = imagePreviews[index];
 
     if (item.imageId) {
-      // Already persisted on the backend — delete it
       try {
         await deleteProductImage(item.imageId);
         toast.success("Image removed");
@@ -159,15 +198,12 @@ export function useProductForm({
     }
 
     if (item.file) {
-      // Count how many newly-uploaded (file-based) previews come before this index
-      // so we can remove the correct attachmentId slot
       const newFileIndexBefore = imagePreviews
         .slice(0, index)
         .filter((p) => p.file).length;
       setAttachmentIds((prev) =>
         prev.filter((_, i) => i !== newFileIndexBefore),
       );
-      // Revoke object URL to free memory
       URL.revokeObjectURL(item.preview);
     }
 
@@ -175,9 +211,6 @@ export function useProductForm({
   };
 
   // ── Form submit ──
-  // 1. Validate fields
-  // 2. createProduct or updateProduct
-  // 3. If there are pending attachmentIds, claim them to the product
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error("Product name is required");
     if (!price) return toast.error("Price is required");
@@ -189,27 +222,47 @@ export function useProductForm({
 
     setSubmitting(true);
     try {
-      let saved: any;
+      // The API returns { message } only — reconstruct SavedProduct from local state.
+      const payload = {
+        name: name.trim(),
+        price: Number(price),
+        categoryName: selectedCategory.name,
+        categoryId,
+        inStock,
+        ...(attachmentIds.length > 0 ? { attachmentIds } : {}),
+      };
+
+      let saved: SavedProduct;
 
       if (product?.id) {
-        // Edit mode — pass new attachment IDs so backend claims + creates ProductImages
-        saved = await updateProduct(product.id, {
-          name: name.trim(),
-          price: Number(price),
-          categoryName: selectedCategory.name,
-          inStock,
-          ...(attachmentIds.length > 0 ? { attachmentIds } : {}),
-        });
-        saved = { ...saved, id: product.id };
+        // updateProduct returns ApiMessageResponse — we don't need its value.
+        await (updateProduct(
+          product.id,
+          payload,
+        ) as Promise<ApiMessageResponse>);
+        saved = {
+          id: product.id,
+          name: payload.name,
+          price: payload.price,
+          categoryId: payload.categoryId,
+          categoryName: payload.categoryName,
+          inStock: payload.inStock,
+          image: product.image,
+          images: product.images,
+        };
       } else {
-        // Create mode — backend claims attachments atomically inside create
-        saved = await createProduct({
-          name: name.trim(),
-          price: Number(price),
-          categoryName: selectedCategory.name,
-          inStock,
-          ...(attachmentIds.length > 0 ? { attachmentIds } : {}),
-        });
+        // createProduct returns ApiMessageResponse — parent refetches to get the real id.
+        await (createProduct(
+          payload,
+        ) as unknown as Promise<ApiMessageResponse>);
+        saved = {
+          id: "",
+          name: payload.name,
+          price: payload.price,
+          categoryId: payload.categoryId,
+          categoryName: payload.categoryName,
+          inStock: payload.inStock,
+        };
       }
 
       toast.success(
@@ -221,7 +274,6 @@ export function useProductForm({
       onSave?.(saved);
       onOpenChange(false);
 
-      // Reset form state
       setName("");
       setPrice("");
       setCategoryId("");
@@ -231,10 +283,12 @@ export function useProductForm({
         return [];
       });
       setAttachmentIds([]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(
-        err?.response?.data?.message ??
-          (product?.id ? "Failed to update product" : "Failed to add product"),
+        getAxiosErrorMessage(
+          err,
+          product?.id ? "Failed to update product" : "Failed to add product",
+        ),
       );
     } finally {
       setSubmitting(false);
@@ -250,8 +304,8 @@ export function useProductForm({
       toast.success("Product deleted successfully");
       onDelete?.();
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Failed to delete product");
+    } catch (err: unknown) {
+      toast.error(getAxiosErrorMessage(err, "Failed to delete product"));
     } finally {
       setDeleting(false);
     }
@@ -274,20 +328,20 @@ export function useProductForm({
     setCategorySubmitting(true);
     try {
       await createCategory({ name: newCategoryName.trim() });
-      const updated = await getCategories();
-      const list = Array.isArray(updated) ? updated : [];
+      const updated: unknown = await getCategories();
+      const list = Array.isArray(updated) ? (updated as Category[]) : [];
       setCategories(list);
       const created = list.find(
-        (c: any) =>
-          c.name.toLowerCase() === newCategoryName.trim().toLowerCase(),
+        (c) => c.name.toLowerCase() === newCategoryName.trim().toLowerCase(),
       );
       if (created) setCategoryId(created.id);
       toast.success("Category added");
       setCategoryDialogOpen(false);
       setNewCategoryName("");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<ApiErrorResponse>;
       setCategoryError(
-        err?.response?.status === 409
+        axiosErr?.response?.status === 409
           ? "Category already exists"
           : "Something went wrong",
       );
