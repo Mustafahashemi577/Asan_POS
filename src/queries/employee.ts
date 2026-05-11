@@ -18,4 +18,4 @@ export const uploadEmployeeImage = (formData: FormData) =>
   });
 
 // ← add this
-export const removeEmployeeImage = () => api.delete("/attachments/img");
+export const removeEmployeeImage = () => api.delete("/employees/profile-pic");
