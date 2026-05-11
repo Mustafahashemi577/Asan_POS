@@ -1,4 +1,4 @@
-export interface Supplier {
+export interface Customer {
   id: string;
   name: string;
   phone: string;
@@ -7,13 +7,13 @@ export interface Supplier {
   updatedAt?: string;
 }
 
-export interface CreateSupplierPayload {
+export interface CreateCustomerPayload {
   name: string;
   phone: string;
   address: string;
 }
 
-export interface UpdateSupplierPayload {
+export interface UpdateCustomerPayload {
   name: string;
   phone: string;
   address: string;

@@ -1,17 +1,17 @@
 import { create } from "zustand";
 
-import type { Supplier } from "@/types/supplier";
+import type { Customer } from "@/types/customer";
 
-interface SupplierStore {
-  suppliers: Supplier[];
+interface CustomerStore {
+  customers: Customer[];
 
-  addSupplier: (supplier: Supplier) => void;
+  addCustomer: (customer: Customer) => void;
 
-  deleteSupplier: (id: string) => void;
+  deleteCustomer: (id: string) => void;
 }
 
-export const useSupplierStore = create<SupplierStore>((set) => ({
-  suppliers: [
+export const useCustomerStore = create<CustomerStore>((set) => ({
+  customers: [
     {
       id: crypto.randomUUID(),
       name: "Kabul Coffee Import",
@@ -26,13 +26,13 @@ export const useSupplierStore = create<SupplierStore>((set) => ({
     },
   ],
 
-  addSupplier: (supplier) =>
+  addCustomer: (customer) =>
     set((state) => ({
-      suppliers: [supplier, ...state.suppliers],
+      customers: [customer, ...state.customers],
     })),
 
-  deleteSupplier: (id) =>
+  deleteCustomer: (id) =>
     set((state) => ({
-      suppliers: state.suppliers.filter((s) => s.id !== id),
+      customers: state.customers.filter((s) => s.id !== id),
     })),
 }));

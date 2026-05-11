@@ -69,7 +69,7 @@ export default function DateInput({ value, onChange }: Props) {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 border border-gray-200 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300"
+            className="w-full h-12 border border-gray-100 rounded-xl px-4 text-sm text-left bg-white flex items-center justify-between hover:border-gray-300"
           >
             <span className={displayValue ? "text-gray-700" : "text-gray-400"}>
               {displayValue || "Select date"}
@@ -97,12 +97,12 @@ export default function DateInput({ value, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="p-0 w-40 rounded-xl"
+                className="p-0 w-40  rounded-xl"
                 align="start"
                 sideOffset={4}
               >
                 <Command>
-                  <CommandGroup>
+                  <CommandGroup className="max-h-60 overflow-y-auto overscroll-contain">
                     {MONTHS.map((m, i) => (
                       <CommandItem
                         key={m}
@@ -124,7 +124,7 @@ export default function DateInput({ value, onChange }: Props) {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex-1 justify-between text-xs h-8 rounded-xl"
+                  className="flex-1 justify-between text-xs h-8 rounded-xl bg-white"
                 >
                   {viewYear}
                   <ChevronDown className="h-3 w-3 opacity-50" />

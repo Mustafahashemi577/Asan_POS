@@ -5,7 +5,7 @@ export interface PurchaseItemPayload {
 }
 
 export interface CreatePurchasePayload {
-  supplierId: string;
+  customerId: string;
   purchaseDate: string;
   items: PurchaseItemPayload[];
 }

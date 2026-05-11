@@ -10,18 +10,18 @@ import { Input } from "@/components/ui/input";
 
 import { useState } from "react";
 
-import { useSupplierStore } from "@/stores/supplierStore";
+import { useCustomerStore } from "@/stores/customerStore";
 
-interface AddSupplierDialogProps {
+interface AddCustomerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function AddSupplierDialog({
+export default function AddCustomerDialog({
   open,
   onOpenChange,
-}: AddSupplierDialogProps) {
-  const addSupplier = useSupplierStore((s) => s.addSupplier);
+}: AddCustomerDialogProps) {
+  const addCustomer = useCustomerStore((s) => s.addCustomer);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -37,7 +37,7 @@ export default function AddSupplierDialog({
     if (!name.trim() || !phone.trim() || !address.trim()) {
       return;
     }
-    addSupplier({
+    addCustomer({
       id: crypto.randomUUID(),
       name,
       phone,
@@ -52,17 +52,17 @@ export default function AddSupplierDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Supplier</DialogTitle>
+          <DialogTitle>Add Customer</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Supplier Name</label>
+            <label className="text-sm font-medium">Customer Name</label>
 
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Supplier name"
+              placeholder="Customer name"
               className="h-11 rounded-xl"
             />
           </div>
@@ -87,7 +87,7 @@ export default function AddSupplierDialog({
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full supplier address"
+              placeholder="Full Customer Address"
               className="h-11 rounded-xl"
             />
           </div>
@@ -96,7 +96,7 @@ export default function AddSupplierDialog({
             onClick={handleSubmit}
             className="w-full h-11 rounded-xl bg-black hover:bg-black/90"
           >
-            Add Supplier
+            Save
           </Button>
         </div>
       </DialogContent>

@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 
 import useSWR from "swr";
 
+import { getCustomers } from "@/queries/customer";
+
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import api from "@/lib/axios";
@@ -16,51 +18,45 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface Supplier {
+interface Customer {
   id: string;
   name: string;
   phone: string;
   address: string;
 }
 
-async function getSuppliers() {
-  const { data } = await api.get<Supplier[]>("/suppliers");
-
-  return data;
-}
-
 export default function ContactsPage() {
   const {
-    data: suppliers = [],
+    data: customers = [],
     mutate,
     isLoading,
-  } = useSWR("/suppliers", getSuppliers);
+  } = useSWR("/customer", getCustomers);
 
   const [search, setSearch] = useState("");
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
 
   const filtered = useMemo(() => {
-    return suppliers.filter((supplier) => {
+    return customers.filter((customer) => {
       return (
-        supplier.name.toLowerCase().includes(search.toLowerCase()) ||
-        supplier.phone.includes(search) ||
-        supplier.address.toLowerCase().includes(search.toLowerCase())
+        customer.name.toLowerCase().includes(search.toLowerCase()) ||
+        customer.phone.includes(search) ||
+        customer.address.toLowerCase().includes(search.toLowerCase())
       );
     });
-  }, [search, suppliers]);
+  }, [search, customers]);
 
   const reset = () => {
     setName("");
     setPhone("");
     setAddress("");
-    setEditingSupplier(null);
+    setEditingCustomer(null);
   };
 
   const handleOpenCreate = () => {
@@ -68,12 +64,12 @@ export default function ContactsPage() {
     setDialogOpen(true);
   };
 
-  const handleOpenEdit = (supplier: Supplier) => {
-    setEditingSupplier(supplier);
+  const handleOpenEdit = (customer: Customer) => {
+    setEditingCustomer(customer);
 
-    setName(supplier.name);
-    setPhone(supplier.phone);
-    setAddress(supplier.address);
+    setName(customer.name);
+    setPhone(customer.phone);
+    setAddress(customer.address);
 
     setDialogOpen(true);
   };
@@ -89,10 +85,10 @@ export default function ContactsPage() {
       address,
     };
 
-    if (editingSupplier) {
-      await api.patch(`/suppliers/${editingSupplier.id}`, payload);
+    if (editingCustomer) {
+      await api.patch(`/customer/${editingCustomer.id}`, payload);
     } else {
-      await api.post("/suppliers", payload);
+      await api.post("/customer", payload);
     }
 
     await mutate();
@@ -103,7 +99,7 @@ export default function ContactsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await api.delete(`/suppliers/${id}`);
+    await api.delete(`/customer/${id}`);
 
     mutate();
   };
@@ -113,10 +109,10 @@ export default function ContactsPage() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Suppliers</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
 
             <p className="text-sm text-gray-500 mt-1">
-              Manage supplier contacts
+              Manage Customer Contacts
             </p>
           </div>
 
@@ -125,7 +121,7 @@ export default function ContactsPage() {
             className="h-11 rounded-xl bg-black hover:bg-black/90"
           >
             <Plus className="w-4 h-4 mr-1" />
-            Add Supplier
+            Add Customer
           </Button>
         </div>
 
@@ -140,7 +136,7 @@ export default function ContactsPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search suppliers"
+                placeholder="Search customers"
                 className="pl-9 h-11 rounded-xl"
               />
             </div>
@@ -149,42 +145,42 @@ export default function ContactsPage() {
           <div className="divide-y divide-gray-100">
             {isLoading ? (
               <div className="p-10 text-center text-sm text-gray-400">
-                Loading suppliers...
+                Loading customers...
               </div>
             ) : filtered.length === 0 ? (
               <div className="p-10 text-center text-sm text-gray-400">
-                No suppliers found
+                No customers found
               </div>
             ) : (
-              filtered.map((supplier) => (
+              filtered.map((customer) => (
                 <div
-                  key={supplier.id}
+                  key={customer.id}
                   className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
                 >
                   <div>
                     <h2 className="text-sm font-semibold text-gray-900">
-                      {supplier.name}
+                      {customer.name}
                     </h2>
 
                     <p className="text-sm text-gray-500 mt-1">
-                      {supplier.phone}
+                      {customer.phone}
                     </p>
 
                     <p className="text-sm text-gray-400 mt-1">
-                      {supplier.address}
+                      {customer.address}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleOpenEdit(supplier)}
+                      onClick={() => handleOpenEdit(customer)}
                       className="text-gray-500 hover:text-black"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
 
                     <button
-                      onClick={() => handleDelete(supplier.id)}
+                      onClick={() => handleDelete(customer.id)}
                       className="text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -201,18 +197,18 @@ export default function ContactsPage() {
         <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingSupplier ? "Edit Supplier" : "Add Supplier"}
+              {editingCustomer ? "Edit Customer" : "Add Customer"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Supplier Name</label>
+              <label className="text-sm font-medium">Customer Name</label>
 
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Supplier name"
+                placeholder="Customer name"
                 className="h-11 rounded-xl"
               />
             </div>
@@ -238,7 +234,7 @@ export default function ContactsPage() {
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Supplier address"
+                placeholder="Customer address"
                 className="h-11 rounded-xl"
               />
             </div>
@@ -247,7 +243,7 @@ export default function ContactsPage() {
               onClick={handleSave}
               className="w-full h-11 rounded-xl bg-black hover:bg-black/90"
             >
-              {editingSupplier ? "Save Changes" : "Add Supplier"}
+              {editingCustomer ? "Save Changes" : "Add Customer"}
             </Button>
           </div>
         </DialogContent>
