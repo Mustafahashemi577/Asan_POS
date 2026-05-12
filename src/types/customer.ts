@@ -16,3 +16,21 @@ export interface UpdateCustomerPayload {
   phone: string;
   address: string;
 }
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedCustomers {
+  data: Customer[];
+  meta: PaginationMeta;
+}
+
+export interface GetCustomersParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}

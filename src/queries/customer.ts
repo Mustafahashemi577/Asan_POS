@@ -3,20 +3,36 @@ import api from "@/lib/axios";
 import type {
   CreateCustomerPayload,
   Customer,
+  GetCustomersParams,
+  PaginatedCustomers,
   UpdateCustomerPayload,
 } from "@/types/customer";
 
-// Normalize backend response safely
-function normalize(res: any): Customer[] {
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res?.data)) return res.data;
-  if (Array.isArray(res?.customers)) return res.customers;
-  return [];
+export async function getCustomers(
+  params: GetCustomersParams = {},
+): Promise<PaginatedCustomers> {
+  const { search, page = 1, limit = 20 } = params;
+
+  const res = await api.get("/customer", {
+    params: {
+      ...(search ? { search } : {}),
+      page,
+      limit,
+    },
+  });
+
+  // Normalize in case backend shape shifts
+  const raw = res.data;
+  return {
+    data: Array.isArray(raw?.data) ? raw.data : [],
+    meta: raw?.meta ?? { total: 0, page, limit, totalPages: 0 },
+  };
 }
 
-export async function getCustomers(): Promise<Customer[]> {
-  const res = await api.get("/customer");
-  return normalize(res.data);
+// SWR key factory — keeps cache keys consistent and type-safe
+export function customersKey(params: GetCustomersParams = {}) {
+  const { search = "", page = 1, limit = 20 } = params;
+  return `/customer?search=${search}&page=${page}&limit=${limit}`;
 }
 
 export async function createCustomer(

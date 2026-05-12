@@ -77,6 +77,7 @@ export default function InventoryStats({
           <Button
             onClick={openAddInventoryDialog}
             size="sm"
+            variant="ghost-dark"
             className="rounded-xl gap-1.5 text-xs"
           >
             <Plus size={13} />
