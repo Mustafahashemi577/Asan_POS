@@ -1,12 +1,6 @@
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { Inventory } from "@/queries/inventory";
-import { ChevronDown, Pencil, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface InventoryStatsProps {
   inventories: Inventory[];
@@ -15,15 +9,15 @@ interface InventoryStatsProps {
   switchInventory: (id: string) => void;
   openAddInventoryDialog: () => void;
   openEditInventoryDialog: (inv: Inventory) => void;
+  /** When true, hides the "Add Inventory" button (used on the detail page) */
+  hideAddButton?: boolean;
 }
 
 export default function InventoryStats({
-  inventories,
   selectedInventory,
   stats,
-  switchInventory,
   openAddInventoryDialog,
-  openEditInventoryDialog,
+  hideAddButton = false,
 }: InventoryStatsProps) {
   return (
     <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
@@ -31,58 +25,27 @@ export default function InventoryStats({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-white text-xl sm:text-2xl font-semibold">
-            Inventory Overview
+            {selectedInventory?.name ?? "Inventory Overview"}
           </h1>
           <p className="text-gray-400 text-xs sm:text-sm mt-1">
-            Track stock levels and manage your inventory efficiently
+            {selectedInventory?.address
+              ? selectedInventory.address
+              : "Track stock levels and manage your inventory efficiently"}
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Inventory selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost-dark"
-                size="sm"
-                className="rounded-xl gap-1.5 text-xs border"
-              >
-                {selectedInventory?.name ?? "Select Inventory"}
-                <ChevronDown size={13} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl min-w-44">
-              {inventories.map((inv) => (
-                <DropdownMenuItem
-                  key={inv.id}
-                  className="text-xs cursor-pointer flex items-center justify-between gap-2 pr-1"
-                  onClick={() => switchInventory(inv.id)}
-                >
-                  <span className="pencil">{inv.name}</span>
-                  {/* Trash icon → opens the edit dialog (which has delete inside) */}
-                  <button
-                    className="shrink-0 text-gray-400 hover:text-red-500 transition-colors p-0.5 rounded"
-                    onClick={(e) => {
-                      e.stopPropagation(); // don't fire switchInventory
-                      openEditInventoryDialog(inv);
-                    }}
-                  >
-                    <Pencil size={12} />
-                  </button>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button
-            onClick={openAddInventoryDialog}
-            size="sm"
-            variant="ghost-dark"
-            className="rounded-xl gap-1.5 text-xs"
-          >
-            <Plus size={13} />
-            Add Inventory
-          </Button>
+          {!hideAddButton && (
+            <Button
+              onClick={openAddInventoryDialog}
+              size="sm"
+              variant="ghost-dark"
+              className="rounded-xl gap-1.5 text-xs"
+            >
+              <Plus size={13} />
+              Add Inventory
+            </Button>
+          )}
         </div>
       </div>
 

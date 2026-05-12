@@ -25,6 +25,7 @@ export function useInventory() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
 
   // ── Selection & filter state
+  // null = list view (no inventory selected), string = detail view
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
     null,
   );
@@ -35,17 +36,19 @@ export function useInventory() {
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
 
   // ── Fetch
-  const fetchInventories = (nextId?: string) => {
+  const fetchInventories = (nextId?: string | null) => {
     setLoading(true);
     setError(null);
     getInventories()
       .then((data) => {
         setInventories(data);
-        if (nextId) {
+        // nextId explicitly null → stay on list view
+        if (nextId === null) {
+          setSelectedInventoryId(null);
+        } else if (nextId) {
           setSelectedInventoryId(nextId);
-        } else if (data.length > 0 && !selectedInventoryId) {
-          setSelectedInventoryId(data[0].id);
         }
+        // no nextId arg → keep current selection (or null = list view on first load)
       })
       .catch((err) => {
         setError(
@@ -90,12 +93,9 @@ export function useInventory() {
   };
 
   const handleInventoryDeleted = () => {
-    const remaining = inventories.filter(
-      (i) => i.id !== inventoryDialogTarget?.id,
-    );
-    setSelectedInventoryId(remaining[0]?.id ?? null);
     closeInventoryDialog();
-    fetchInventories(remaining[0]?.id);
+    // Go back to list view after deletion
+    fetchInventories(null);
   };
 
   const handleItemAdded = () => {
@@ -103,16 +103,21 @@ export function useInventory() {
     fetchInventories(selectedInventoryId ?? undefined);
   };
 
-  const switchInventory = (id: string) => {
+  // null → go back to list view; string → drill into that inventory
+  const switchInventory = (id: string | null) => {
     setSelectedInventoryId(id);
     setCategory("all");
     setStatus("all");
     setSearch("");
+    setSelectedRow(null);
   };
 
   // ── Derived: selected inventory
   const selectedInventory = useMemo(
-    () => inventories.find((inv) => inv.id === selectedInventoryId) ?? null,
+    () =>
+      selectedInventoryId
+        ? (inventories.find((inv) => inv.id === selectedInventoryId) ?? null)
+        : null,
     [inventories, selectedInventoryId],
   );
 
@@ -209,5 +214,7 @@ export function useInventory() {
     handleInventoryDeleted,
     handleItemAdded,
     switchInventory,
+    // expose raw id so index.tsx can check list vs detail
+    selectedInventoryId,
   };
 }
