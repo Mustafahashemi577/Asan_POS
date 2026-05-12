@@ -6,29 +6,34 @@ import type {
   UpdateCustomerPayload,
 } from "@/types/customer";
 
-export async function getCustomers() {
-  const { data } = await api.get<Customer[]>("/customer");
-
-  return data;
+// Normalize backend response safely
+function normalize(res: any): Customer[] {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.customers)) return res.customers;
+  return [];
 }
 
-export async function createCustomer(payload: CreateCustomerPayload) {
-  const { data } = await api.post("/customer", payload);
+export async function getCustomers(): Promise<Customer[]> {
+  const res = await api.get("/customer");
+  return normalize(res.data);
+}
 
-  return data;
+export async function createCustomer(
+  payload: CreateCustomerPayload,
+): Promise<Customer> {
+  const res = await api.post("/customer", payload);
+  return res.data;
 }
 
 export async function updateCustomer(
   id: string,
   payload: UpdateCustomerPayload,
-) {
-  const { data } = await api.patch(`/customer/${id}`, payload);
-
-  return data;
+): Promise<Customer> {
+  const res = await api.put(`/customer/${id}`, payload);
+  return res.data;
 }
 
-export async function deleteCustomer(id: string) {
-  const { data } = await api.delete(`/customer/${id}`);
-
-  return data;
+export async function deleteCustomer(id: string): Promise<void> {
+  await api.delete(`/customer/${id}`);
 }

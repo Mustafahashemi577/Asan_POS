@@ -1,14 +1,16 @@
+import { getCustomers } from "@/queries/customer";
+import type { Customer } from "@/types/customer";
 import useSWR from "swr";
 
-import { getCustomers } from "@/queries/customer";
-
 export function useCustomers() {
-  const swr = useSWR("/customer", getCustomers);
+  const { data, error, isLoading, mutate } = useSWR("/customer", getCustomers);
+
+  const customers: Customer[] = Array.isArray(data) ? data : [];
 
   return {
-    customers: swr.data ?? [],
-    isLoading: swr.isLoading,
-    error: swr.error,
-    mutate: swr.mutate,
+    customers,
+    isLoading,
+    error,
+    mutate,
   };
 }

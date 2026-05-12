@@ -86,7 +86,7 @@ export default function ContactsPage() {
     };
 
     if (editingCustomer) {
-      await api.patch(`/customer/${editingCustomer.id}`, payload);
+      await api.put(`/customer/${editingCustomer.id}`, payload);
     } else {
       await api.post("/customer", payload);
     }

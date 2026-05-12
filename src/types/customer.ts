@@ -3,8 +3,6 @@ export interface Customer {
   name: string;
   phone: string;
   address: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface CreateCustomerPayload {
