@@ -53,8 +53,7 @@ import { getInventories } from "@/queries/inventory";
 import { getProducts } from "@/queries/products";
 import { createPurchase } from "@/queries/purchase";
 import type { Customer } from "@/types/customer";
-
-// ── Schema ────────────────────────────────────────────────────────────────────
+import { useNavigate } from "react-router-dom";
 
 const itemSchema = z.object({
   productId: z.string().min(1, "Select a product"),
@@ -71,8 +70,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// ── Combobox — reusable typeahead dropdown ─────────────────────────────────
 
 interface ComboboxProps {
   value: string;
@@ -162,17 +159,13 @@ function Combobox({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-
 export default function NewPurchasePage() {
-  // ── Customers ──────────────────────────────────────────────────────────────
   const { customers, mutate: mutateCustomers } = useCustomers();
   const [customersFetched, setCustomersFetched] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerLoading, setCustomerLoading] = useState(false);
   const [customerDisplay, setCustomerDisplay] = useState("");
 
-  // Fetch customers on first focus of the customer input
   const handleCustomerFocus = () => {
     if (customersFetched) return;
     setCustomerLoading(true);
@@ -193,9 +186,6 @@ export default function NewPurchasePage() {
     .slice(0, 8)
     .map((c) => ({ id: c.id, label: c.name, sub: c.phone }));
 
-  // ── Products per item row ──────────────────────────────────────────────────
-  // productSearch[index] = current typed value
-  // productSuggestions[index] = fetched results
   const [productSearch, setProductSearch] = useState<string[]>([""]);
   const [productSuggestions, setProductSuggestions] = useState<
     Record<number, { id: string; label: string; sub?: string }[]>
@@ -227,7 +217,6 @@ export default function NewPurchasePage() {
     }
   };
 
-  // ── Inventories ────────────────────────────────────────────────────────────
   const [inventories, setInventories] = useState<Inventory[]>([]);
   useEffect(() => {
     getInventories()
@@ -235,11 +224,12 @@ export default function NewPurchasePage() {
       .catch(() => setInventories([]));
   }, []);
 
-  // ── Add customer dialog ────────────────────────────────────────────────────
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newAddress, setNewAddress] = useState("");
+
+  const navigate = useNavigate();
 
   const handleCreateCustomer = async () => {
     if (!newName || !newPhone || !newAddress) return;
@@ -276,19 +266,25 @@ export default function NewPurchasePage() {
     (sum, i) => sum + Number(i.quantity || 0) * Number(i.unitPrice || 0),
     0,
   );
-
   const onSubmit = async (values: FormValues) => {
-    await createPurchase({
-      customerId: values.customerId,
-      purchaseDate: values.purchaseDate,
-      inventoryId: values.inventoryId,
-      items: values.items.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-      })),
-    });
-    form.reset();
+    try {
+      await createPurchase({
+        customerId: values.customerId,
+        purchaseDate: values.purchaseDate,
+        inventoryId: values.inventoryId,
+        items: values.items.map((item) => ({
+          productId: item.productId,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        })),
+      });
+
+      form.reset();
+
+      navigate("/purchases");
+    } catch (error) {
+      console.error("Failed to create purchase:", error);
+    }
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -466,7 +462,6 @@ export default function NewPurchasePage() {
                         onSelect={(id, label) => {
                           f.onChange(id);
                           form.setValue(`items.${index}.productName`, label);
-                          // auto-fill unit price from suggestion sub if available
                           const match = (productSuggestions[index] ?? []).find(
                             (s) => s.id === id,
                           );

@@ -1,3 +1,5 @@
+// src/pages/Purchases/index.tsx
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,174 +8,101 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-import { getCategories } from "@/queries/category";
+import { deletePurchase } from "@/queries/purchase";
 
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+import { usePurchases } from "@/hooks/usePurchases";
 
-interface PurchaseItem {
-  id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  date: string;
-}
+import type { Purchase } from "@/types/purchase";
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-
-const PURCHASE_STATS = [
-  {
-    label: "Total Purchases",
-    value: "134",
-    pct: "4.1%",
-    pctColor: "text-green-400",
-    date: "Wednesday, 06 May 2026",
-    sub: "8 this week",
-  },
-  {
-    label: "Total Spent",
-    value: "AFN 2.4M",
-    pct: "1.8%",
-    pctColor: "text-orange-400",
-    date: "Wednesday, 06 May 2026",
-    sub: "AFN 380K this month",
-  },
-  {
-    label: "This Month",
-    value: "23",
-    pct: "",
-    pctColor: "",
-    date: "Wednesday, 06 May 2026",
-    sub: "AFN 380,000",
-  },
-];
-
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-const MOCK_PURCHASES: PurchaseItem[] = [
-  {
-    id: "PUR-001",
-    name: "Arabica Coffee Beans",
-    category: "Beverages",
-    quantity: 50,
-    unitPrice: 85000,
-    totalPrice: 4250000,
-    date: "2026-05-01",
-  },
-  {
-    id: "PUR-002",
-    name: "Whole Milk",
-    category: "Dairy",
-    quantity: 30,
-    unitPrice: 18000,
-    totalPrice: 540000,
-    date: "2026-05-02",
-  },
-  {
-    id: "PUR-003",
-    name: "Vanilla Syrup",
-    category: "Flavoring",
-    quantity: 12,
-    unitPrice: 45000,
-    totalPrice: 540000,
-    date: "2026-05-03",
-  },
-  {
-    id: "PUR-004",
-    name: "Paper Cups (12oz)",
-    category: "Packaging",
-    quantity: 1000,
-    unitPrice: 1200,
-    totalPrice: 1200000,
-    date: "2026-05-03",
-  },
-  {
-    id: "PUR-005",
-    name: "Chocolate Powder",
-    category: "Beverages",
-    quantity: 20,
-    unitPrice: 95000,
-    totalPrice: 1900000,
-    date: "2026-05-04",
-  },
-];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+function fmtDate(date: string) {
+  return new Date(date).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function fmtCurrency(n: number) {
-  return "AFN " + n.toLocaleString("id-ID");
+function fmtCurrency(value: number) {
+  return `AFN ${Number(value || 0).toLocaleString("id-ID")}`;
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
-export default function Purchase() {
+export default function PurchasePage() {
   const navigate = useNavigate();
 
-  const [purchases, setPurchases] = useState<PurchaseItem[]>(MOCK_PURCHASES);
+  const { purchases, mutate, isLoading } = usePurchases();
 
-  const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
 
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    [],
+  // ───────────────────────────────────────────────────────────────────
+  // Filter
+  // ───────────────────────────────────────────────────────────────────
+
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter((purchase: Purchase) => {
+      const purchaseId = purchase.id?.toLowerCase() ?? "";
+
+      const inventoryName = purchase.inventory?.name?.toLowerCase() ?? "";
+
+      const customerName = purchase.customer?.name?.toLowerCase() ?? "";
+
+      return (
+        purchaseId.includes(search.toLowerCase()) ||
+        inventoryName.includes(search.toLowerCase()) ||
+        customerName.includes(search.toLowerCase())
+      );
+    });
+  }, [purchases, search]);
+
+  // ───────────────────────────────────────────────────────────────────
+  // Stats
+  // ───────────────────────────────────────────────────────────────────
+
+  const totalSpent = filteredPurchases.reduce(
+    (sum, purchase) => sum + Number(purchase.totalPrice || 0),
+    0,
   );
 
-  // Fetch categories
-  useEffect(() => {
-    getCategories()
-      .then((data) => setCategories(Array.isArray(data) ? data : []))
-      .catch(() => setCategories([]));
-  }, []);
+  const thisMonthPurchases = filteredPurchases.filter((purchase) => {
+    const date = new Date(purchase.purchaseDate);
 
-  // Filtered data
-  const filtered = useMemo(() => {
-    return purchases.filter((item) => {
-      const matchesCategory =
-        category === "all" ||
-        item.category.toLowerCase() === category.toLowerCase();
+    const now = new Date();
 
-      const matchesSearch =
-        !search ||
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase()) ||
-        item.category.toLowerCase().includes(search.toLowerCase());
+    return (
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+    );
+  });
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [purchases, category, search]);
+  // ───────────────────────────────────────────────────────────────────
+  // Delete
+  // ───────────────────────────────────────────────────────────────────
 
-  const totalSpent = filtered.reduce((sum, item) => sum + item.totalPrice, 0);
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePurchase(id);
 
-  const handleDelete = (id: string) => {
-    setPurchases((prev) => prev.filter((item) => item.id !== id));
+      await mutate();
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-sm text-gray-500">Loading purchases...</div>
+    );
+  }
 
   return (
     <div className="overflow-y-auto">
-      <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
         {/* ── STATS ───────────────────────────────────────────── */}
         <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
           <div className="mb-6">
@@ -182,49 +111,49 @@ export default function Purchase() {
             </h1>
 
             <p className="text-gray-400 text-xs sm:text-sm mt-1">
-              Track purchases for your inventory
+              Track all inventory purchases
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {PURCHASE_STATS.map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white/10 border border-white/10 rounded-xl p-4"
-              >
-                <p className="text-gray-300 text-xs mb-2">{stat.label}</p>
+            {/* Total Purchases */}
+            <div className="bg-white/10 border border-white/10 rounded-xl p-4">
+              <p className="text-gray-300 text-xs mb-2">Total Purchases</p>
 
-                <div className="flex items-end justify-between mb-3">
-                  <p className="text-white text-lg sm:text-xl font-semibold leading-tight">
-                    {stat.value}
-                  </p>
+              <p className="text-white text-xl font-semibold">
+                {filteredPurchases.length}
+              </p>
 
-                  {stat.pct && (
-                    <span
-                      className={`text-xs font-medium ${stat.pctColor} bg-white/10 px-1.5 py-0.5 rounded`}
-                    >
-                      {stat.pct}
-                    </span>
-                  )}
-                </div>
+              <p className="text-gray-400 text-xs mt-3">
+                Total purchase records
+              </p>
+            </div>
 
-                <hr className="border-white/10 mb-2" />
+            {/* Total Spent */}
+            <div className="bg-white/10 border border-white/10 rounded-xl p-4">
+              <p className="text-gray-300 text-xs mb-2">Total Spent</p>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-[10px]">{stat.date}</span>
+              <p className="text-white text-xl font-semibold">
+                {fmtCurrency(totalSpent)}
+              </p>
 
-                  <span className="text-gray-400 text-xs">{stat.sub}</span>
-                </div>
+              <p className="text-gray-400 text-xs mt-3">Across all purchases</p>
+            </div>
 
-                <button className="text-gray-500 text-[10px] mt-1.5 hover:text-gray-300 transition block">
-                  View all &rsaquo;
-                </button>
-              </div>
-            ))}
+            {/* This Month */}
+            <div className="bg-white/10 border border-white/10 rounded-xl p-4">
+              <p className="text-gray-300 text-xs mb-2">This Month</p>
+
+              <p className="text-white text-xl font-semibold">
+                {thisMonthPurchases.length}
+              </p>
+
+              <p className="text-gray-400 text-xs mt-3">Purchases this month</p>
+            </div>
           </div>
         </div>
 
-        {/* ── TABLE SECTION ──────────────────────────────────── */}
+        {/* ── TABLE ─────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100">
@@ -234,31 +163,14 @@ export default function Purchase() {
               </h2>
 
               <p className="text-xs text-gray-400 mt-0.5">
-                {filtered.length} record
-                {filtered.length !== 1 ? "s" : ""} found
+                {filteredPurchases.length} record
+                {filteredPurchases.length !== 1 ? "s" : ""} found
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:shrink-0">
-              {/* Category Filter */}
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="all">All Categories</SelectItem>
-
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               {/* Search */}
-              <div className="relative sm:w-56">
+              <div className="relative sm:w-64">
                 <Search
                   size={15}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -268,11 +180,11 @@ export default function Purchase() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search purchases..."
-                  className="h-10 pl-9 rounded-xl border-gray-200 text-sm bg-white"
+                  className="h-10 pl-9 rounded-xl border-gray-200 text-sm"
                 />
               </div>
 
-              {/* Add Purchase */}
+              {/* Add */}
               <Button
                 onClick={() => navigate("/purchases/new")}
                 className="h-10 rounded-xl bg-black text-white hover:bg-black/90 text-sm gap-1.5"
@@ -283,17 +195,15 @@ export default function Purchase() {
             </div>
           </div>
 
-          {/* DESKTOP TABLE */}
+          {/* ── DESKTOP TABLE ─────────────────────────────── */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-100">
                   {[
                     "Purchase ID",
-                    "Name",
-                    "Category",
-                    "Quantity",
-                    "Unit Price",
+                    "Inventory",
+                    "Customer",
                     "Total Price",
                     "Date",
                     "Actions",
@@ -309,49 +219,47 @@ export default function Purchase() {
               </thead>
 
               <tbody>
-                {filtered.length === 0 ? (
+                {filteredPurchases.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={6}
                       className="px-6 py-12 text-center text-gray-400 text-sm"
                     >
                       No purchases found
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((item) => (
+                  filteredPurchases.map((purchase) => (
                     <tr
-                      key={item.id}
+                      key={purchase.id}
                       className="border-t border-gray-100 hover:bg-gray-50 transition-colors"
                     >
+                      {/* Purchase ID */}
                       <td className="text-xs text-gray-600 font-mono px-6 py-4 whitespace-nowrap">
-                        {item.id}
+                        {purchase.id}
                       </td>
 
-                      <td className="text-xs text-gray-800 font-medium px-6 py-4 whitespace-nowrap">
-                        {item.name}
+                      {/* Inventory */}
+                      <td className="text-sm text-gray-800 font-medium px-6 py-4 whitespace-nowrap">
+                        {purchase.inventory?.name ?? "-"}
                       </td>
 
-                      <td className="text-xs text-gray-600 px-6 py-4 whitespace-nowrap">
-                        {item.category}
+                      {/* Customer */}
+                      <td className="text-sm text-gray-600 px-6 py-4 whitespace-nowrap">
+                        {purchase.customer?.name ?? "-"}
                       </td>
 
-                      <td className="text-xs text-gray-800 px-6 py-4 whitespace-nowrap">
-                        {item.quantity.toLocaleString()}
+                      {/* Total */}
+                      <td className="text-sm font-semibold text-gray-900 px-6 py-4 whitespace-nowrap">
+                        {fmtCurrency(purchase.totalPrice)}
                       </td>
 
-                      <td className="text-xs text-gray-800 px-6 py-4 whitespace-nowrap">
-                        {fmtCurrency(item.unitPrice)}
+                      {/* Date */}
+                      <td className="text-sm text-gray-600 px-6 py-4 whitespace-nowrap">
+                        {fmtDate(purchase.purchaseDate)}
                       </td>
 
-                      <td className="text-xs text-gray-900 font-semibold px-6 py-4 whitespace-nowrap">
-                        {fmtCurrency(item.totalPrice)}
-                      </td>
-
-                      <td className="text-xs text-gray-600 px-6 py-4 whitespace-nowrap">
-                        {fmtDate(item.date)}
-                      </td>
-
+                      {/* Actions */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -380,7 +288,7 @@ export default function Purchase() {
                             </DropdownMenuItem>
 
                             <DropdownMenuItem
-                              onClick={() => handleDelete(item.id)}
+                              onClick={() => handleDelete(purchase.id)}
                               className="text-xs cursor-pointer text-red-500 focus:text-red-500"
                             >
                               Delete
@@ -395,47 +303,39 @@ export default function Purchase() {
             </table>
           </div>
 
-          {/* MOBILE CARDS */}
+          {/* ── MOBILE ─────────────────────────────────────── */}
           <div className="sm:hidden divide-y divide-gray-100">
-            {filtered.length === 0 ? (
+            {filteredPurchases.length === 0 ? (
               <p className="px-5 py-12 text-center text-gray-400 text-sm">
                 No purchases found
               </p>
             ) : (
-              filtered.map((item) => (
-                <div key={item.id} className="px-4 py-4">
-                  <div className="flex justify-between mb-1">
+              filteredPurchases.map((purchase) => (
+                <div key={purchase.id} className="px-4 py-4">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-mono text-gray-500">
-                      {item.id}
+                      {purchase.id}
                     </span>
 
                     <span className="text-xs text-gray-400">
-                      {fmtDate(item.date)}
+                      {fmtDate(purchase.purchaseDate)}
                     </span>
                   </div>
 
-                  <p className="text-sm font-medium text-gray-800 mb-1">
-                    {item.name}
+                  <p className="text-sm font-semibold text-gray-900">
+                    {purchase.inventory?.name ?? "-"}
                   </p>
 
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{item.category}</span>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Customer: {purchase.customer?.name ?? "-"}
+                  </p>
 
-                    <span>Qty: {item.quantity.toLocaleString()}</span>
-                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-sm font-bold text-gray-900">
+                      {fmtCurrency(purchase.totalPrice)}
+                    </p>
 
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-gray-400">
-                        Unit: {fmtCurrency(item.unitPrice)}
-                      </p>
-
-                      <p className="text-sm font-semibold text-gray-900">
-                        {fmtCurrency(item.totalPrice)}
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <button className="text-xs text-blue-500 hover:underline">
                         View
                       </button>
@@ -445,7 +345,7 @@ export default function Purchase() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(purchase.id)}
                         className="text-xs text-red-500 hover:underline"
                       >
                         Delete
@@ -460,7 +360,7 @@ export default function Purchase() {
           {/* Footer */}
           <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
             <span className="text-xs text-gray-500">
-              Showing {filtered.length} of {purchases.length} records
+              Showing {filteredPurchases.length} of {purchases.length} records
             </span>
 
             <span className="text-sm font-semibold text-gray-900">
