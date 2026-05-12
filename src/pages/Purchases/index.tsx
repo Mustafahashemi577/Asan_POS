@@ -182,7 +182,7 @@ export default function Purchase() {
             </h1>
 
             <p className="text-gray-400 text-xs sm:text-sm mt-1">
-              Track raw material purchases for your inventory
+              Track purchases for your inventory
             </p>
           </div>
 
