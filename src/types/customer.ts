@@ -20,6 +20,7 @@ export interface UpdateCustomerPayload {
 export interface PaginationMeta {
   total: number;
   page: number;
+  totalCount: number;
   limit: number;
   totalPages: number;
 }

@@ -169,7 +169,7 @@ export default function InventoryTable({
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search inventory..."
+                  placeholder="Search items"
                   className="h-10 pl-9 pr-8 rounded-xl border-gray-200 text-sm bg-white"
                 />
                 <XIcon

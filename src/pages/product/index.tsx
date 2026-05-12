@@ -151,7 +151,7 @@ export default function ProductPage() {
 
   return (
     <>
-      <div className="bg-bg-main h-[calc(100vh-80px)] flex flex-col gap-2.5 lg:flex-row">
+      <div className="h-[calc(100vh-80px)] flex flex-col lg:flex-row">
         {/* ── MOBILE: Order details card ── */}
         {cart.length > 0 && (
           <div className="lg:hidden bg-white rounded-xl max-h-[45vh] overflow-y-auto shrink-0">
@@ -257,14 +257,16 @@ export default function ProductPage() {
         </div>
 
         {/* ── Order details card (desktop only) ── */}
-        <div className="hidden lg:block sm:mt-2.5 w-[300px] xl:w-[340px] shrink-0 bg-white rounded-xl overflow-y-auto">
-          <OrderDetails
-            cart={cart}
-            onRemoveItem={removeFromCart}
-            subtotal={subtotal}
-            tax={tax}
-            total={total}
-          />
+        <div className="bg-bg-main rounded-tl-xl">
+          <div className="hidden lg:block sm:mt-2.5 ml-2.5 w-[300px] xl:w-[340px] shrink-0 bg-white rounded-xl overflow-y-auto">
+            <OrderDetails
+              cart={cart}
+              onRemoveItem={removeFromCart}
+              subtotal={subtotal}
+              tax={tax}
+              total={total}
+            />
+          </div>
         </div>
 
         <AddEditProduct

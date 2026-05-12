@@ -7,19 +7,19 @@ import type {
 } from "@/types/purchase";
 
 export async function getPurchases() {
-  const { data } = await api.get<Purchase[]>("/purchase");
+  const { data } = await api.get<Purchase[]>("/purchases");
 
   return data;
 }
 
 export async function getPurchase(id: string) {
-  const { data } = await api.get<Purchase>(`/purchase/${id}`);
+  const { data } = await api.get<Purchase>(`/purchases/${id}`);
 
   return data;
 }
 
 export async function createPurchase(payload: CreatePurchasePayload) {
-  const { data } = await api.post<Purchase>("/purchase", payload);
+  const { data } = await api.post<Purchase>("/purchases", payload);
 
   return data;
 }
@@ -28,13 +28,13 @@ export async function updatePurchase(
   id: string,
   payload: UpdatePurchasePayload,
 ) {
-  const { data } = await api.patch<Purchase>(`/purchase/${id}`, payload);
+  const { data } = await api.patch<Purchase>(`/purchases/${id}`, payload);
 
   return data;
 }
 
 export async function deletePurchase(id: string) {
-  const { data } = await api.delete(`/purchase/${id}`);
+  const { data } = await api.delete(`/purchases/${id}`);
 
   return data;
 }
