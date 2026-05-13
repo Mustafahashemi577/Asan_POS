@@ -22,35 +22,84 @@ export interface Inventory {
   items: InventoryItem[];
 }
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedInventories {
+  data: Inventory[];
+  meta: PaginationMeta;
+}
+
 // ── Queries ───────────────────────────────────────────────────────────────────
 
-/** GET /inventory — returns all inventories for the current store */
-export const getInventories = (): Promise<Inventory[]> =>
-  api.get("/inventory").then((r) => {
-    const raw: any[] = Array.isArray(r.data)
-      ? r.data
-      : (r.data.data ?? r.data.inventories ?? []);
+export interface GetInventoriesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
 
-    return raw.map(
-      (inv): Inventory => ({
-        id: inv.id,
-        name: inv.name,
-        address: inv.address ?? "",
-        items: (inv.items ?? []).map(
-          (item: any): InventoryItem => ({
-            id: item.id,
-            name: item.name,
-            category: item.category,
-            quantity: item.quantity,
-            unit: item.unit,
-            price: item.price,
-            status: item.status,
-            lastUpdated: item.lastUpdated ?? item.updatedAt ?? item.createdAt,
-          }),
-        ),
-      }),
-    );
+/** GET /inventory — returns paginated inventories for the current store */
+export const getInventories = (
+  params: GetInventoriesParams = {},
+): Promise<PaginatedInventories> => {
+  const { page = 1, limit = 10, search } = params;
+
+  const query: Record<string, string | number> = { page, limit };
+  if (search) query.search = search;
+
+  return api.get("/inventory", { params: query }).then((r) => {
+    // Handle both paginated { data, meta } and legacy plain-array responses
+    if (Array.isArray(r.data)) {
+      const mapped = mapInventories(r.data);
+      return {
+        data: mapped,
+        meta: {
+          page: 1,
+          limit: mapped.length,
+          total: mapped.length,
+          totalPages: 1,
+        },
+      };
+    }
+
+    const raw: any[] = r.data.data ?? r.data.inventories ?? [];
+    const meta: PaginationMeta = r.data.meta ?? {
+      page: 1,
+      limit: raw.length,
+      total: raw.length,
+      totalPages: 1,
+    };
+
+    return { data: mapInventories(raw), meta };
   });
+};
+
+function mapInventories(raw: any[]): Inventory[] {
+  return raw.map(
+    (inv): Inventory => ({
+      id: inv.id,
+      name: inv.name,
+      address: inv.address ?? "",
+      items: (inv.items ?? inv.products ?? []).map(
+        (item: any): InventoryItem => ({
+          id: item.id,
+          name: item.name,
+          category: item.category ?? "",
+          quantity: item.quantity ?? 0,
+          unit: item.unit ?? "",
+          price: item.price ?? 0,
+          status: item.status ?? "In Stock",
+          lastUpdated:
+            item.lastUpdated ?? item.updatedAt ?? item.createdAt ?? "",
+        }),
+      ),
+    }),
+  );
+}
 
 /** GET /inventory/:id — returns a single inventory with its items */
 export const getInventory = (id: string): Promise<Inventory> =>

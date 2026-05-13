@@ -1,6 +1,7 @@
 import type {
   Inventory,
   InventoryItem,
+  PaginationMeta,
   StockStatus,
 } from "@/queries/inventory";
 import { getInventories } from "@/queries/inventory";
@@ -11,12 +12,35 @@ export type { Inventory, InventoryItem, StockStatus };
 export function useInventory() {
   // ── Remote state
   const [inventories, setInventories] = useState<Inventory[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Pagination state (list view)
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  // ── List-level search (server-side, hits the paginated endpoint)
+  const [listSearch, setListSearch] = useState("");
+  // Debounced value actually sent to the API
+  const [listSearchDebounced, setListSearchDebounced] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setListSearchDebounced(listSearch), 400);
+    return () => clearTimeout(t);
+  }, [listSearch]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [listSearchDebounced]);
+
   // ── Inventory dialog: unified for add + edit
-  // inventoryDialogTarget = null     → add mode
-  // inventoryDialogTarget = Inventory → edit mode
   const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
   const [inventoryDialogTarget, setInventoryDialogTarget] =
     useState<Inventory | null>(null);
@@ -25,7 +49,7 @@ export function useInventory() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
 
   // ── Selection & filter state
-  // null = list view (no inventory selected), string = detail view
+  // null = list view, string = detail view
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
     null,
   );
@@ -35,20 +59,31 @@ export function useInventory() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
 
-  // ── Fetch
-  const fetchInventories = (nextId?: string | null) => {
+  // ── Fetch (list view, paginated)
+  const fetchInventories = (opts?: {
+    page?: number;
+    nextId?: string | null;
+  }) => {
     setLoading(true);
     setError(null);
-    getInventories()
-      .then((data) => {
+
+    const targetPage = opts?.page ?? page;
+
+    getInventories({
+      page: targetPage,
+      limit,
+      search: listSearchDebounced || undefined,
+    })
+      .then(({ data, meta }) => {
         setInventories(data);
-        // nextId explicitly null → stay on list view
-        if (nextId === null) {
+        setPaginationMeta(meta);
+
+        if (opts?.nextId === null) {
+          // Explicit null → return to list view
           setSelectedInventoryId(null);
-        } else if (nextId) {
-          setSelectedInventoryId(nextId);
+        } else if (opts?.nextId) {
+          setSelectedInventoryId(opts.nextId);
         }
-        // no nextId arg → keep current selection (or null = list view on first load)
       })
       .catch((err) => {
         setError(
@@ -60,10 +95,11 @@ export function useInventory() {
       .finally(() => setLoading(false));
   };
 
+  // Re-fetch whenever page or debounced search changes
   useEffect(() => {
-    fetchInventories();
+    fetchInventories({ page });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, listSearchDebounced]);
 
   // ── Dialog helpers
   const openAddInventoryDialog = () => {
@@ -84,32 +120,39 @@ export function useInventory() {
   // ── Callbacks
   const handleInventoryAdded = (newId: string) => {
     closeInventoryDialog();
-    fetchInventories(newId);
+    fetchInventories({ nextId: newId });
   };
 
   const handleInventoryUpdated = (id: string) => {
     closeInventoryDialog();
-    fetchInventories(id);
+    fetchInventories({ nextId: id });
   };
 
   const handleInventoryDeleted = () => {
     closeInventoryDialog();
-    // Go back to list view after deletion
-    fetchInventories(null);
+    // Return to list view, re-fetch page 1
+    setPage(1);
+    fetchInventories({ page: 1, nextId: null });
   };
 
   const handleItemAdded = () => {
     setItemDialogOpen(false);
-    fetchInventories(selectedInventoryId ?? undefined);
+    fetchInventories();
   };
 
-  // null → go back to list view; string → drill into that inventory
+  // null → back to list; string → drill into inventory
   const switchInventory = (id: string | null) => {
     setSelectedInventoryId(id);
     setCategory("all");
     setStatus("all");
     setSearch("");
     setSelectedRow(null);
+  };
+
+  // ── Pagination helpers
+  const goToPage = (p: number) => {
+    const clamped = Math.max(1, Math.min(p, paginationMeta.totalPages));
+    setPage(clamped);
   };
 
   // ── Derived: selected inventory
@@ -121,7 +164,7 @@ export function useInventory() {
     [inventories, selectedInventoryId],
   );
 
-  // ── Derived: stats
+  // ── Derived: stats (for detail view)
   const stats = useMemo(() => {
     const items = selectedInventory?.items ?? [];
     const total = items.length;
@@ -155,7 +198,7 @@ export function useInventory() {
     ];
   }, [selectedInventory]);
 
-  // ── Derived: filtered items
+  // ── Derived: filtered items (client-side, detail view only)
   const filtered = useMemo(() => {
     const items = selectedInventory?.items ?? [];
     return items.filter((item) => {
@@ -173,7 +216,7 @@ export function useInventory() {
     });
   }, [selectedInventory, category, status, search]);
 
-  // ── Derived: unique categories
+  // ── Derived: unique categories (detail view)
   const categories = useMemo(() => {
     const all = (selectedInventory?.items ?? []).map((i) => i.category);
     return [...new Set(all)].sort();
@@ -182,22 +225,30 @@ export function useInventory() {
   return {
     // data
     inventories,
+    paginationMeta,
     selectedInventory,
     stats,
     filtered,
     categories,
     loading,
     error,
+    // pagination
+    page,
+    limit,
+    goToPage,
+    // list search (server-side)
+    listSearch,
+    setListSearch,
     // inventory dialog (unified add / edit)
     inventoryDialogOpen,
-    inventoryDialogTarget, // null = add mode, Inventory = edit mode
+    inventoryDialogTarget,
     openAddInventoryDialog,
     openEditInventoryDialog,
     closeInventoryDialog,
     // item dialog
     itemDialogOpen,
     setItemDialogOpen,
-    // filter state
+    // detail-view filter state
     category,
     setCategory,
     status,
@@ -214,7 +265,7 @@ export function useInventory() {
     handleInventoryDeleted,
     handleItemAdded,
     switchInventory,
-    // expose raw id so index.tsx can check list vs detail
+    // raw id so index.tsx can check list vs detail mode
     selectedInventoryId,
   };
 }
