@@ -30,9 +30,6 @@ api.interceptors.response.use(
       if (currentPath !== "/") {
         // Clear the auth state to remove invalid token
         useAuthStore.getState().clearAuth();
-
-        // Redirect to login page
-        window.location.href = "/";
       }
     }
 
