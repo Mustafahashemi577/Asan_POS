@@ -39,7 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import CustomerDialog from "./components/AddCustomerDialog";
+import CustomerDialog from "@/components/AddCustomerDialog";
 
 import type { Customer } from "@/types/customer";
 

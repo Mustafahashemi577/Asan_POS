@@ -26,12 +26,23 @@ export function ProductList({
 }: ProductListProps) {
   if (products.length === 0) {
     return (
-      <div className="items-center">
+      <div className="flex flex-col items-center text-center justify-center w-full min-h-[60vh] px-4">
         <img
-          src="../../../public/photos/NotFound.jpeg"
-          alt="Not Found!"
-          className="max-h-100 max-w-150 absolute right-200 items-center text-center mt-20"
+          src="/photos/NotFound2.jpeg"
+          alt="No Categories"
+          className="
+              max-w-50
+              max-h-50
+              object-contain
+            "
         />
+        <div>
+          <p className="text-lg font-medium text-gray-700">No Products yet!</p>
+
+          <p className="text-sm text-gray-500 mt-2">
+            Create your first product to get started.
+          </p>
+        </div>
       </div>
     );
   }

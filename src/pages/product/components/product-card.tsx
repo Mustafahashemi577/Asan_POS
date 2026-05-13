@@ -106,11 +106,12 @@ const ProductCard = ({
       </div>
 
       <div className="p-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground">
+        <div className="flex items-start justify-between gap-2 min-h-[40px]">
+          <h3 className="text-sm font-medium text-foreground line-clamp-2 break-words">
             {product.name}
           </h3>
-          <span className="text-sm font-semibold text-foreground">
+
+          <span className="text-sm font-semibold text-foreground text-green-600 shrink-0">
             {product.price} AFN
           </span>
         </div>

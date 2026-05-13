@@ -6,6 +6,7 @@ import {
   updateProduct,
   uploadProductImages,
 } from "@/queries/products";
+import type { Category } from "@/types";
 import type { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,11 +34,6 @@ export interface ProductFormData {
   image?: string;
   imageId?: string;
   images?: ProductImage[];
-}
-
-export interface Category {
-  id: string;
-  name: string;
 }
 
 interface ApiErrorResponse {
@@ -298,6 +294,7 @@ export function useProductForm({
   // ── Delete product ──
   const handleDelete = async () => {
     if (!product?.id) return;
+
     setDeleting(true);
     try {
       await deleteProduct(product.id);

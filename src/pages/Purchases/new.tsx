@@ -1,16 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import DateInput from "@/components/ui/DateInput";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -46,14 +41,16 @@ import {
   UserPlus,
 } from "lucide-react";
 
-import { useCustomers } from "@/hooks/useCustomers";
-import { createCustomer } from "@/queries/customer";
+// Reuse the shared customer form dialog
+import CustomerDialog from "@/components/AddCustomerDialog";
+import { createCustomer, getCustomers } from "@/queries/customer";
 import type { Inventory } from "@/queries/inventory";
 import { getInventories } from "@/queries/inventory";
 import { getProducts } from "@/queries/products";
 import { createPurchase } from "@/queries/purchase";
-import type { Customer } from "@/types/customer";
-import { useNavigate } from "react-router-dom";
+import type { CustomerFormValues } from "@/types/customer";
+
+// ── Zod schema ────────────────────────────────────────────────────────────────
 
 const itemSchema = z.object({
   productId: z.string().min(1, "Select a product"),
@@ -71,12 +68,33 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+// ── Suggestion type ───────────────────────────────────────────────────────────
+
+interface Suggestion {
+  id: string;
+  label: string;
+  sub?: string;
+}
+
+// ── useDebounce ───────────────────────────────────────────────────────────────
+
+function useDebounce<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
+// ── Generic Combobox ──────────────────────────────────────────────────────────
+
 interface ComboboxProps {
   value: string;
   displayValue: string;
   placeholder: string;
   icon: React.ReactNode;
-  suggestions: { id: string; label: string; sub?: string }[];
+  suggestions: Suggestion[];
   loading: boolean;
   onFocus: () => void;
   onInputChange: (v: string) => void;
@@ -159,93 +177,139 @@ function Combobox({
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function NewPurchasePage() {
-  const { customers, mutate: mutateCustomers } = useCustomers();
-  const [customersFetched, setCustomersFetched] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customerLoading, setCustomerLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // ── Customer search (API-driven, debounced) ───────────────────────────────
   const [customerDisplay, setCustomerDisplay] = useState("");
+  const [customerSuggestions, setCustomerSuggestions] = useState<Suggestion[]>(
+    [],
+  );
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [customerSearchEnabled, setCustomerSearchEnabled] = useState(false);
+  const debouncedCustomerSearch = useDebounce(customerDisplay, 300);
 
-  const handleCustomerFocus = () => {
-    if (customersFetched) return;
+  useEffect(() => {
+    if (!customerSearchEnabled) return;
+    if (!debouncedCustomerSearch.trim()) {
+      setCustomerSuggestions([]);
+      return;
+    }
+    let cancelled = false;
     setCustomerLoading(true);
-    mutateCustomers().finally(() => {
-      setCustomersFetched(true);
-      setCustomerLoading(false);
-    });
-  };
+    getCustomers({ search: debouncedCustomerSearch, itemsPerPage: 8, page: 1 })
+      .then((result) => {
+        if (cancelled) return;
+        const rows = result.data ?? result ?? [];
+        setCustomerSuggestions(
+          (Array.isArray(rows) ? rows : []).map((c: any) => ({
+            id: c.id,
+            label: c.name,
+            sub: c.phone,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setCustomerSuggestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCustomerLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedCustomerSearch, customerSearchEnabled]);
 
-  const filteredCustomers: { id: string; label: string; sub?: string }[] = (
-    Array.isArray(customers) ? (customers as Customer[]) : []
-  )
-    .filter((c) =>
-      customerSearch
-        ? c.name.toLowerCase().startsWith(customerSearch.toLowerCase())
-        : true,
-    )
-    .slice(0, 8)
-    .map((c) => ({ id: c.id, label: c.name, sub: c.phone }));
-
-  const [productSearch, setProductSearch] = useState<string[]>([""]);
+  // ── Product search (API-driven, debounced) ────────────────────────────────
+  // Each item row has its own display string; we debounce on a per-row basis
+  // by using a single debounced state per active typing row tracked via index.
+  const [productDisplay, setProductDisplay] = useState<string[]>([""]);
   const [productSuggestions, setProductSuggestions] = useState<
-    Record<number, { id: string; label: string; sub?: string }[]>
+    Record<number, Suggestion[]>
   >({});
   const [productLoading, setProductLoading] = useState<Record<number, boolean>>(
     {},
   );
 
-  const fetchProductSuggestions = async (index: number, search: string) => {
-    if (!search.trim()) return;
-    setProductLoading((p) => ({ ...p, [index]: true }));
-    try {
-      const result = await getProducts({ search, itemsPerPage: 8, page: 1 });
-      const data = result.data ?? result;
-      setProductSuggestions((p) => ({
-        ...p,
-        [index]: (Array.isArray(data) ? data : []).map((pr: any) => ({
-          id: pr.id,
-          label: pr.name,
-          sub: pr.price
-            ? `AFN ${Number(pr.price).toLocaleString()}`
-            : undefined,
-        })),
-      }));
-    } catch {
-      setProductSuggestions((p) => ({ ...p, [index]: [] }));
-    } finally {
-      setProductLoading((p) => ({ ...p, [index]: false }));
-    }
-  };
+  // activeProductIndex tracks which row is currently being typed in so the
+  // debounce effect knows which index to fetch for.
+  const [activeProductIndex, setActiveProductIndex] = useState<number | null>(
+    null,
+  );
+  const activeProductSearch =
+    activeProductIndex !== null
+      ? (productDisplay[activeProductIndex] ?? "")
+      : "";
+  const debouncedProductSearch = useDebounce(activeProductSearch, 300);
 
+  useEffect(() => {
+    if (activeProductIndex === null) return;
+    const index = activeProductIndex;
+    const search = debouncedProductSearch;
+
+    if (!search.trim()) {
+      setProductSuggestions((p) => ({ ...p, [index]: [] }));
+      return;
+    }
+
+    let cancelled = false;
+    setProductLoading((p) => ({ ...p, [index]: true }));
+
+    getProducts({ search, itemsPerPage: 8, page: 1 })
+      .then((result) => {
+        if (cancelled) return;
+        const data = result.data ?? result;
+        setProductSuggestions((p) => ({
+          ...p,
+          [index]: (Array.isArray(data) ? data : []).map((pr: any) => ({
+            id: pr.id,
+            label: pr.name,
+            sub: pr.price
+              ? `AFN ${Number(pr.price).toLocaleString()}`
+              : undefined,
+          })),
+        }));
+      })
+      .catch(() => {
+        if (!cancelled) setProductSuggestions((p) => ({ ...p, [index]: [] }));
+      })
+      .finally(() => {
+        if (!cancelled) setProductLoading((p) => ({ ...p, [index]: false }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedProductSearch, activeProductIndex]);
+
+  // ── Inventories (small list, fetched once on mount) ───────────────────────
   const [inventories, setInventories] = useState<Inventory[]>([]);
   useEffect(() => {
     getInventories()
-      .then(setInventories)
+      .then((res: any) =>
+        setInventories(Array.isArray(res) ? res : (res?.data ?? [])),
+      )
       .catch(() => setInventories([]));
   }, []);
 
+  // ── Add-customer dialog (reuses the shared CustomerDialog component) ───────
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const [newAddress, setNewAddress] = useState("");
 
-  const navigate = useNavigate();
-
-  const handleCreateCustomer = async () => {
-    if (!newName || !newPhone || !newAddress) return;
+  const handleCreateCustomer = async (values: CustomerFormValues) => {
     await createCustomer({
-      name: newName,
-      phone: newPhone,
-      address: newAddress,
+      name: values.name,
+      phone: values.phone,
+      address: values.address,
     });
-    await mutateCustomers();
-    setCustomerDialogOpen(false);
-    setNewName("");
-    setNewPhone("");
-    setNewAddress("");
+    // After creation, auto-fill the search field so the user can see who was added.
+    // The next keystroke will re-query and find them.
+    setCustomerDisplay(values.name);
+    setCustomerSearchEnabled(true);
   };
 
-  // ── Form ───────────────────────────────────────────────────────────────────
+  // ── Form ──────────────────────────────────────────────────────────────────
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -266,46 +330,44 @@ export default function NewPurchasePage() {
     (sum, i) => sum + Number(i.quantity || 0) * Number(i.unitPrice || 0),
     0,
   );
+
   const onSubmit = async (values: FormValues) => {
     try {
       await createPurchase({
         customerId: values.customerId,
-        purchaseDate: values.purchaseDate,
         inventoryId: values.inventoryId,
+        purchaseDate: values.purchaseDate,
         items: values.items.map((item) => ({
           productId: item.productId,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
         })),
       });
-
       form.reset();
-
       navigate("/purchases");
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
   };
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
+  // ── Item helpers ──────────────────────────────────────────────────────────
   const addItem = () => {
     append({ productId: "", productName: "", quantity: 1, unitPrice: 0 });
-    setProductSearch((p) => [...p, ""]);
+    setProductDisplay((p) => [...p, ""]);
   };
 
   const removeItem = (index: number) => {
     remove(index);
-    setProductSearch((p) => p.filter((_, i) => i !== index));
+    setProductDisplay((p) => p.filter((_, i) => i !== index));
     setProductSuggestions((p) => {
       const next = { ...p };
       delete next[index];
       return next;
     });
+    if (activeProductIndex === index) setActiveProductIndex(null);
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
       <h1 className="text-xl font-semibold text-gray-900">New Purchase</h1>
@@ -329,17 +391,18 @@ export default function NewPurchasePage() {
                           displayValue={customerDisplay}
                           placeholder="Search customer…"
                           icon={<User className="w-4 h-4" />}
-                          suggestions={filteredCustomers}
+                          suggestions={customerSuggestions}
                           loading={customerLoading}
-                          onFocus={handleCustomerFocus}
+                          onFocus={() => setCustomerSearchEnabled(true)}
                           onInputChange={(v) => {
                             setCustomerDisplay(v);
-                            setCustomerSearch(v);
+                            // Clear stored ID while the user is still typing
+                            field.onChange("");
                           }}
                           onSelect={(id, label) => {
                             field.onChange(id);
                             setCustomerDisplay(label);
-                            setCustomerSearch(label);
+                            setCustomerSuggestions([]);
                           }}
                           error={fieldState.error?.message}
                         />
@@ -428,7 +491,6 @@ export default function NewPurchasePage() {
                 key={field.id}
                 className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/50"
               >
-                {/* Product search */}
                 <div className="space-y-1.5">
                   <Label className="text-xs text-gray-500">Product</Label>
                   <Controller
@@ -437,31 +499,28 @@ export default function NewPurchasePage() {
                     render={({ field: f, fieldState }) => (
                       <Combobox
                         value={f.value}
-                        displayValue={productSearch[index] ?? ""}
+                        displayValue={productDisplay[index] ?? ""}
                         placeholder="Search product…"
                         icon={<Package className="w-4 h-4" />}
                         suggestions={productSuggestions[index] ?? []}
                         loading={productLoading[index] ?? false}
                         onFocus={() => {
-                          // Only fetch on first focus if input already has a value
-                          if (productSearch[index]?.trim()) {
-                            fetchProductSuggestions(
-                              index,
-                              productSearch[index],
-                            );
-                          }
+                          setActiveProductIndex(index);
                         }}
                         onInputChange={(v) => {
-                          setProductSearch((p) => {
+                          setProductDisplay((p) => {
                             const next = [...p];
                             next[index] = v;
                             return next;
                           });
-                          if (v.trim()) fetchProductSuggestions(index, v);
+                          // Clear stored ID while user is still typing
+                          f.onChange("");
+                          setActiveProductIndex(index);
                         }}
                         onSelect={(id, label) => {
                           f.onChange(id);
                           form.setValue(`items.${index}.productName`, label);
+                          // Auto-fill unit price from suggestion
                           const match = (productSuggestions[index] ?? []).find(
                             (s) => s.id === id,
                           );
@@ -472,11 +531,13 @@ export default function NewPurchasePage() {
                             if (!isNaN(price))
                               form.setValue(`items.${index}.unitPrice`, price);
                           }
-                          setProductSearch((p) => {
+                          setProductDisplay((p) => {
                             const next = [...p];
                             next[index] = label;
                             return next;
                           });
+                          setProductSuggestions((p) => ({ ...p, [index]: [] }));
+                          setActiveProductIndex(null);
                         }}
                         error={fieldState.error?.message}
                       />
@@ -484,7 +545,6 @@ export default function NewPurchasePage() {
                   />
                 </div>
 
-                {/* Qty + Unit price */}
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
@@ -510,7 +570,6 @@ export default function NewPurchasePage() {
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name={`items.${index}.unitPrice`}
@@ -537,7 +596,6 @@ export default function NewPurchasePage() {
                   />
                 </div>
 
-                {/* Row total + remove */}
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-gray-400">
                     Line total:{" "}
@@ -599,47 +657,17 @@ export default function NewPurchasePage() {
         </form>
       </Form>
 
-      {/* ── Add customer dialog ──────────────────────────────────────────── */}
-      <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
-        <DialogContent className="rounded-2xl max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold">
-              Add Customer
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 pt-1">
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <Input
-                placeholder="Name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="h-11 pl-9 rounded-xl border-gray-200 text-sm"
-              />
-            </div>
-            <Input
-              placeholder="Phone"
-              value={newPhone}
-              onChange={(e) =>
-                setNewPhone(e.target.value.replace(/[^0-9]/g, ""))
-              }
-              className="h-11 rounded-xl border-gray-200 text-sm"
-            />
-            <Input
-              placeholder="Address"
-              value={newAddress}
-              onChange={(e) => setNewAddress(e.target.value)}
-              className="h-11 rounded-xl border-gray-200 text-sm"
-            />
-            <Button
-              onClick={handleCreateCustomer}
-              className="w-full h-11 rounded-xl bg-black text-white hover:bg-black/90"
-            >
-              Save Customer
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/*
+        Reuse the shared CustomerDialog — same component used on the Customers page.
+        Pass no `customer` prop so it renders in "Add" mode.
+        `onSubmit` receives the validated form values; we forward them to the API
+        and let the dialog close itself on success (it calls onOpenChange(false)).
+      */}
+      <CustomerDialog
+        open={customerDialogOpen}
+        onOpenChange={setCustomerDialogOpen}
+        onSubmit={handleCreateCustomer}
+      />
     </div>
   );
 }
