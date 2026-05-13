@@ -13,17 +13,18 @@ export function useInventory() {
   // ── Remote state
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
-    page: 1,
-    limit: 10,
-    total: 0,
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0,
     totalPages: 1,
+    totalCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // ── Pagination state (list view)
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [itemsPerPage] = useState(10);
 
   // ── List-level search (server-side, hits the paginated endpoint)
   const [listSearch, setListSearch] = useState("");
@@ -71,7 +72,7 @@ export function useInventory() {
 
     getInventories({
       page: targetPage,
-      limit,
+      itemsPerPage,
       search: listSearchDebounced || undefined,
     })
       .then(({ data, meta }) => {
@@ -234,7 +235,7 @@ export function useInventory() {
     error,
     // pagination
     page,
-    limit,
+    itemsPerPage,
     goToPage,
     // list search (server-side)
     listSearch,

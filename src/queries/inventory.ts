@@ -23,10 +23,14 @@ export interface Inventory {
 }
 
 export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
   totalPages: number;
+  totalCount: number;
+  search?: string;
+  filters?: Record<string, string | string[]>;
+  sorts?: Record<string, "asc" | "desc">;
 }
 
 export interface PaginatedInventories {
@@ -38,17 +42,18 @@ export interface PaginatedInventories {
 
 export interface GetInventoriesParams {
   page?: number;
-  limit?: number;
+  itemsPerPage?: number;
   search?: string;
+  totalPages?: number;
 }
 
 /** GET /inventory — returns paginated inventories for the current store */
 export const getInventories = (
   params: GetInventoriesParams = {},
 ): Promise<PaginatedInventories> => {
-  const { page = 1, limit = 10, search } = params;
+  const { page = 1, itemsPerPage = 10, search } = params;
 
-  const query: Record<string, string | number> = { page, limit };
+  const query: Record<string, string | number> = { page, itemsPerPage };
   if (search) query.search = search;
 
   return api.get("/inventory", { params: query }).then((r) => {
@@ -58,20 +63,29 @@ export const getInventories = (
       return {
         data: mapped,
         meta: {
-          page: 1,
-          limit: mapped.length,
-          total: mapped.length,
+          currentPage: 1,
+          itemsPerPage: mapped.length,
+          totalItems: mapped.length,
           totalPages: 1,
+          totalCount: mapped.length,
         },
       };
     }
 
     const raw: any[] = r.data.data ?? r.data.inventories ?? [];
-    const meta: PaginationMeta = r.data.meta ?? {
-      page: 1,
-      limit: raw.length,
-      total: raw.length,
-      totalPages: 1,
+    const serverMeta = r.data.meta ?? {};
+    const totalItems: number =
+      serverMeta.totalItems ?? serverMeta.total ?? raw.length;
+    const meta: PaginationMeta = {
+      currentPage: serverMeta.currentPage ?? serverMeta.page ?? 1,
+      itemsPerPage: serverMeta.itemsPerPage ?? itemsPerPage,
+      totalItems,
+      totalPages:
+        serverMeta.totalPages ?? Math.ceil(totalItems / itemsPerPage) ?? 1,
+      totalCount: serverMeta.totalCount ?? serverMeta.total ?? raw.length,
+      search: serverMeta.search,
+      filters: serverMeta.filters,
+      sorts: serverMeta.sorts,
     };
 
     return { data: mapInventories(raw), meta };

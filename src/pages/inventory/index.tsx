@@ -156,9 +156,9 @@ export default function Inventory() {
 
   // ── List view: paginated table of all inventories
   const { page, paginationMeta, goToPage } = inv;
-  const { totalPages, total } = paginationMeta;
-  const from = total === 0 ? 0 : (page - 1) * inv.limit + 1;
-  const to = Math.min(page * inv.limit, total);
+  const { totalPages, totalItems: total } = paginationMeta;
+  const from = total === 0 ? 0 : (page - 1) * inv.itemsPerPage + 1;
+  const to = Math.min(page * inv.itemsPerPage, total);
 
   // Page number pills — show at most 5 around the current page
   const pageNumbers: (number | "…")[] = [];

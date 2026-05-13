@@ -43,7 +43,7 @@ import CustomerDialog from "./components/AddCustomerDialog";
 
 import type { Customer } from "@/types/customer";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 function getTodayLabel() {
   return new Date().toLocaleDateString("en-GB", {
@@ -69,11 +69,11 @@ export default function ContactsPage() {
   const swrKey = customersKey({
     search: debouncedSearch,
     page,
-    limit: PAGE_SIZE,
+    itemsPerpage: PAGE_SIZE,
   });
 
   const { data, mutate, isLoading } = useSWR(swrKey, () =>
-    getCustomers({ search: debouncedSearch, page, limit: PAGE_SIZE }),
+    getCustomers({ search: debouncedSearch, page, itemsPerpage: PAGE_SIZE }),
   );
 
   const customers = data?.data ?? [];

@@ -21,7 +21,7 @@ export interface PaginationMeta {
   total: number;
   page: number;
   totalCount: number;
-  limit: number;
+  itemsPerpage: number;
   totalPages: number;
 }
 
@@ -33,5 +33,5 @@ export interface PaginatedCustomers {
 export interface GetCustomersParams {
   search?: string;
   page?: number;
-  limit?: number;
+  itemsPerpage?: number;
 }
