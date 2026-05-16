@@ -33,5 +33,5 @@ export interface PaginatedCustomers {
 export interface GetCustomersParams {
   search?: string;
   page?: number;
-  itemsPerpage?: number;
+  itemsPerPage?: number;
 }

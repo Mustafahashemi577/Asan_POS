@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -14,27 +15,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useInventory } from "@/hooks/useinventory";
 import {
   ArrowLeft,
   Building2,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   MapPin,
   Plus,
   Search,
+  XIcon,
 } from "lucide-react";
 import AddInventoryForm from "./components/addinventoryform";
 import InventoryStats from "./components/inventorystats";
 import InventoryTable from "./components/inventorytable";
-import { useInventory } from "./hooks/useinventory";
 
 export default function Inventory() {
   const inv = useInventory();
 
   const isEdit = !!inv.inventoryDialogTarget;
 
-  // ── Single inventory dialog — handles Add and Edit (+ Delete when editing)
+  // ── Dialogs (always rendered so they don't unmount mid-interaction) ────────
   const inventoryDialog = (
     <Dialog
       open={inv.inventoryDialogOpen}
@@ -60,7 +60,6 @@ export default function Inventory() {
     </Dialog>
   );
 
-  // ── Add Item dialog
   const itemDialog = (
     <Dialog open={inv.itemDialogOpen} onOpenChange={inv.setItemDialogOpen}>
       <DialogContent className="sm:max-w-lg rounded-2xl">
@@ -74,34 +73,7 @@ export default function Inventory() {
     </Dialog>
   );
 
-  // ── Loading
-  if (inv.loading) {
-    return (
-      <>
-        {inventoryDialog}
-        {itemDialog}
-        <div className="flex items-center justify-center h-64 text-gray-400 gap-2">
-          <Loader2 className="animate-spin size-5" />
-          <span className="text-sm">Loading inventories…</span>
-        </div>
-      </>
-    );
-  }
-
-  // ── Error
-  if (inv.error) {
-    return (
-      <>
-        {inventoryDialog}
-        {itemDialog}
-        <div className="flex items-center justify-center h-64">
-          <p className="text-sm text-red-500">{inv.error}</p>
-        </div>
-      </>
-    );
-  }
-
-  // ── Detail view: an inventory row has been clicked
+  // ── Detail view ────────────────────────────────────────────────────────────
   if (inv.selectedInventoryId && inv.selectedInventory) {
     return (
       <>
@@ -110,7 +82,6 @@ export default function Inventory() {
 
         <div className="overflow-y-auto">
           <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-            {/* Back button */}
             <div>
               <Button
                 variant="ghost"
@@ -123,7 +94,6 @@ export default function Inventory() {
               </Button>
             </div>
 
-            {/* Stats + items table — no "Add Inventory" button */}
             <InventoryStats
               inventories={inv.inventories}
               selectedInventory={inv.selectedInventory}
@@ -154,28 +124,10 @@ export default function Inventory() {
     );
   }
 
-  // ── List view: paginated table of all inventories
-  const { page, paginationMeta, goToPage } = inv;
-  const { totalPages, totalItems: total } = paginationMeta;
-  const from = total === 0 ? 0 : (page - 1) * inv.itemsPerPage + 1;
-  const to = Math.min(page * inv.itemsPerPage, total);
-
-  // Page number pills — show at most 5 around the current page
-  const pageNumbers: (number | "…")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
-  } else {
-    pageNumbers.push(1);
-    if (page > 3) pageNumbers.push("…");
-    for (
-      let i = Math.max(2, page - 1);
-      i <= Math.min(totalPages - 1, page + 1);
-      i++
-    )
-      pageNumbers.push(i);
-    if (page < totalPages - 2) pageNumbers.push("…");
-    pageNumbers.push(totalPages);
-  }
+  // ── List view ──────────────────────────────────────────────────────────────
+  const { totalPages, totalItems } = inv;
+  const from = totalItems === 0 ? 0 : (inv.page - 1) * inv.itemsPerPage + 1;
+  const to = Math.min(inv.page * inv.itemsPerPage, totalItems);
 
   return (
     <>
@@ -207,34 +159,65 @@ export default function Inventory() {
 
           {/* Card */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {/* Table toolbar: search */}
+            {/* Toolbar */}
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-900">
                 All Inventories
-                {total > 0 && (
+                {totalItems > 0 && (
                   <span className="ml-2 text-xs font-normal text-gray-400">
-                    ({total})
+                    ({totalItems})
                   </span>
                 )}
               </p>
 
-              {/* Server-side search */}
-              <div className="relative sm:w-56">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-                <Input
-                  value={inv.listSearch}
-                  onChange={(e) => inv.setListSearch(e.target.value)}
-                  placeholder="Search by name…"
-                  className="h-9 pl-8 rounded-xl border-gray-200 text-sm bg-gray-50 focus:bg-white"
-                />
+              {/* Search toggle */}
+              <div className="flex items-center gap-2">
+                {!inv.listSearchOpen ? (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-10 w-10 p-0 rounded-xl"
+                    onClick={() => inv.setListSearchOpen(true)}
+                  >
+                    <Search size={15} className="text-white" />
+                  </Button>
+                ) : (
+                  <div className="relative sm:w-56">
+                    <Search
+                      size={15}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                    <Input
+                      autoFocus
+                      value={inv.listSearch}
+                      onChange={(e) => inv.setListSearch(e.target.value)}
+                      placeholder="Search by name…"
+                      className="h-10 pl-9 pr-8 rounded-xl border-gray-200 text-sm bg-white"
+                    />
+                    <XIcon
+                      size={14}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
+                      onClick={() => {
+                        inv.clearListSearch();
+                        inv.setListSearchOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Empty state */}
-            {inv.inventories.length === 0 ? (
+            {/* Body — loading spinner shown inline, table stays in the tree */}
+            {inv.loading ? (
+              <div className="flex items-center justify-center h-48 gap-2 text-gray-400">
+                <Loader2 className="animate-spin size-4" />
+                <span className="text-sm">Loading…</span>
+              </div>
+            ) : inv.error ? (
+              <div className="flex items-center justify-center h-48">
+                <p className="text-sm text-red-500">{inv.error}</p>
+              </div>
+            ) : inv.inventories.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Building2 size={32} className="text-gray-300" />
                 <p className="text-sm text-gray-400">
@@ -424,62 +407,19 @@ export default function Inventory() {
               </>
             )}
 
-            {/* ── Pagination footer */}
+            {/* Pagination footer */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-gray-100">
-              {/* Result range */}
               <span className="text-xs text-gray-500 shrink-0">
-                {total === 0
+                {totalItems === 0
                   ? "No results"
-                  : `Showing ${from}–${to} of ${total} inventori${total !== 1 ? "es" : "y"}`}
+                  : `Showing ${from}–${to} of ${totalItems} inventor${totalItems !== 1 ? "ies" : "y"}`}
               </span>
-
-              {/* Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center gap-1">
-                  {/* Prev */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0 rounded-lg"
-                    disabled={page <= 1}
-                    onClick={() => goToPage(page - 1)}
-                  >
-                    <ChevronLeft size={14} />
-                  </Button>
-
-                  {/* Page pills */}
-                  {pageNumbers.map((p, i) =>
-                    p === "…" ? (
-                      <span
-                        key={`ellipsis-${i}`}
-                        className="h-8 w-8 flex items-center justify-center text-xs text-gray-400"
-                      >
-                        …
-                      </span>
-                    ) : (
-                      <Button
-                        key={p}
-                        variant={p === page ? "default" : "outline"}
-                        size="sm"
-                        className="h-8 w-8 p-0 rounded-lg text-xs"
-                        onClick={() => goToPage(p)}
-                      >
-                        {p}
-                      </Button>
-                    ),
-                  )}
-
-                  {/* Next */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0 rounded-lg"
-                    disabled={page >= totalPages}
-                    onClick={() => goToPage(page + 1)}
-                  >
-                    <ChevronRight size={14} />
-                  </Button>
-                </div>
+                <Pagination
+                  currentPage={inv.page}
+                  totalPages={totalPages}
+                  onPageChange={inv.goToPage}
+                />
               )}
             </div>
           </div>

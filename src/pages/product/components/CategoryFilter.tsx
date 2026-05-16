@@ -65,7 +65,7 @@ export function CategoryFilter({
               key={cat.id}
               onClick={() => onSelect(cat.id)}
               className={[
-                "shrink-0 h-9 w-24 rounded-lg text-sm font-medium border transition-colors",
+                "shrink-0 h-9 w-26 rounded-lg text-sm font-medium border transition-colors",
                 selected === cat.id
                   ? "bg-white border-blue-600 text-blue-600 hover:bg-blue-100"
                   : "bg-transparent border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-400 hover:border-blue-200",

@@ -28,7 +28,7 @@ import type {
   InventoryItem,
   StockStatus,
   useInventory,
-} from "../hooks/useinventory";
+} from "../../../hooks/useinventory";
 
 const STATUS_STYLES: Record<StockStatus, string> = {
   "In Stock": "bg-green-100 text-green-700",

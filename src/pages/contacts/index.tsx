@@ -12,8 +12,6 @@ import {
 } from "@/queries/customer";
 
 import {
-  ChevronLeft,
-  ChevronRight,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -30,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -69,11 +68,11 @@ export default function ContactsPage() {
   const swrKey = customersKey({
     search: debouncedSearch,
     page,
-    itemsPerpage: PAGE_SIZE,
+    itemsPerPage: PAGE_SIZE,
   });
 
   const { data, mutate, isLoading } = useSWR(swrKey, () =>
-    getCustomers({ search: debouncedSearch, page, itemsPerpage: PAGE_SIZE }),
+    getCustomers({ search: debouncedSearch, page, itemsPerPage: PAGE_SIZE }),
   );
 
   const customers = data?.data ?? [];
@@ -424,29 +423,11 @@ export default function ContactsPage() {
                 Showing {customers.length} of {total} customers
               </span>
               {totalPages > 1 && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="h-7 w-7 p-0 rounded-lg"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </Button>
-                  <span className="text-xs text-gray-500">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    className="h-7 w-7 p-0 rounded-lg"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                />
               )}
             </div>
           </div>

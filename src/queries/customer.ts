@@ -11,13 +11,13 @@ import type {
 export async function getCustomers(
   params: GetCustomersParams = {},
 ): Promise<PaginatedCustomers> {
-  const { search, page = 1, itemsPerpage = 20 } = params;
+  const { search, page = 1, itemsPerPage = 15 } = params;
 
   const res = await api.get("/customer", {
     params: {
       ...(search ? { search } : {}),
       page,
-      itemsPerpage,
+      itemsPerPage,
     },
   });
 
@@ -25,14 +25,14 @@ export async function getCustomers(
   const raw = res.data;
   return {
     data: Array.isArray(raw?.data) ? raw.data : [],
-    meta: raw?.meta ?? { total: 0, page, itemsPerpage, totalPages: 0 },
+    meta: raw?.meta ?? { total: 0, page, itemsPerPage, totalPages: 0 },
   };
 }
 
 // SWR key factory — keeps cache keys consistent and type-safe
 export function customersKey(params: GetCustomersParams = {}) {
-  const { search = "", page = 1, itemsPerpage = 20 } = params;
-  return `/customer?search=${search}&page=${page}&itemsPerpage=${itemsPerpage}`;
+  const { search = "", page = 1, itemsPerPage = 15 } = params;
+  return `/customer?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}`;
 }
 
 export async function createCustomer(

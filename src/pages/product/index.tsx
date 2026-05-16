@@ -1,5 +1,6 @@
+import { Pagination } from "@/components/ui/pagination";
 import { getCategories } from "@/queries/category";
-import { getProducts, type PaginationMeta } from "@/queries/products";
+import { getProducts } from "@/queries/products";
 import type { Category } from "@/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AddEditProduct } from "./components/addEditProduct";
@@ -11,6 +12,8 @@ import type {
   ProductFormData,
   SavedProduct,
 } from "./components/useproductform";
+
+const ITEMS_PER_PAGE = 12;
 
 export default function ProductPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,12 +29,9 @@ export default function ProductPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const ITEMS_PER_PAGE = 12;
+  const [totalPages, setTotalPages] = useState(1);
 
   // A ref that always holds the latest categories list.
-  // Using a ref (not state) in fetchProducts breaks the dependency chain
-  // that was causing categories to load → fetchProducts ref to change → double fetch.
   const categoriesRef = useRef<Category[]>([]);
 
   const fetchProducts = useCallback(
@@ -49,15 +49,15 @@ export default function ProductPage() {
       })
         .then(({ data, meta }) => {
           setProducts(data);
-          setMeta(meta);
+          setTotalPages(meta.totalPages);
         })
         .catch(() => {
           setProducts([]);
-          setMeta(null);
+          setTotalPages(1);
         })
         .finally(() => setLoading(false));
     },
-    [], // stable forever — categoriesRef.current is always up-to-date without being a dep
+    [],
   );
 
   // Fetch categories on mount only
@@ -72,7 +72,6 @@ export default function ProductPage() {
   }, []);
 
   // Fetch products whenever page, search, or category changes.
-  // fetchProducts is stable so this never fires spuriously.
   useEffect(() => {
     fetchProducts(currentPage, searchQuery, selectedCategory);
   }, [currentPage, searchQuery, selectedCategory, fetchProducts]);
@@ -143,11 +142,13 @@ export default function ProductPage() {
     fetchProducts(currentPage, searchQuery, selectedCategory);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
-
-  const totalPages = meta?.totalPages ?? 1;
 
   return (
     <>
@@ -191,68 +192,12 @@ export default function ProductPage() {
 
           {/* ── Pagination bar ── */}
           {!loading && totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-2 pb-1">
-              {/* Prev button */}
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="h-8 w-8 rounded-lg border border-gray-200 text-sm text-gray-500 flex items-center justify-center hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                ‹
-              </button>
-
-              {/* Page numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => {
-                  const showPage =
-                    page === 1 ||
-                    page === totalPages ||
-                    Math.abs(page - currentPage) <= 1;
-
-                  const showLeftDots = page === 2 && currentPage > 4;
-                  const showRightDots =
-                    page === totalPages - 1 && currentPage < totalPages - 3;
-
-                  if (!showPage && !showLeftDots && !showRightDots) return null;
-                  if (showLeftDots || showRightDots) {
-                    return (
-                      <span
-                        key={`dots-${page}`}
-                        className="h-8 w-8 flex items-center justify-center text-gray-400 text-sm"
-                      >
-                        …
-                      </span>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={[
-                        "h-8 w-8 rounded-lg border text-sm font-medium transition-colors",
-                        currentPage === page
-                          ? "bg-black text-white border-black"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50",
-                      ].join(" ")}
-                    >
-                      {page}
-                    </button>
-                  );
-                },
-              )}
-
-              {/* Next button */}
-              <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages}
-                className="h-8 w-8 rounded-lg border border-gray-200 text-sm text-gray-500 flex items-center justify-center hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                ›
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              className="pt-2 pb-1"
+            />
           )}
         </div>
 
