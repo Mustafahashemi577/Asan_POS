@@ -1,5 +1,5 @@
-import { usePagination } from "@/hooks/usepagination";
-import { useSearch } from "@/hooks/usesearch";
+import { usePagination } from "@/hooks/use-pagination";
+import { useSearch } from "@/hooks/use-search";
 import { customersKey, getCustomers } from "@/queries/customer";
 import useSWR from "swr";
 

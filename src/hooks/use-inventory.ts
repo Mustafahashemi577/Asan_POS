@@ -1,10 +1,10 @@
-import { usePagination } from "@/hooks/usepagination";
-import { useSearch } from "@/hooks/usesearch";
+import { usePagination } from "@/hooks/use-pagination";
+import { useSearch } from "@/hooks/use-search";
 import type {
-  Inventory,
-  InventoryItem,
-  PaginationMeta,
-  StockStatus,
+    Inventory,
+    InventoryItem,
+    PaginationMeta,
+    StockStatus,
 } from "@/queries/inventory";
 import { getInventories } from "@/queries/inventory";
 import { useEffect, useMemo, useRef, useState } from "react";

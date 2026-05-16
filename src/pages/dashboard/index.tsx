@@ -2,23 +2,23 @@
 import { Loading } from "@/components/loading";
 import TransactionTable from "@/components/transactiontable";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
-import { useProfile } from "@/hooks/useprofile";
+import { useProfile } from "@/hooks/use-profile";
 import DashboardStatsCard from "@/pages/dashboard/dashboardStatsCard";
 import { useState } from "react";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from "recharts";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
