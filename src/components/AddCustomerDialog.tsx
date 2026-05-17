@@ -2,7 +2,9 @@ import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import type { Value as PhoneValue } from "react-phone-number-input";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
 
 import {
@@ -14,8 +16,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneNumberInput } from "@/components/ui/phoneinput";
 
-import { MapPin, Phone, User } from "lucide-react";
+import { MapPin, User } from "lucide-react";
 
 import type { Customer } from "@/types/customer";
 
@@ -25,9 +28,8 @@ const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z
     .string()
-    .min(10, "Valid phone number is required")
-    .max(12, "phone number cannot be more than 12 numbers")
-    .regex(/^[0-9+\s\-()]{7,20}$/, "Enter a valid phone number"),
+    .min(1, "Phone number is required")
+    .refine((val) => isValidPhoneNumber(val), "Enter a valid phone number"),
   address: z.string().min(1, "Address is required"),
 });
 
@@ -56,7 +58,7 @@ export default function CustomerDialog({
     register,
     handleSubmit,
     reset,
-    setValue,
+    control,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CustomerFormValues>({
@@ -86,13 +88,8 @@ export default function CustomerDialog({
       if (axios.isAxiosError(err) && err.response?.status === 400) {
         const message: string =
           err.response.data?.message ?? "Phone number already in use";
-
-        // Pin the server error onto the phone field since that's what the
-        // backend validates (duplicate phone). Adjust the field name if your
-        // backend ever returns errors for other fields.
         setError("phone", { type: "server", message });
       } else {
-        // Re-throw unexpected errors so they surface normally
         throw err;
       }
     }
@@ -122,8 +119,8 @@ export default function CustomerDialog({
               />
               <Input
                 {...register("name")}
-                placeholder="e.g. Ahmad Karimi"
-                className="pl-9 h-11 rounded-xl"
+                placeholder="e.g. John"
+                className="pl-9 h-11 rounded-xl border-gray-200"
               />
             </div>
             {errors.name && (
@@ -133,23 +130,18 @@ export default function CustomerDialog({
 
           {/* Phone */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Phone Number</label>
-            <div className="relative">
-              <Phone
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <Input
-                {...register("phone")}
-                placeholder="e.g. +93 700 000 000"
-                inputMode="tel"
-                className={`pl-9 h-11 rounded-xl ${errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9+\s\-()]/g, "");
-                  setValue("phone", val, { shouldValidate: true });
-                }}
-              />
-            </div>
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field }) => (
+                <PhoneNumberInput
+                  label="Phone Number"
+                  value={field.value as PhoneValue}
+                  onChange={(val) => field.onChange(val ?? "")}
+                  error={!!errors.phone}
+                />
+              )}
+            />
             {errors.phone && (
               <p className="text-xs text-red-500">{errors.phone.message}</p>
             )}
@@ -165,8 +157,8 @@ export default function CustomerDialog({
               />
               <Input
                 {...register("address")}
-                placeholder="e.g. Kabul, District 3"
-                className="pl-9 h-11 rounded-xl"
+                placeholder="e.g. Kabul"
+                className="pl-9 h-11 rounded-xl border-gray-200"
               />
             </div>
             {errors.address && (

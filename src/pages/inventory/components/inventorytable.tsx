@@ -1,33 +1,31 @@
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { getCategories } from "@/queries/category";
 import { MoreHorizontal, Search, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import type {
-    InventoryItem,
-    StockStatus,
-    useInventory,
+  InventoryItem,
+  StockStatus,
+  useInventory,
 } from "../../../hooks/use-inventory";
 
 const STATUS_STYLES: Record<StockStatus, string> = {
@@ -49,8 +47,6 @@ type Props = ReturnType<typeof useInventory>;
 export default function InventoryTable({
   selectedInventory,
   filtered,
-  category,
-  setCategory,
   status,
   setStatus,
   search,
@@ -64,8 +60,6 @@ export default function InventoryTable({
   Props,
   | "selectedInventory"
   | "filtered"
-  | "category"
-  | "setCategory"
   | "status"
   | "setStatus"
   | "search"
@@ -76,25 +70,6 @@ export default function InventoryTable({
   | "setSelectedRow"
   | "setItemDialogOpen"
 >) {
-  // Fetch categories from the API
-  type Category = {
-    id: string | number;
-    name: string;
-    store?: unknown;
-    createdAt?: string;
-    updatedAt?: string;
-  };
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-
-  useEffect(() => {
-    setCategoriesLoading(true);
-    getCategories()
-      .then((data) => setCategories(data ?? []))
-      .catch(() => setCategories([]))
-      .finally(() => setCategoriesLoading(false));
-  }, []);
-
   // Row action handlers — wire up your own modals here
   const handleView = (item: InventoryItem) => console.log("View:", item);
   const handleEdit = (item: InventoryItem) => console.log("Edit:", item);
@@ -114,27 +89,6 @@ export default function InventoryTable({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:shrink-0">
-          {/* Category filter — loaded from API */}
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all">All Categories</SelectItem>
-              {categoriesLoading ? (
-                <SelectItem value="__loading__" disabled>
-                  Loading…
-                </SelectItem>
-              ) : (
-                categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-
           {/* Status filter */}
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">
@@ -192,9 +146,7 @@ export default function InventoryTable({
           <TableHeader>
             <TableRow className="bg-gray-100">
               {[
-                "Item ID",
                 "Name",
-                "Category",
                 "Quantity",
                 "Unit Price",
                 "Status",
@@ -231,14 +183,8 @@ export default function InventoryTable({
                     selectedRow === item.id ? "bg-blue-50" : "hover:bg-gray-50"
                   }`}
                 >
-                  <TableCell className="text-xs text-gray-600 font-mono pl-6 whitespace-nowrap">
-                    {item.id}
-                  </TableCell>
                   <TableCell className="text-xs text-gray-800 font-medium whitespace-nowrap">
                     {item.name}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-600 whitespace-nowrap">
-                    {item.category}
                   </TableCell>
                   <TableCell className="text-xs text-gray-800 whitespace-nowrap">
                     {item.quantity.toLocaleString()} {item.unit}
@@ -334,7 +280,6 @@ export default function InventoryTable({
                 {item.name}
               </p>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>{item.category}</span>
                 <span>
                   {item.quantity} {item.unit}
                 </span>
