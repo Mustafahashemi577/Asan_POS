@@ -1,3 +1,4 @@
+import { Plus, Search, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -16,11 +17,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useCategories } from "@/hooks/use-categories";
 import type { Category } from "@/types";
 
-export default function category() {
-  const [search, setSearch] = useState("");
+export default function Category() {
+  const { search, handleSearch, clearSearch } = useCategories();
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: categories, mutate } = useSWR(
     ["categories", debouncedSearch],
@@ -107,16 +110,43 @@ export default function category() {
         <h1 className="text-xl sm:text-2xl font-semibold">Category</h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-        <Input
-          placeholder="Search category..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-80"
-        />
+      <div className="flex sm:flex-row items-center sm:justify-end gap-3 mb-3">
+        {!searchOpen ? (
+          <Button
+            variant="default"
+            size="sm"
+            className="h-10 w-37 sm:w-15 p-0 rounded-xl"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search size={15} className="text-white" />
+          </Button>
+        ) : (
+          <div className="relative sm:w-56">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
+            <Input
+              autoFocus
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search purchases..."
+              className="h-10 pl-9 pr-8 rounded-xl border-gray-200 text-sm bg-white"
+            />
+            <XIcon
+              size={14}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
+              onClick={() => {
+                clearSearch();
+                setSearchOpen(false);
+              }}
+            />
+          </div>
+        )}
 
-        <Button onClick={openAdd} className="w-full sm:w-auto">
-          + Add Category
+        <Button className="h-10 w-40" onClick={openAdd}>
+          <Plus size={15} className="text-white" />
+          Add Category
         </Button>
       </div>
 
@@ -146,7 +176,7 @@ export default function category() {
           {categories.map((cat: any) => (
             <div
               key={cat.id}
-              className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm flex flex-col justify-between"
+              className="border  border-gray-200 rounded-xl p-4 bg-white shadow-lg flex flex-col justify-between"
             >
               <div>
                 <h3 className="text-lg font-medium text-gray-900">

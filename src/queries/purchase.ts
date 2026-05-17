@@ -13,7 +13,6 @@ export interface PurchasesQuery {
   page?: number;
   itemsPerPage?: number;
   search?: string;
-  /** Filter by purchase status; omit to return all statuses */
   status?: string;
 }
 
@@ -24,14 +23,24 @@ export interface PurchasesMeta {
   itemsPerPage: number;
 }
 
+export function purchasesKey(params: PurchasesQuery = {}) {
+  const { search = "", page = 1, itemsPerPage = 15 } = params;
+  return `/purchase?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}`;
+}
+
+/** Normalize a purchase object so status is always uppercase */
+function normalizePurchase<T extends { status: string }>(p: T): T {
+  return { ...p, status: p.status.toUpperCase() };
+}
+
 export const getPurchases = (
   query: PurchasesQuery = {},
 ): Promise<{ data: PurchaseListItem[]; meta: PurchasesMeta }> =>
   api.get("/purchase", { params: query }).then((r) => {
     const raw = r.data;
-    const items: PurchaseListItem[] = Array.isArray(raw)
-      ? raw
-      : (raw.data ?? raw.purchases ?? []);
+    const items: PurchaseListItem[] = (
+      Array.isArray(raw) ? raw : (raw.data ?? raw.purchases ?? [])
+    ).map(normalizePurchase);
     const meta: PurchasesMeta = raw.meta ?? {
       total: items.length,
       page: 1,
@@ -44,15 +53,15 @@ export const getPurchases = (
 // ── Single ────────────────────────────────────────────────────────────────────
 
 export const getPurchase = (id: string): Promise<PurchaseDetail> =>
-  api.get(`/purchase/${id}`).then((r) => r.data);
+  api
+    .get(`/purchase/${id}`)
+    .then((r) => normalizePurchase(r.data) as PurchaseDetail);
 
 // ── Create ────────────────────────────────────────────────────────────────────
 
 export const createPurchase = (
   payload: CreatePurchasePayload,
 ): Promise<{ message: string }> => {
-  // The backend DTO field is `customDate`; the form schema uses `purchaseDate`.
-  // Remap here so the API contract is honoured without touching the form.
   const { purchaseDate, ...rest } = payload as any;
   return api
     .post("/purchase", { ...rest, customDate: purchaseDate })
@@ -60,14 +69,13 @@ export const createPurchase = (
 };
 
 // ── Update status ─────────────────────────────────────────────────────────────
-// The backend exposes PATCH /purchase/:id (UpdatePurchaseDto with a status field).
-// There is no separate /status sub-route.
+// Backend controller uses @Put(":id")
 
 export const updatePurchaseStatus = (
   id: string,
   payload: UpdatePurchaseStatusPayload,
 ): Promise<{ message: string }> =>
-  api.patch(`/purchase/${id}`, payload).then((r) => r.data);
+  api.put(`/purchase/${id}`, payload).then((r) => r.data);
 
 // ── Delete (only valid when status is DRAFT) ──────────────────────────────────
 
