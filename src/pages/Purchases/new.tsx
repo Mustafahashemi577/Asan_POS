@@ -1,724 +1,661 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import useSWR from "swr";
+import { z } from "zod";
 
+import CustomerDialog from "@/components/AddCustomerDialog";
+import DateInput from "@/components/ui/DateInput";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Pagination } from "@/components/ui/pagination";
+import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Archive,
+  DollarSign,
+  Hash,
+  Package,
+  Plus,
+  Trash2,
+  User,
+  UserPlus,
+} from "lucide-react";
+import InventoryCombobox from "./components/inventory-combobox";
 
-import { MoreHorizontal, Plus, Search, XIcon } from "lucide-react";
+import { createCustomer, getCustomers } from "@/queries/customer";
+import { getProducts } from "@/queries/products";
+import { createPurchase } from "@/queries/purchase";
+import type { CreateCustomerPayload } from "@/types/customer";
 
-import { usePurchases } from "@/hooks/use-purchases";
-import {
-  deletePurchase,
-  getPurchase,
-  updatePurchaseStatus,
-} from "@/queries/purchase";
-import type { PurchaseDetail, PurchaseStatus } from "@/types/purchases";
+// ── API response shapes ───────────────────────────────────────────────────────
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-
-const PURCHASE_STATS = [
-  {
-    label: "Total Purchases",
-    value: "134",
-    pct: "4.1%",
-    pctColor: "text-green-400",
-    date: "Wednesday, 06 May 2026",
-    sub: "8 this week",
-  },
-  {
-    label: "Total Spent",
-    value: "AFN 2.4M",
-    pct: "1.8%",
-    pctColor: "text-orange-400",
-    date: "Wednesday, 06 May 2026",
-    sub: "AFN 380K this month",
-  },
-  {
-    label: "This Month",
-    value: "23",
-    pct: "",
-    pctColor: "",
-    date: "Wednesday, 06 May 2026",
-    sub: "AFN 380,000",
-  },
-];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDate(iso: string | undefined | null): string {
-  if (!iso) return "—";
-  const normalized = iso.includes("T") ? iso : `${iso}T12:00:00Z`;
-  return new Date(normalized).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+interface CustomerRow {
+  id: string;
+  name: string;
+  phone?: string;
 }
 
-function fmtCurrency(n: number) {
-  return "AFN " + Number(n).toLocaleString("id-ID");
+interface ProductRow {
+  id: string;
+  name: string;
+  price?: string | number;
 }
 
-// Normalize to uppercase so comparisons always work regardless of what
-// the backend serializes the enum as (e.g. "draft" vs "DRAFT")
-function normalizeStatus(status: string): PurchaseStatus {
-  return status.toUpperCase() as PurchaseStatus;
+interface ApiListResponse<T> {
+  data?: T[];
 }
 
-const STATUS_STYLES: Record<PurchaseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
-  DONE: "bg-green-100 text-green-700",
-  CANCELLED: "bg-red-100 text-red-500",
+// ── Schema ────────────────────────────────────────────────────────────────────
+
+const itemSchema = z.object({
+  productId: z.string().min(1, "Select a product"),
+  productName: z.string().min(1),
+  quantity: z.coerce.number().int().positive("Must be > 0"),
+  unitPrice: z.coerce.number().positive("Must be > 0"),
+});
+
+const schema = z.object({
+  customerId: z.string().min(1, "Select a customer"),
+  purchaseDate: z.string().min(1, "Select a date"),
+  inventoryId: z.string().min(1, "Select an inventory"),
+  items: z.array(itemSchema).min(1, "Add at least one item"),
+});
+
+// Explicit type so z.coerce fields resolve to `number` not `unknown`,
+// fixing the Resolver<> assignability error from react-hook-form.
+type FormValues = {
+  customerId: string;
+  purchaseDate: string;
+  inventoryId: string;
+  items: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
 };
 
-const STATUS_FILTER_OPTIONS: { label: string; value: string }[] = [
-  { label: "All Statuses", value: "ALL" },
-  { label: "Draft", value: "DRAFT" },
-  { label: "Done", value: "DONE" },
-  { label: "Cancelled", value: "CANCELLED" },
-];
+// ── Suggestion type ───────────────────────────────────────────────────────────
 
-// ── Purchase detail sheet ─────────────────────────────────────────────────────
-
-interface PurchaseDetailSheetProps {
-  id: string | null;
-  open: boolean;
-  onClose: () => void;
-  onStatusChange: (id: string, status: PurchaseStatus) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  actionLoading: boolean;
+interface Suggestion {
+  id: string;
+  label: string;
+  sub?: string;
 }
 
-function PurchaseDetailSheet({
-  id,
-  open,
-  onClose,
-  onStatusChange,
-  onDelete,
-  actionLoading,
-}: PurchaseDetailSheetProps) {
-  const { data, isLoading } = useSWR<PurchaseDetail>(
-    open && id ? `purchase-detail-${id}` : null,
-    () => getPurchase(id!),
-    { revalidateOnFocus: false },
-  );
+// ── useDebounce ───────────────────────────────────────────────────────────────
 
-  // Always normalize status so comparisons work regardless of backend casing
-  const status = data ? normalizeStatus(data.status) : null;
-
-  return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-lg">
-        <SheetHeader className="px-6 pt-2 pb-4 border-b border-gray-100">
-          <SheetTitle className="text-base font-semibold">
-            Purchase Detail
-          </SheetTitle>
-        </SheetHeader>
-
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-          {isLoading || !data ? (
-            <p className="text-sm text-gray-400 text-center py-12">Loading…</p>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Purchase #</p>
-                  <p className="font-mono text-gray-700 text-xs">
-                    #{data.sequenceId}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Status</p>
-                  <span
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                      STATUS_STYLES[status!] ?? "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Customer</p>
-                  <p className="text-gray-800 font-medium">
-                    {data.customer?.name}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Inventory</p>
-                  <p className="text-gray-800 font-medium">
-                    {data.inventory?.name}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Date</p>
-                  <p className="text-gray-700">{fmtDate(data.customDate)}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-3">
-                  Items
-                </p>
-                <div className="rounded-xl border border-gray-200 overflow-hidden">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="text-left px-4 py-2.5 font-medium text-gray-600">
-                          Product
-                        </th>
-                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">
-                          Qty
-                        </th>
-                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">
-                          Unit Price
-                        </th>
-                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {data.items?.map((item) => (
-                        <tr key={item.id}>
-                          <td className="px-4 py-2.5 text-gray-800">
-                            {item.product?.name}
-                          </td>
-                          <td className="px-4 py-2.5 text-right text-gray-600">
-                            {item.quantity}
-                          </td>
-                          <td className="px-4 py-2.5 text-right text-gray-600">
-                            {fmtCurrency(item.unitPrice)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-medium text-gray-800">
-                            {fmtCurrency(item.unitPrice * item.quantity)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center border-t border-gray-100 pt-4">
-                <span className="text-sm text-gray-500 font-medium">Total</span>
-                <span className="text-base font-bold text-gray-900">
-                  {fmtCurrency(data.totalPrice)}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Footer — SheetFooter has mt-auto so it always sticks to the bottom */}
-        <SheetFooter className="border-t border-gray-100 px-6 py-4 flex-row flex-wrap gap-2">
-          {!data || isLoading || !status ? null : status === "DRAFT" ? (
-            <>
-              <Button
-                size="sm"
-                disabled={actionLoading}
-                className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs h-9 px-4"
-                onClick={() => onStatusChange(data.id, "DONE")}
-              >
-                Mark as Done
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={actionLoading}
-                className="rounded-xl border-orange-300 text-orange-500 hover:bg-orange-50 hover:text-orange-600 text-xs h-9 px-4"
-                onClick={() => onStatusChange(data.id, "CANCELLED")}
-              >
-                Cancel Purchase
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={actionLoading}
-                className="rounded-xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 text-xs h-9 px-4 ml-auto"
-                onClick={async () => {
-                  await onDelete(data.id);
-                  onClose();
-                }}
-              >
-                Delete
-              </Button>
-            </>
-          ) : status === "DONE" ? (
-            <p className="text-xs text-gray-400 self-center">
-              Purchase completed — items have been transferred to inventory.
-            </p>
-          ) : status === "CANCELLED" ? (
-            <p className="text-xs text-gray-400 self-center">
-              This purchase has been cancelled and cannot be modified.
-            </p>
-          ) : null}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
+function useDebounce<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── InlineCombobox (customer / product autocomplete) ─────────────────────────
 
-export default function Purchase() {
-  const navigate = useNavigate();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [viewId, setViewId] = useState<string | null>(null);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface InlineComboboxProps {
+  displayValue: string;
+  placeholder: string;
+  icon: React.ReactNode;
+  suggestions: Suggestion[];
+  loading: boolean;
+  onFocus: () => void;
+  onInputChange: (v: string) => void;
+  onSelect: (id: string, label: string) => void;
+  error?: string;
+}
 
-  const {
-    purchases,
-    total,
-    totalPages,
-    page,
-    setPage,
-    search,
-    handleSearch,
-    clearSearch,
-    status,
-    setStatus,
-    isLoading,
-    mutate,
-  } = usePurchases();
+function InlineCombobox({
+  displayValue,
+  placeholder,
+  icon,
+  suggestions,
+  loading,
+  onFocus,
+  onInputChange,
+  onSelect,
+  error,
+}: InlineComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-
-  const handleDelete = async (id: string) => {
-    setLoadingId(id);
-    setError(null);
-    try {
-      await deletePurchase(id);
-      await mutate();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to delete purchase.",
-      );
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const handleStatusChange = async (id: string, newStatus: PurchaseStatus) => {
-    setLoadingId(id);
-    setError(null);
-    try {
-      await updatePurchaseStatus(id, { status: newStatus });
-      await mutate();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Failed to update status to ${newStatus}.`,
-      );
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
-    <div className="overflow-y-auto">
-      <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-        {/* Error banner */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 flex items-center justify-between">
-            <span>{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600 ml-4 text-xs"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
-          <div className="mb-6">
-            <h1 className="text-white text-xl sm:text-2xl font-semibold">
-              Purchase Overview
-            </h1>
-            <p className="text-gray-400 text-xs sm:text-sm mt-1">
-              Track purchases for your inventory
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {PURCHASE_STATS.map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white/10 border border-white/10 rounded-xl p-4"
-              >
-                <p className="text-gray-300 text-xs mb-2">{stat.label}</p>
-                <div className="flex items-end justify-between mb-3">
-                  <p className="text-white text-lg sm:text-xl font-semibold leading-tight">
-                    {stat.value}
-                  </p>
-                  {stat.pct && (
-                    <span
-                      className={`text-xs font-medium ${stat.pctColor} bg-white/10 px-1.5 py-0.5 rounded`}
-                    >
-                      {stat.pct}
-                    </span>
-                  )}
-                </div>
-                <hr className="border-white/10 mb-2" />
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-[10px]">{stat.date}</span>
-                  <span className="text-gray-400 text-xs">{stat.sub}</span>
-                </div>
-                <button className="text-gray-500 text-[10px] mt-1.5 hover:text-gray-300 transition block">
-                  View all &rsaquo;
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Table card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {/* Toolbar */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">
-                Purchase Records
-              </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {purchases.length} record{purchases.length !== 1 ? "s" : ""}{" "}
-                found
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
-              {!searchOpen ? (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="h-10 w-10 p-0 rounded-xl"
-                  onClick={() => setSearchOpen(true)}
-                >
-                  <Search size={15} className="text-white" />
-                </Button>
-              ) : (
-                <div className="relative sm:w-56">
-                  <Search
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                  <Input
-                    autoFocus
-                    value={search}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    placeholder="Search purchases..."
-                    className="h-10 pl-9 pr-8 rounded-xl border-gray-200 text-sm bg-white"
-                  />
-                  <XIcon
-                    size={14}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
-                    onClick={() => {
-                      clearSearch();
-                      setSearchOpen(false);
-                    }}
-                  />
-                </div>
-              )}
-
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-10 rounded-xl border-gray-200 text-sm w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {STATUS_FILTER_OPTIONS.map((opt) => (
-                    <SelectItem
-                      key={opt.value}
-                      value={opt.value}
-                      className="text-sm"
-                    >
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                onClick={() => navigate("/purchases/new")}
-                className="h-10 rounded-xl bg-black text-white hover:bg-black/90 text-sm gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                Add Purchase
-              </Button>
-            </div>
-          </div>
-
-          {/* Desktop table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-100">
-                  {[
-                    "Purchase #",
-                    "Customer",
-                    "Inventory",
-                    "Total Price",
-                    "Date",
-                    "Status",
-                    "Actions",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-sm font-medium py-4 text-left text-black px-6 whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-12 text-center text-gray-400 text-sm"
-                    >
-                      Loading purchases…
-                    </td>
-                  </tr>
-                ) : purchases.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-12 text-center text-gray-400 text-sm"
-                    >
-                      {search
-                        ? `No purchases matching "${search}"`
-                        : "No purchases found"}
-                    </td>
-                  </tr>
-                ) : (
-                  purchases.map((item) => {
-                    const itemStatus = normalizeStatus(item.status);
-                    return (
-                      <tr
-                        key={item.id}
-                        className="border-t border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="text-xs text-gray-600 font-mono px-6 py-4 whitespace-nowrap">
-                          #{item.sequenceId}
-                        </td>
-                        <td className="text-xs text-gray-800 font-medium px-6 py-4 whitespace-nowrap">
-                          {item.customer?.name}
-                        </td>
-                        <td className="text-xs text-gray-600 px-6 py-4 whitespace-nowrap">
-                          {item.inventory?.name}
-                        </td>
-                        <td className="text-xs text-gray-900 font-semibold px-6 py-4 whitespace-nowrap">
-                          {fmtCurrency(item.totalPrice)}
-                        </td>
-                        <td className="text-xs text-gray-600 px-6 py-4 whitespace-nowrap">
-                          {fmtDate(item.customDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                              STATUS_STYLES[itemStatus] ??
-                              "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {itemStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={loadingId === item.id}
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100 disabled:opacity-40"
-                              >
-                                <MoreHorizontal
-                                  size={16}
-                                  className="text-gray-500"
-                                />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-xl w-44"
-                            >
-                              <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={() => setViewId(item.id)}
-                              >
-                                View
-                              </DropdownMenuItem>
-
-                              {itemStatus === "DRAFT" && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-green-600 focus:text-green-600"
-                                    onClick={() =>
-                                      handleStatusChange(item.id, "DONE")
-                                    }
-                                  >
-                                    Mark as Done
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-orange-500 focus:text-orange-500"
-                                    onClick={() =>
-                                      handleStatusChange(item.id, "CANCELLED")
-                                    }
-                                  >
-                                    Cancel Purchase
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-red-500 focus:text-red-500"
-                                    onClick={() => handleDelete(item.id)}
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile cards */}
-          <div className="sm:hidden divide-y divide-gray-100">
-            {isLoading ? (
-              <p className="px-5 py-12 text-center text-gray-400 text-sm">
-                Loading purchases…
-              </p>
-            ) : purchases.length === 0 ? (
-              <p className="px-5 py-12 text-center text-gray-400 text-sm">
-                {search
-                  ? `No purchases matching "${search}"`
-                  : "No purchases found"}
-              </p>
-            ) : (
-              purchases.map((item) => {
-                const itemStatus = normalizeStatus(item.status);
-                return (
-                  <div key={item.id} className="px-4 py-4">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs font-mono text-gray-500">
-                        #{item.sequenceId}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          STATUS_STYLES[itemStatus] ?? ""
-                        }`}
-                      >
-                        {itemStatus}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-gray-800 mb-0.5">
-                      {item.customer?.name}
-                    </p>
-                    <p className="text-xs text-gray-500 mb-1">
-                      {item.inventory?.name}
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <div>
-                        <p className="text-xs text-gray-400">
-                          {fmtDate(item.customDate)}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {fmtCurrency(item.totalPrice)}
-                        </p>
-                      </div>
-                      <div className="flex gap-3 items-center">
-                        <button
-                          onClick={() => setViewId(item.id)}
-                          className="text-xs text-blue-500 hover:underline"
-                        >
-                          View
-                        </button>
-                        {itemStatus === "DRAFT" && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(item.id, "DONE")
-                              }
-                              className="text-xs text-green-600 hover:underline"
-                            >
-                              Done
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="text-xs text-red-500 hover:underline"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Pagination footer */}
-          <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs text-gray-500">
-              Showing {purchases.length} of {total} records
-            </span>
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        </div>
+    <div ref={ref} className="relative">
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+          {icon}
+        </span>
+        <Input
+          value={displayValue}
+          placeholder={placeholder}
+          className={`h-11 pl-9 pr-3 rounded-xl border-gray-200 text-sm ${error ? "border-red-400" : ""}`}
+          onFocus={() => {
+            onFocus();
+            setOpen(true);
+          }}
+          onChange={(e) => {
+            onInputChange(e.target.value);
+            setOpen(true);
+          }}
+        />
       </div>
 
-      <PurchaseDetailSheet
-        id={viewId}
-        open={!!viewId}
-        onClose={() => setViewId(null)}
-        onStatusChange={async (id, newStatus) => {
-          await handleStatusChange(id, newStatus);
-        }}
-        onDelete={handleDelete}
-        actionLoading={!!loadingId}
+      {open && (displayValue.length > 0 || loading) && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          {loading ? (
+            <p className="px-4 py-3 text-xs text-gray-400">Searching…</p>
+          ) : suggestions.length === 0 ? (
+            <p className="px-4 py-3 text-xs text-gray-400">No results</p>
+          ) : (
+            suggestions.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onSelect(s.id, s.label);
+                  setOpen(false);
+                }}
+              >
+                <p className="text-sm text-gray-800">{s.label}</p>
+                {s.sub && <p className="text-xs text-gray-400">{s.sub}</p>}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// ── useCustomerSearch ─────────────────────────────────────────────────────────
+
+function useCustomerSearch() {
+  const [display, setDisplay] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const debounced = useDebounce(display, 300);
+
+  useEffect(() => {
+    if (!enabled || !debounced.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    getCustomers({ search: debounced, itemsPerPage: 8, page: 1 })
+      .then((result: ApiListResponse<CustomerRow> | CustomerRow[]) => {
+        if (cancelled) return;
+        const rows = Array.isArray(result) ? result : (result.data ?? []);
+        setSuggestions(
+          rows.map((c) => ({ id: c.id, label: c.name, sub: c.phone })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debounced, enabled]);
+
+  return {
+    display,
+    setDisplay,
+    suggestions,
+    setSuggestions,
+    loading,
+    setEnabled,
+  };
+}
+
+// ── useProductSearch ──────────────────────────────────────────────────────────
+
+function useProductSearch() {
+  const [displays, setDisplays] = useState<string[]>([""]);
+  const [suggestions, setSuggestions] = useState<Record<number, Suggestion[]>>(
+    {},
+  );
+  const [loadingMap, setLoadingMap] = useState<Record<number, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const activeSearch =
+    activeIndex !== null ? (displays[activeIndex] ?? "") : "";
+  const debounced = useDebounce(activeSearch, 300);
+
+  useEffect(() => {
+    if (activeIndex === null || !debounced.trim()) {
+      if (activeIndex !== null)
+        setSuggestions((p) => ({ ...p, [activeIndex]: [] }));
+      return;
+    }
+    const index = activeIndex;
+    let cancelled = false;
+    setLoadingMap((p) => ({ ...p, [index]: true }));
+    getProducts({ search: debounced, itemsPerPage: 8, page: 1 })
+      .then((result: ApiListResponse<ProductRow> | ProductRow[]) => {
+        if (cancelled) return;
+        const data = Array.isArray(result) ? result : (result.data ?? []);
+        setSuggestions((p) => ({
+          ...p,
+          [index]: data.map((pr) => ({
+            id: pr.id,
+            label: pr.name,
+            sub: pr.price
+              ? `AFN ${Number(pr.price).toLocaleString()}`
+              : undefined,
+          })),
+        }));
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestions((p) => ({ ...p, [index]: [] }));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMap((p) => ({ ...p, [index]: false }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debounced, activeIndex]);
+
+  const addRow = () => setDisplays((p) => [...p, ""]);
+
+  const removeRow = (index: number) => {
+    setDisplays((p) => p.filter((_, i) => i !== index));
+    setSuggestions((p) => {
+      const n = { ...p };
+      delete n[index];
+      return n;
+    });
+    if (activeIndex === index) setActiveIndex(null);
+  };
+
+  return {
+    displays,
+    setDisplays,
+    suggestions,
+    setSuggestions,
+    loadingMap,
+    activeIndex,
+    setActiveIndex,
+    addRow,
+    removeRow,
+  };
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function NewPurchasePage() {
+  const navigate = useNavigate();
+  const customer = useCustomerSearch();
+  const product = useProductSearch();
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as ReturnType<
+      typeof zodResolver<typeof schema, FormValues>
+    >,
+    defaultValues: {
+      customerId: "",
+      purchaseDate: "",
+      inventoryId: "",
+      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
+  const watchedItems = form.watch("items");
+  const total = watchedItems.reduce(
+    (sum, i) => sum + Number(i.quantity || 0) * Number(i.unitPrice || 0),
+    0,
+  );
+
+  const handleCreateCustomer = async (values: CreateCustomerPayload) => {
+    await createCustomer({
+      name: values.name,
+      phone: values.phone,
+      address: values.address,
+    });
+    customer.setDisplay(values.name);
+    customer.setEnabled(true);
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await createPurchase({
+        customerId: values.customerId,
+        inventoryId: values.inventoryId,
+        purchaseDate: values.purchaseDate,
+        items: values.items.map((item) => ({
+          productId: item.productId,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        })),
+      });
+      form.reset();
+      navigate("/purchases");
+    } catch (err) {
+      console.error("Failed to create purchase:", err);
+    }
+  };
+
+  const addItem = () => {
+    append({ productId: "", productName: "", quantity: 1, unitPrice: 0 });
+    product.addRow();
+  };
+
+  const removeItem = (index: number) => {
+    remove(index);
+    product.removeRow(index);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <h1 className="text-xl font-semibold text-gray-900">New Purchase</h1>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* ── Customer + Date ─────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="customerId"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>Customer</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <div className="flex-1">
+                        <InlineCombobox
+                          displayValue={customer.display}
+                          placeholder="Search customer…"
+                          icon={<User className="w-4 h-4" />}
+                          suggestions={customer.suggestions}
+                          loading={customer.loading}
+                          onFocus={() => customer.setEnabled(true)}
+                          onInputChange={(v) => {
+                            customer.setDisplay(v);
+                            field.onChange("");
+                          }}
+                          onSelect={(id, label) => {
+                            field.onChange(id);
+                            customer.setDisplay(label);
+                            customer.setSuggestions([]);
+                          }}
+                          error={fieldState.error?.message}
+                        />
+                      </div>
+                    </FormControl>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-11 w-11 rounded-xl border-gray-200 shrink-0"
+                            onClick={() => setCustomerDialogOpen(true)}
+                          >
+                            <UserPlus className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Add new customer</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="purchaseDate"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>Purchase Date</FormLabel>
+                  <FormControl>
+                    <DateInput value={field.value} onChange={field.onChange} />
+                  </FormControl>
+                  {fieldState.error && (
+                    <FormMessage>{fieldState.error.message}</FormMessage>
+                  )}
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* ── Inventory ───────────────────────────────────────────────── */}
+          <FormField
+            control={form.control}
+            name="inventoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Inventory</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Archive className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                    <InventoryCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* ── Items ───────────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-gray-700">Items</Label>
+
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/50"
+              >
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Product</Label>
+                  <Controller
+                    control={form.control}
+                    name={`items.${index}.productId`}
+                    render={({ field: f, fieldState }) => (
+                      <InlineCombobox
+                        displayValue={product.displays[index] ?? ""}
+                        placeholder="Search product…"
+                        icon={<Package className="w-4 h-4" />}
+                        suggestions={product.suggestions[index] ?? []}
+                        loading={product.loadingMap[index] ?? false}
+                        onFocus={() => product.setActiveIndex(index)}
+                        onInputChange={(v) => {
+                          product.setDisplays((p) => {
+                            const n = [...p];
+                            n[index] = v;
+                            return n;
+                          });
+                          f.onChange("");
+                          product.setActiveIndex(index);
+                        }}
+                        onSelect={(id, label) => {
+                          f.onChange(id);
+                          form.setValue(`items.${index}.productName`, label);
+                          const match = (product.suggestions[index] ?? []).find(
+                            (s) => s.id === id,
+                          );
+                          if (match?.sub) {
+                            const price = Number(
+                              match.sub.replace(/[^0-9]/g, ""),
+                            );
+                            if (!isNaN(price))
+                              form.setValue(`items.${index}.unitPrice`, price);
+                          }
+                          product.setDisplays((p) => {
+                            const n = [...p];
+                            n[index] = label;
+                            return n;
+                          });
+                          product.setSuggestions((p) => ({
+                            ...p,
+                            [index]: [],
+                          }));
+                          product.setActiveIndex(null);
+                        }}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.quantity`}
+                    render={({ field: f }) => (
+                      <FormItem>
+                        <Label className="text-xs text-gray-500">
+                          Quantity
+                        </Label>
+                        <FormControl>
+                          <div className="relative">
+                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <Input
+                              type="number"
+                              min={1}
+                              placeholder="0"
+                              className="h-11 pl-9 rounded-xl border-gray-200 text-sm"
+                              {...f}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.unitPrice`}
+                    render={({ field: f }) => (
+                      <FormItem>
+                        <Label className="text-xs text-gray-500">
+                          Unit Price
+                        </Label>
+                        <FormControl>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <Input
+                              type="number"
+                              min={0}
+                              placeholder="0"
+                              className="h-11 pl-9 rounded-xl border-gray-200 text-sm"
+                              {...f}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-gray-400">
+                    Line total:{" "}
+                    <span className="font-medium text-gray-700">
+                      AFN{" "}
+                      {(
+                        Number(watchedItems[index]?.quantity || 0) *
+                        Number(watchedItems[index]?.unitPrice || 0)
+                      ).toLocaleString("id-ID")}
+                    </span>
+                  </span>
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl border-dashed border-gray-300 text-gray-500 hover:text-gray-800 h-11"
+              onClick={addItem}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add Item
+            </Button>
+
+            {form.formState.errors.items?.root && (
+              <p className="text-xs text-red-500">
+                {form.formState.errors.items.root.message}
+              </p>
+            )}
+          </div>
+
+          {/* ── Total + submit ───────────────────────────────────────────── */}
+          <div className="border-t border-gray-200 pt-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400">Total</p>
+              <p className="text-lg font-bold text-gray-900">
+                AFN {total.toLocaleString("id-ID")}
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="h-11 px-8 rounded-xl bg-black text-white hover:bg-black/90 font-medium"
+            >
+              {form.formState.isSubmitting ? "Saving…" : "Save Purchase"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+
+      <CustomerDialog
+        open={customerDialogOpen}
+        onOpenChange={setCustomerDialogOpen}
+        onSubmit={handleCreateCustomer}
       />
     </div>
   );

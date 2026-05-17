@@ -242,7 +242,7 @@ function PurchaseDetailSheet({
                 size="sm"
                 disabled={actionLoading}
                 className="rounded-xl bg-white border-green-400 hover:bg-green-100 text-green-700 hover:text-green-800 text-xs h-9 px-4"
-                onClick={() => onStatusChange(data.id, "DONE")}
+                onClick={() => onStatusChange(data.id, "Done")}
               >
                 Mark as DONE
               </Button>
@@ -467,7 +467,7 @@ export default function Purchase() {
               </Select>
 
               <Button
-                onClick={() => navigate("/purchases/new")}
+                onClick={() => navigate("/Purchases/new")}
                 className="h-10 rounded-xl bg-black text-white hover:bg-black/90 text-sm gap-1.5"
               >
                 <Plus className="w-4 h-4" />
