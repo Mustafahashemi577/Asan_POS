@@ -1,28 +1,38 @@
 import { usePagination } from "@/hooks/use-pagination";
 import { useSearch } from "@/hooks/use-search";
+import { getInventories, getInventory } from "@/queries/inventory";
 import type {
-    Inventory,
-    InventoryItem,
-    PaginationMeta,
-    StockStatus,
-} from "@/queries/inventory";
-import { getInventories } from "@/queries/inventory";
+  Inventory,
+  InventoryDetail,
+  InventoryItem,
+  InventoryProduct,
+  PaginationMeta,
+  StockStatus,
+} from "@/types/inventory";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-export type { Inventory, InventoryItem, StockStatus };
+export type {
+  Inventory,
+  InventoryDetail,
+  InventoryItem,
+  InventoryProduct,
+  StockStatus,
+};
 
 // ── Hook return type ──────────────────────────────────────────────────────────
 
 export interface UseInventoryReturn {
-  // data
+  // list data
   inventories: Inventory[];
   paginationMeta: PaginationMeta;
-  selectedInventory: Inventory | null;
-  stats: Array<{ label: string; value: string; date: string; sub: string }>;
-  filtered: InventoryItem[];
-  categories: string[];
   loading: boolean;
   error: string | null;
+  // detail data
+  selectedInventory: InventoryDetail | null;
+  detailLoading: boolean;
+  detailError: string | null;
+  stats: Array<{ label: string; value: string; date: string; sub: string }>;
+  filtered: InventoryProduct[];
   // pagination
   page: number;
   itemsPerPage: number;
@@ -45,8 +55,6 @@ export interface UseInventoryReturn {
   itemDialogOpen: boolean;
   setItemDialogOpen: (open: boolean) => void;
   // detail-view filter state (client-side)
-  category: string;
-  setCategory: (category: string) => void;
   status: string;
   setStatus: (status: string) => void;
   search: string;
@@ -68,7 +76,7 @@ export interface UseInventoryReturn {
 const ITEMS_PER_PAGE = 10;
 
 export function useInventory(): UseInventoryReturn {
-  // ── Remote state ──────────────────────────────────────────────────────────
+  // ── List state ────────────────────────────────────────────────────────────
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
     currentPage: 1,
@@ -80,6 +88,15 @@ export function useInventory(): UseInventoryReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Detail state ──────────────────────────────────────────────────────────
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
+    null,
+  );
+  const [selectedInventory, setSelectedInventory] =
+    useState<InventoryDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+
   // ── Pagination (list view, server-side) ───────────────────────────────────
   const { page, setPage, resetToPage1, goToPage } = usePagination({
     initialPage: 1,
@@ -87,8 +104,6 @@ export function useInventory(): UseInventoryReturn {
   });
 
   // ── List search (server-side, debounced) ──────────────────────────────────
-  // useSearch handles debounce internally; we pass resetToPage1 so that
-  // typing always sends the user back to page 1 — no stale paginated results.
   const {
     search: listSearch,
     debouncedSearch: listSearchDebounced,
@@ -103,31 +118,19 @@ export function useInventory(): UseInventoryReturn {
     useState<Inventory | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
 
-  // ── Selection & detail-view filter state ──────────────────────────────────
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
-    null,
-  );
-  const [category, setCategory] = useState("all");
+  // ── Detail-view filter state ──────────────────────────────────────────────
   const [status, setStatus] = useState("all");
-  // This search is client-side (filters already-loaded items in the detail
-  // view). No debounce needed — it never hits the network.
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  // Use a ref so fetchInventories can always read the latest debounced value
-  // without being listed as a dependency (avoids stale-closure re-render loops
-  // that cause the input to lose focus on every keystroke).
+  // ── Fetch list ────────────────────────────────────────────────────────────
   const listSearchDebouncedRef = useRef(listSearchDebounced);
   useEffect(() => {
     listSearchDebouncedRef.current = listSearchDebounced;
   }, [listSearchDebounced]);
 
-  const fetchInventories = (opts?: {
-    page?: number;
-    nextId?: string | null;
-  }) => {
+  const fetchInventories = (opts?: { page?: number }) => {
     setLoading(true);
     setError(null);
 
@@ -141,31 +144,51 @@ export function useInventory(): UseInventoryReturn {
       .then(({ data, meta }) => {
         setInventories(data);
         setPaginationMeta(meta);
-
-        if (opts?.nextId === null) {
-          setSelectedInventoryId(null);
-        } else if (opts?.nextId !== undefined) {
-          setSelectedInventoryId(opts.nextId);
-        }
       })
-      .catch((err) => {
-        setError(
-          err?.response?.data?.message ??
-            err.message ??
-            "Failed to load inventories",
-        );
-      })
+      .catch(
+        (err: {
+          response?: { data?: { message?: string } };
+          message?: string;
+        }) => {
+          setError(
+            err?.response?.data?.message ??
+              err.message ??
+              "Failed to load inventories",
+          );
+        },
+      )
       .finally(() => setLoading(false));
   };
 
-  // Re-fetch whenever page or debounced search changes.
-  // Because fetchInventories reads the debounced value via a ref, this effect
-  // does NOT re-run on every raw keystroke — only after the 400 ms debounce
-  // settles, which means the input never loses focus mid-typing.
   useEffect(() => {
     fetchInventories({ page });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, listSearchDebounced]);
+
+  // ── Fetch detail ──────────────────────────────────────────────────────────
+  const fetchInventoryDetail = (id: string) => {
+    setDetailLoading(true);
+    setDetailError(null);
+    setSelectedInventory(null);
+
+    getInventory(id)
+      .then((detail) => {
+        setSelectedInventory(detail);
+      })
+      .catch(
+        (err: {
+          response?: { data?: { message?: string } };
+          message?: string;
+        }) => {
+          setDetailError(
+            err?.response?.data?.message ??
+              err.message ??
+              "Failed to load inventory detail",
+          );
+        },
+      )
+      .finally(() => setDetailLoading(false));
+  };
 
   // ── Dialog helpers ────────────────────────────────────────────────────────
   const openAddInventoryDialog = () => {
@@ -186,61 +209,67 @@ export function useInventory(): UseInventoryReturn {
   // ── Callbacks ─────────────────────────────────────────────────────────────
   const handleInventoryAdded = (newId: string) => {
     closeInventoryDialog();
-    fetchInventories({ nextId: newId });
+    fetchInventories();
+    switchInventory(newId);
   };
 
   const handleInventoryUpdated = (id: string) => {
     closeInventoryDialog();
-    fetchInventories({ nextId: id });
+    fetchInventories();
+    fetchInventoryDetail(id);
   };
 
   const handleInventoryDeleted = () => {
     closeInventoryDialog();
     setPage(1);
-    fetchInventories({ page: 1, nextId: null });
+    fetchInventories({ page: 1 });
+    switchInventory(null);
   };
 
   const handleItemAdded = () => {
     setItemDialogOpen(false);
-    fetchInventories();
+    if (selectedInventoryId !== null) {
+      fetchInventoryDetail(selectedInventoryId);
+    }
   };
 
-  // null → back to list; string → drill into inventory detail
+  /** null → back to list; string → drill into inventory detail */
   const switchInventory = (id: string | null) => {
     setSelectedInventoryId(id);
-    setCategory("all");
     setStatus("all");
     setSearch("");
     setSelectedRow(null);
-  };
 
-  // ── Derived: selected inventory ───────────────────────────────────────────
-  const selectedInventory = useMemo(
-    () =>
-      selectedInventoryId
-        ? (inventories.find((inv) => inv.id === selectedInventoryId) ?? null)
-        : null,
-    [inventories, selectedInventoryId],
-  );
+    if (id !== null) {
+      fetchInventoryDetail(id);
+    } else {
+      setSelectedInventory(null);
+      setDetailError(null);
+    }
+  };
 
   // ── Derived: stats (detail view) ──────────────────────────────────────────
   const stats = useMemo(() => {
-    const items = selectedInventory?.items ?? [];
-    const total = items.length;
-    const lowStock = items.filter((i) => i.status === "Low Stock").length;
-    const outOfStock = items.filter((i) => i.status === "Out of Stock").length;
+    const products = selectedInventory?.products ?? [];
+    const total = products.length;
     const today = new Date().toLocaleDateString("en-US", {
       weekday: "long",
       day: "2-digit",
       month: "long",
       year: "numeric",
     });
+    const totalQty = products.reduce((sum, p) => sum + p.quantity, 0);
+    const outOfStock = products.filter((p) => p.quantity === 0).length;
+    const lowStock = products.filter(
+      (p) => p.quantity > 0 && p.quantity <= 10,
+    ).length;
+
     return [
       {
-        label: "Total Items",
+        label: "Total Products",
         value: String(total),
         date: today,
-        sub: `${total} item${total !== 1 ? "s" : ""} tracked`,
+        sub: `${totalQty} units in stock`,
       },
       {
         label: "Low Stock Alerts",
@@ -257,40 +286,39 @@ export function useInventory(): UseInventoryReturn {
     ];
   }, [selectedInventory]);
 
-  // ── Derived: filtered items (client-side, detail view only) ───────────────
-  const filtered = useMemo(() => {
-    const items = selectedInventory?.items ?? [];
-    return items.filter((item) => {
-      const matchesCategory =
-        category === "all" ||
-        item.category.toLowerCase() === category.toLowerCase();
+  // ── Derived: filtered products (client-side, detail view only) ────────────
+  const filtered = useMemo((): InventoryProduct[] => {
+    const products = selectedInventory?.products ?? [];
+    return products.filter((product) => {
       const matchesStatus =
-        status === "all" || item.status.toLowerCase() === status.toLowerCase();
+        status === "all" ||
+        (status === "In Stock" && product.quantity > 10) ||
+        (status === "Low Stock" &&
+          product.quantity > 0 &&
+          product.quantity <= 10) ||
+        (status === "Out of Stock" && product.quantity === 0);
+
       const matchesSearch =
         !search ||
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase()) ||
-        item.category.toLowerCase().includes(search.toLowerCase());
-      return matchesCategory && matchesStatus && matchesSearch;
-    });
-  }, [selectedInventory, category, status, search]);
+        product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.id.toLowerCase().includes(search.toLowerCase());
 
-  // ── Derived: unique categories (detail view) ──────────────────────────────
-  const categories = useMemo(() => {
-    const all = (selectedInventory?.items ?? []).map((i) => i.category);
-    return [...new Set(all)].sort();
-  }, [selectedInventory]);
+      return matchesStatus && matchesSearch;
+    });
+  }, [selectedInventory, status, search]);
 
   return {
-    // data
+    // list data
     inventories,
     paginationMeta,
-    selectedInventory,
-    stats,
-    filtered,
-    categories,
     loading,
     error,
+    // detail data
+    selectedInventory,
+    detailLoading,
+    detailError,
+    stats,
+    filtered,
     // pagination
     page,
     itemsPerPage: ITEMS_PER_PAGE,
@@ -313,8 +341,6 @@ export function useInventory(): UseInventoryReturn {
     itemDialogOpen,
     setItemDialogOpen,
     // detail-view filter state
-    category,
-    setCategory,
     status,
     setStatus,
     search,

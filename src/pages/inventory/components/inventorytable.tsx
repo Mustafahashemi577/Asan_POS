@@ -21,28 +21,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { InventoryDetail, InventoryProduct } from "@/types/inventory";
 import { MoreHorizontal, Search, XIcon } from "lucide-react";
-import type {
-  InventoryItem,
-  StockStatus,
-  useInventory,
-} from "../../../hooks/use-inventory";
 
-const STATUS_STYLES: Record<StockStatus, string> = {
-  "In Stock": "bg-green-100 text-green-700",
-  "Low Stock": "bg-orange-100 text-orange-600",
-  "Out of Stock": "bg-red-100 text-red-500",
-};
+// ── Props ─────────────────────────────────────────────────────────────────────
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+interface InventoryTableProps {
+  selectedInventory: InventoryDetail | null;
+  /** Already-filtered products from use-inventory */
+  filtered: InventoryProduct[];
+  status: string;
+  setStatus: (value: string) => void;
+  search: string;
+  setSearch: (value: string) => void;
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean) => void;
+  selectedRow: string | null;
+  setSelectedRow: (id: string | null) => void;
+  setItemDialogOpen: (open: boolean) => void;
 }
 
-type Props = ReturnType<typeof useInventory>;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function stockStatus(quantity: number): { label: string; className: string } {
+  if (quantity === 0)
+    return { label: "Out of Stock", className: "bg-red-100 text-red-500" };
+  if (quantity <= 10)
+    return { label: "Low Stock", className: "bg-orange-100 text-orange-600" };
+  return { label: "In Stock", className: "bg-green-100 text-green-700" };
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InventoryTable({
   selectedInventory,
@@ -55,25 +64,13 @@ export default function InventoryTable({
   setSearchOpen,
   selectedRow,
   setSelectedRow,
-  //setItemDialogOpen,
-}: Pick<
-  Props,
-  | "selectedInventory"
-  | "filtered"
-  | "status"
-  | "setStatus"
-  | "search"
-  | "setSearch"
-  | "searchOpen"
-  | "setSearchOpen"
-  | "selectedRow"
-  | "setSelectedRow"
-  | "setItemDialogOpen"
->) {
-  // Row action handlers — wire up your own modals here
-  const handleView = (item: InventoryItem) => console.log("View:", item);
-  const handleEdit = (item: InventoryItem) => console.log("Edit:", item);
-  const handleDelete = (item: InventoryItem) => console.log("Delete:", item);
+}: InventoryTableProps) {
+  const handleView = (product: InventoryProduct) =>
+    console.log("View:", product);
+  const handleEdit = (product: InventoryProduct) =>
+    console.log("Edit:", product);
+  const handleDelete = (product: InventoryProduct) =>
+    console.log("Delete:", product);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -81,10 +78,10 @@ export default function InventoryTable({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">
-            {selectedInventory?.name} — Items
+            {selectedInventory?.name} — Products
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            {filtered.length} item{filtered.length !== 1 ? "s" : ""} found
+            {filtered.length} product{filtered.length !== 1 ? "s" : ""} found
           </p>
         </div>
 
@@ -123,7 +120,7 @@ export default function InventoryTable({
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search items"
+                  placeholder="Search products"
                   className="h-10 pl-9 pr-8 rounded-xl border-gray-200 text-sm bg-white"
                 />
                 <XIcon
@@ -145,105 +142,107 @@ export default function InventoryTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100">
-              {[
-                "Name",
-                "Quantity",
-                "Unit Price",
-                "Status",
-                "Last Updated",
-                "Actions",
-              ].map((h) => (
-                <TableHead
-                  key={h}
-                  className="text-sm font-medium py-4 text-left text-black bg-gray-100 first:rounded-l-md first:pl-6 last:rounded-r-md last:pr-6 whitespace-nowrap"
-                >
-                  {h}
-                </TableHead>
-              ))}
+              {["Name", "Quantity", "Unit Price", "Status", "Actions"].map(
+                (h) => (
+                  <TableHead
+                    key={h}
+                    className="text-sm font-medium py-4 text-left text-black bg-gray-100 first:rounded-l-md first:pl-6 last:rounded-r-md last:pr-6 whitespace-nowrap"
+                  >
+                    {h}
+                  </TableHead>
+                ),
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={5}
                   className="px-6 py-12 text-center text-gray-400 text-sm"
                 >
-                  No inventory items found
+                  No products found
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((item) => (
-                <TableRow
-                  key={item.id}
-                  onClick={() =>
-                    setSelectedRow(selectedRow === item.id ? null : item.id)
-                  }
-                  className={`cursor-pointer transition-colors ${
-                    selectedRow === item.id ? "bg-blue-50" : "hover:bg-gray-50"
-                  }`}
-                >
-                  <TableCell className="text-xs text-gray-800 font-medium whitespace-nowrap">
-                    {item.name}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-800 whitespace-nowrap">
-                    {item.quantity.toLocaleString()} {item.unit}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-800 whitespace-nowrap">
-                    {item.price.toLocaleString("id-ID")}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_STYLES[item.status]}`}
-                    >
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-600 whitespace-nowrap">
-                    {fmtDate(item.lastUpdated)}
-                  </TableCell>
-                  <TableCell
-                    className="pr-6 whitespace-nowrap"
-                    onClick={(e) => e.stopPropagation()}
+              filtered.map((product) => {
+                const { label, className } = stockStatus(product.quantity);
+                return (
+                  <TableRow
+                    key={product.id}
+                    onClick={() =>
+                      setSelectedRow(
+                        selectedRow === product.id ? null : product.id,
+                      )
+                    }
+                    className={`cursor-pointer transition-colors ${
+                      selectedRow === product.id
+                        ? "bg-blue-50"
+                        : "hover:bg-gray-50"
+                    }`}
                   >
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                        >
-                          <MoreHorizontal size={16} className="text-gray-500" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="rounded-xl w-36"
+                    <TableCell className="pl-6 text-xs text-gray-800 font-medium whitespace-nowrap">
+                      {product.name}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-800 whitespace-nowrap">
+                      {product.quantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-800 whitespace-nowrap">
+                      {product.price.toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${className}`}
                       >
-                        <DropdownMenuItem
-                          className="text-xs cursor-pointer"
-                          onClick={() => handleView(item)}
+                        {label}
+                      </span>
+                    </TableCell>
+                    <TableCell
+                      className="pr-6 whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                          >
+                            <MoreHorizontal
+                              size={16}
+                              className="text-gray-500"
+                            />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="rounded-xl w-36"
                         >
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-xs cursor-pointer"
-                          onClick={() => handleEdit(item)}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          className="text-xs cursor-pointer"
-                          onClick={() => handleDelete(item)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                          <DropdownMenuItem
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleView(product)}
+                          >
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleEdit(product)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleDelete(product)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -253,75 +252,76 @@ export default function InventoryTable({
       <div className="sm:hidden divide-y divide-gray-100">
         {filtered.length === 0 ? (
           <p className="px-5 py-12 text-center text-gray-400 text-sm">
-            No inventory items found
+            No products found
           </p>
         ) : (
-          filtered.map((item) => (
-            <div
-              key={item.id}
-              onClick={() =>
-                setSelectedRow(selectedRow === item.id ? null : item.id)
-              }
-              className={`px-4 py-4 cursor-pointer transition-colors ${
-                selectedRow === item.id ? "bg-blue-50" : ""
-              }`}
-            >
-              <div className="flex justify-between mb-1">
-                <span className="text-xs font-mono text-gray-500">
-                  {item.id}
-                </span>
-                <span
-                  className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_STYLES[item.status]}`}
-                >
-                  {item.status}
-                </span>
-              </div>
-              <p className="text-sm font-medium text-gray-800 mb-1">
-                {item.name}
-              </p>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>
-                  {item.quantity} {item.unit}
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-gray-500">
-                  {item.price.toLocaleString("id-ID")}
-                </span>
+          filtered.map((product) => {
+            const { label, className } = stockStatus(product.quantity);
+            return (
+              <div
+                key={product.id}
+                onClick={() =>
+                  setSelectedRow(selectedRow === product.id ? null : product.id)
+                }
+                className={`px-4 py-4 cursor-pointer transition-colors ${
+                  selectedRow === product.id ? "bg-blue-50" : ""
+                }`}
+              >
+                <div className="flex justify-between mb-1">
+                  <span className="text-xs font-mono text-gray-500">
+                    {product.id}
+                  </span>
+                  <span
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${className}`}
+                  >
+                    {label}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-gray-800 mb-1">
+                  {product.name}
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-500">
+                    {product.quantity.toLocaleString()} units
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {product.price.toLocaleString("id-ID")}
+                  </span>
+                </div>
                 <div
-                  className="flex gap-2"
+                  className="flex gap-2 mt-2"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => handleView(item)}
+                    onClick={() => handleView(product)}
                     className="text-xs text-blue-500 hover:underline"
                   >
                     View
                   </button>
                   <button
-                    onClick={() => handleEdit(item)}
+                    onClick={() => handleEdit(product)}
                     className="text-xs text-gray-500 hover:underline"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(item)}
+                    onClick={() => handleDelete(product)}
                     className="text-xs text-red-500 hover:underline"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-gray-100">
         <span className="text-xs text-gray-500">
-          Showing {filtered.length} of {selectedInventory?.items.length ?? 0}{" "}
-          items
+          Showing {filtered.length} of {selectedInventory?.products.length ?? 0}{" "}
+          products
         </span>
       </div>
     </div>

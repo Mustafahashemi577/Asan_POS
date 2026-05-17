@@ -6,8 +6,8 @@ import {
   createInventory,
   deleteInventory,
   updateInventory,
-  type Inventory,
 } from "@/queries/inventory";
+import type { Inventory } from "@/types/inventory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { Building2, Loader2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";

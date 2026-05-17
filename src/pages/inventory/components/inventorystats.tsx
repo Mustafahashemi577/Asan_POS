@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import type { Inventory } from "@/queries/inventory";
+import type { Inventory, InventoryDetail } from "@/types/inventory";
 import { Plus } from "lucide-react";
 
 interface InventoryStatsProps {
   inventories: Inventory[];
-  selectedInventory: Inventory | null;
+  selectedInventory: InventoryDetail | null;
   stats: { label: string; value: string; date: string; sub: string }[];
-  switchInventory: (id: string) => void;
+  switchInventory: (id: string | null) => void;
   openAddInventoryDialog: () => void;
   openEditInventoryDialog: (inv: Inventory) => void;
   /** When true, hides the "Add Inventory" button (used on the detail page) */

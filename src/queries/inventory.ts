@@ -1,105 +1,38 @@
 import api from "@/lib/axios";
+import type {
+  GetInventoriesParams,
+  Inventory,
+  InventoryDetail,
+  InventoryItem,
+  InventoryProduct,
+  PaginatedInventories,
+  PaginationMeta,
+  RawInventory,
+  RawInventoryDetail,
+  RawInventoryItem,
+} from "@/types/inventory";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
-
-export interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  price: number;
-  status: StockStatus;
-  lastUpdated: string; // ISO yyyy-mm-dd
-}
-
-export interface Inventory {
-  id: string;
-  name: string;
-  address: string;
-  items: InventoryItem[];
-}
-
-export interface PaginationMeta {
-  currentPage: number;
-  itemsPerPage: number;
-  totalItems: number;
-  totalPages: number;
-  totalCount: number;
-  search?: string;
-  filters?: Record<string, string | string[]>;
-  sorts?: Record<string, "asc" | "desc">;
-}
-
-export interface PaginatedInventories {
-  data: Inventory[];
-  meta: PaginationMeta;
-}
-
-// ── Queries ───────────────────────────────────────────────────────────────────
-
-export interface GetInventoriesParams {
-  page?: number;
-  itemsPerPage?: number;
-  search?: string;
-  totalPages?: number;
-}
-
-/** GET /inventory — returns paginated inventories for the current store */
-export const getInventories = (
-  params: GetInventoriesParams = {},
-): Promise<PaginatedInventories> => {
-  const { page = 1, itemsPerPage = 10, search } = params;
-
-  const query: Record<string, string | number> = { page, itemsPerPage };
-  if (search) query.search = search;
-
-  return api.get("/inventory", { params: query }).then((r) => {
-    // Handle both paginated { data, meta } and legacy plain-array responses
-    if (Array.isArray(r.data)) {
-      const mapped = mapInventories(r.data);
-      return {
-        data: mapped,
-        meta: {
-          currentPage: 1,
-          itemsPerPage: mapped.length,
-          totalItems: mapped.length,
-          totalPages: 1,
-          totalCount: mapped.length,
-        },
-      };
-    }
-
-    const raw: any[] = r.data.data ?? r.data.inventories ?? [];
-    const serverMeta = r.data.meta ?? {};
-    const totalItems: number =
-      serverMeta.totalItems ?? serverMeta.total ?? raw.length;
-    const meta: PaginationMeta = {
-      currentPage: serverMeta.currentPage ?? serverMeta.page ?? 1,
-      itemsPerPage: serverMeta.itemsPerPage ?? itemsPerPage,
-      totalItems,
-      totalPages:
-        serverMeta.totalPages ?? Math.ceil(totalItems / itemsPerPage) ?? 1,
-      totalCount: serverMeta.totalCount ?? serverMeta.total ?? raw.length,
-      search: serverMeta.search,
-      filters: serverMeta.filters,
-      sorts: serverMeta.sorts,
-    };
-
-    return { data: mapInventories(raw), meta };
-  });
+// Re-export so callers that import from this module continue to work.
+export type {
+  GetInventoriesParams,
+  Inventory,
+  InventoryDetail,
+  InventoryItem,
+  InventoryProduct,
+  PaginatedInventories,
+  PaginationMeta,
 };
 
-function mapInventories(raw: any[]): Inventory[] {
-  return raw.map(
+// ── Mapping helpers ───────────────────────────────────────────────────────────
+
+function mapInventories(raw: unknown[]): Inventory[] {
+  return (raw as RawInventory[]).map(
     (inv): Inventory => ({
       id: inv.id,
       name: inv.name,
       address: inv.address ?? "",
       items: (inv.items ?? inv.products ?? []).map(
-        (item: any): InventoryItem => ({
+        (item: RawInventoryItem): InventoryItem => ({
           id: item.id,
           name: item.name,
           category: item.category ?? "",
@@ -115,9 +48,90 @@ function mapInventories(raw: any[]): Inventory[] {
   );
 }
 
-/** GET /inventory/:id — returns a single inventory with its items */
-export const getInventory = (id: string): Promise<Inventory> =>
-  api.get(`/inventory/${id}`).then((r) => r.data);
+// ── Queries ───────────────────────────────────────────────────────────────────
+
+/** GET /inventory — returns paginated inventories for the current store */
+export const getInventories = (
+  params: GetInventoriesParams = {},
+): Promise<PaginatedInventories> => {
+  const { page = 1, itemsPerPage = 10, search } = params;
+
+  const query: Record<string, string | number> = { page, itemsPerPage };
+  if (search) query.search = search;
+
+  return api.get("/inventory", { params: query }).then((r) => {
+    if (Array.isArray(r.data)) {
+      const mapped = mapInventories(r.data);
+      return {
+        data: mapped,
+        meta: {
+          currentPage: 1,
+          itemsPerPage: mapped.length,
+          totalItems: mapped.length,
+          totalPages: 1,
+          totalCount: mapped.length,
+        },
+      };
+    }
+
+    const raw: unknown[] = r.data.data ?? r.data.inventories ?? [];
+    const serverMeta: Record<string, unknown> = r.data.meta ?? {};
+    const totalItems: number =
+      (serverMeta.totalItems as number | undefined) ??
+      (serverMeta.total as number | undefined) ??
+      raw.length;
+
+    const meta: PaginationMeta = {
+      currentPage:
+        (serverMeta.currentPage as number | undefined) ??
+        (serverMeta.page as number | undefined) ??
+        1,
+      itemsPerPage:
+        (serverMeta.itemsPerPage as number | undefined) ?? itemsPerPage,
+      totalItems,
+      totalPages:
+        (serverMeta.totalPages as number | undefined) ??
+        Math.ceil(totalItems / itemsPerPage) ??
+        1,
+      totalCount:
+        (serverMeta.totalCount as number | undefined) ??
+        (serverMeta.total as number | undefined) ??
+        raw.length,
+      search: serverMeta.search as string | undefined,
+      filters: serverMeta.filters as
+        | Record<string, string | string[]>
+        | undefined,
+      sorts: serverMeta.sorts as Record<string, "asc" | "desc"> | undefined,
+    };
+
+    return { data: mapInventories(raw), meta };
+  });
+};
+
+/**
+ * GET /inventory/:id
+ *
+ * Returns the full inventory with its products and per-inventory stock
+ * quantities, exactly as the backend's `findOne` method serialises them.
+ */
+export const getInventory = (id: string): Promise<InventoryDetail> =>
+  api.get<RawInventoryDetail>(`/inventory/${id}`).then((r) => {
+    const raw = r.data;
+    const detail: InventoryDetail = {
+      id: raw.id,
+      name: raw.name,
+      address: raw.address ?? "",
+      products: raw.products.map(
+        (p): InventoryProduct => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          quantity: p.quantity,
+        }),
+      ),
+    };
+    return detail;
+  });
 
 /** POST /inventory — create a new inventory */
 export const createInventory = (data: {
