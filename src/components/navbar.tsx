@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeInfo } from "@/types/index";
 import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
-import { Bell, CalendarDays, ChevronDown, Menu } from "lucide-react";
+import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { format } from "date-fns";
 
 interface NavbarProps {
   profile: EmployeeInfo;
@@ -29,13 +28,6 @@ export const Navbar = ({ profile }: NavbarProps) => {
     logout();
     navigate("/", { replace: true });
   };
-
-  const now = new Date();
-  const dateStr = format(now, "EEEE, dd MMM yyyy");
-  const timeStr = now.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   const items = [
     { label: "Dashboard", path: "/dashboard" },
@@ -103,12 +95,12 @@ export const Navbar = ({ profile }: NavbarProps) => {
 
         {/* ROW 2 */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
+          {/* <div className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2">
             <CalendarDays size={13} />
             <span>
               {dateStr} at {timeStr}
             </span>
-          </div>
+          </div> */}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

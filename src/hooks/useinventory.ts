@@ -94,7 +94,7 @@ export function useInventory(): UseInventoryReturn {
     debouncedSearch: listSearchDebounced,
     handleSearch: setListSearch,
     clearSearch: clearListSearch,
-  } = useSearch({ debounceMs: 2000, onSearch: resetToPage1 });
+  } = useSearch({ debounceMs: 400, onSearch: resetToPage1 });
   const [listSearchOpen, setListSearchOpen] = useState(false);
 
   // ── Dialog state ──────────────────────────────────────────────────────────
