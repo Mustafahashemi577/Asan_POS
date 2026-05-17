@@ -27,7 +27,7 @@ import {
 
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
-import { usePurchases } from "@/hooks/usePurchases";
+import { usePurchases } from "@/hooks/use-Purchases";
 import {
   deletePurchase,
   getPurchase,

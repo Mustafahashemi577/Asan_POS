@@ -1,34 +1,34 @@
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { getCategories } from "@/queries/category";
 import { MoreHorizontal, Search, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type {
-  InventoryItem,
-  StockStatus,
-  useInventory,
-} from "../../../hooks/useinventory";
+    InventoryItem,
+    StockStatus,
+    useInventory,
+} from "../../../hooks/use-inventory";
 
 const STATUS_STYLES: Record<StockStatus, string> = {
   "In Stock": "bg-green-100 text-green-700",

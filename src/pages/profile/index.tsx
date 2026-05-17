@@ -4,8 +4,8 @@ import EditProfileDialog from "@/components/profile/editprofiledialog";
 import ProfileCard from "@/components/profile/profilecard";
 import TwoFactorCard from "@/components/profile/twofactorcard";
 import TransactionTable from "@/components/transactiontable";
-import { useEditProfile } from "@/hooks/useeditprofile";
-import { useProfile } from "@/hooks/useprofile";
+import { useEditProfile } from "@/hooks/use-editprofile";
+import { useProfile } from "@/hooks/use-profile";
 import api from "@/lib/axios";
 import { useState } from "react";
 

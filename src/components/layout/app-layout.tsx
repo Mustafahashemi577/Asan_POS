@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/navbar";
-import { useProfile } from "@/hooks/useprofile";
+import { useProfile } from "@/hooks/use-profile";
 import { Loader2 } from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 

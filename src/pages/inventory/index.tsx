@@ -1,29 +1,29 @@
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
-import { useInventory } from "@/hooks/useinventory";
+import { useInventory } from "@/hooks/use-inventory";
 import {
-  ArrowLeft,
-  Building2,
-  Loader2,
-  MapPin,
-  Plus,
-  Search,
-  XIcon,
+    ArrowLeft,
+    Building2,
+    Loader2,
+    MapPin,
+    Plus,
+    Search,
+    XIcon,
 } from "lucide-react";
 import AddInventoryForm from "./components/addinventoryform";
 import InventoryStats from "./components/inventorystats";
