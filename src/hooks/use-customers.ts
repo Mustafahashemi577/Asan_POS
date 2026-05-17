@@ -6,11 +6,7 @@ import useSWR from "swr";
 const PAGE_SIZE = 15;
 
 export function useCustomers() {
-  const { page, setPage, resetToPage1 } = usePagination({
-    initialPage: 1,
-    initialItemsPerPage: PAGE_SIZE,
-  });
-
+  const { page, setPage, resetToPage1 } = usePagination();
   const { search, debouncedSearch, handleSearch, clearSearch } = useSearch({
     onSearch: resetToPage1, // resets to page 1 on every new search
   });

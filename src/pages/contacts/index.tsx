@@ -1,16 +1,3 @@
-import { useCallback, useState } from "react";
-
-import useSWR from "swr";
-import { useDebounce } from "use-debounce";
-
-import {
-  createCustomer,
-  customersKey,
-  deleteCustomer,
-  getCustomers,
-  updateCustomer,
-} from "@/queries/customer";
-
 import {
   MoreHorizontal,
   Pencil,
@@ -40,9 +27,9 @@ import {
 
 import CustomerDialog from "@/components/AddCustomerDialog";
 
-import type { Customer } from "@/types/customer";
-
-const PAGE_SIZE = 15;
+import { useCustomerDialog } from "@/hooks/use-customer-dialog";
+import { useCustomers } from "@/hooks/use-customers";
+import { useState } from "react";
 
 function getTodayLabel() {
   return new Date().toLocaleDateString("en-GB", {
@@ -54,30 +41,31 @@ function getTodayLabel() {
 }
 
 export default function ContactsPage() {
-  const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [page, setPage] = useState(1);
 
-  const [debouncedSearch] = useDebounce(search, 400);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
-
-  const swrKey = customersKey({
-    search: debouncedSearch,
+  const {
+    customers,
+    total,
+    totalPages,
     page,
-    itemsPerPage: PAGE_SIZE,
-  });
+    setPage,
+    search,
+    handleSearch,
+    mutate,
+    isLoading,
+    PAGE_SIZE,
+  } = useCustomers();
 
-  const { data, mutate, isLoading } = useSWR(swrKey, () =>
-    getCustomers({ search: debouncedSearch, page, itemsPerPage: PAGE_SIZE }),
-  );
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editingCustomer,
+    handleOpenCreate,
+    handleOpenEdit,
+    handleSubmit,
+    handleDelete,
+  } = useCustomerDialog(mutate);
 
-  const customers = data?.data ?? [];
-  const total = data?.meta?.totalCount ?? 0;
-  const totalPages = data?.meta?.totalPages ?? 1;
   const today = getTodayLabel();
 
   const stats = [
@@ -101,49 +89,9 @@ export default function ContactsPage() {
     },
   ];
 
-  // ─── Dialog ───────────────────────────────────────────────────────────────
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-
-  const handleOpenCreate = () => {
-    setEditingCustomer(null);
-    setDialogOpen(true);
-  };
-
-  const handleOpenEdit = (customer: Customer) => {
-    setEditingCustomer(customer);
-    setDialogOpen(true);
-  };
-
-  // ─── CRUD ─────────────────────────────────────────────────────────────────
-
-  const handleSubmit = useCallback(
-    async (
-      values: { name: string; phone: string; address: string },
-      id?: string,
-    ) => {
-      if (id) {
-        await updateCustomer(id, values);
-      } else {
-        await createCustomer(values);
-      }
-      await mutate();
-    },
-    [mutate],
-  );
-
-  const handleDelete = async (id: string) => {
-    mutate(
-      (prev) =>
-        prev ? { ...prev, data: prev.data.filter((c) => c.id !== id) } : prev,
-      false,
-    );
-    await deleteCustomer(id);
-    await mutate();
-  };
-
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const emptyMessage = search
+    ? `No customers matching "${search}"`
+    : "No customers found";
 
   return (
     <>
@@ -251,7 +199,7 @@ export default function ContactsPage() {
                       size={14}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
                       onClick={() => {
-                        setSearch("");
+                        handleSearch("");
                         setSearchOpen(false);
                       }}
                     />
@@ -291,9 +239,7 @@ export default function ContactsPage() {
                         colSpan={4}
                         className="px-6 py-12 text-center text-gray-400 text-sm"
                       >
-                        {search
-                          ? `No customers matching "${search}"`
-                          : "No customers found"}
+                        {emptyMessage}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -312,40 +258,11 @@ export default function ContactsPage() {
                           className="pr-6 whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                              >
-                                <MoreHorizontal
-                                  size={16}
-                                  className="text-gray-500"
-                                />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-xl w-36"
-                            >
-                              <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={() => handleOpenEdit(customer)}
-                              >
-                                <Pencil className="w-3.5 h-3.5 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                className="text-xs cursor-pointer"
-                                onClick={() => handleDelete(customer.id)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <CustomerActionsMenu
+                            onEdit={() => handleOpenEdit(customer)}
+                            onDelete={() => handleDelete(customer.id)}
+                            size="desktop"
+                          />
                         </TableCell>
                       </TableRow>
                     ))
@@ -362,9 +279,7 @@ export default function ContactsPage() {
                 </p>
               ) : customers.length === 0 ? (
                 <p className="px-5 py-12 text-center text-gray-400 text-sm">
-                  {search
-                    ? `No customers matching "${search}"`
-                    : "No customers found"}
+                  {emptyMessage}
                 </p>
               ) : (
                 customers.map((customer) => (
@@ -373,40 +288,11 @@ export default function ContactsPage() {
                       <p className="text-sm font-medium text-gray-800">
                         {customer.name}
                       </p>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 rounded-lg -mt-0.5"
-                          >
-                            <MoreHorizontal
-                              size={15}
-                              className="text-gray-400"
-                            />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="rounded-xl w-36"
-                        >
-                          <DropdownMenuItem
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleOpenEdit(customer)}
-                          >
-                            <Pencil className="w-3.5 h-3.5 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleDelete(customer.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <CustomerActionsMenu
+                        onEdit={() => handleOpenEdit(customer)}
+                        onDelete={() => handleDelete(customer.id)}
+                        size="mobile"
+                      />
                     </div>
                     <p className="text-xs text-gray-500 mb-0.5">
                       {customer.phone}
@@ -434,5 +320,52 @@ export default function ContactsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// ── Sub-component ─────────────────────────────────────────────────────────────
+
+function CustomerActionsMenu({
+  onEdit,
+  onDelete,
+  size,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+  size: "desktop" | "mobile";
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            size === "desktop"
+              ? "h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+              : "h-7 w-7 p-0 rounded-lg -mt-0.5"
+          }
+        >
+          <MoreHorizontal
+            size={size === "desktop" ? 16 : 15}
+            className={size === "desktop" ? "text-gray-500" : "text-gray-400"}
+          />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="rounded-xl w-36">
+        <DropdownMenuItem className="text-xs cursor-pointer" onClick={onEdit}>
+          <Pencil className="w-3.5 h-3.5 mr-2" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          className="text-xs cursor-pointer"
+          onClick={onDelete}
+        >
+          <Trash2 className="w-3.5 h-3.5 mr-2" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
