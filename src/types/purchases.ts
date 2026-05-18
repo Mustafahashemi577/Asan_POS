@@ -1,15 +1,10 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type PurchaseStatus = "DRAFT" | "DONE" | "CANCELLED";
+export type PurchaseStatus = "DRAFT" | "DONE" | "CANCELLED" | "PENDING";
 
 // ── Shared sub-shapes ─────────────────────────────────────────────────────────
 
 export interface PurchaseCustomer {
-  id: string;
-  name: string;
-}
-
-export interface PurchaseInventory {
   id: string;
   name: string;
 }
@@ -47,7 +42,6 @@ export interface PurchaseListItem {
   customDate: string;
   totalPrice: number;
   customer: PurchaseCustomer;
-  inventory: PurchaseInventory;
   items: PurchasedItemResponse[];
 }
 
@@ -59,14 +53,40 @@ export type PurchaseDetail = PurchaseListItem;
 
 export interface CreatePurchasePayload {
   customerId: string;
-  inventoryId: string;
   /** ISO date string from the date picker */
   purchaseDate: string;
   items: PurchaseItemPayload[];
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+/** Generic autocomplete suggestion used in search comboboxes */
+export interface Suggestion {
+  id: string;
+  label: string;
+  sub?: string;
 }
 
 // ── Update status payload (sent to PATCH /purchase/:id) ─────────────────────
 
 export interface UpdatePurchaseStatusPayload {
   status: PurchaseStatus;
+}
+
+// ── Stock-In types ────────────────────────────────────────────────────────────
+
+export interface StockInItemPayload {
+  purchaseItemId: string;
+  quantity: number;
+}
+
+export interface CreateStockInPayload {
+  purchaseId: string;
+  inventoryId: string;
+  items: StockInItemPayload[];
+}
+
+/** Item shape on the stock-in page — extends PurchasedItemResponse with received */
+export interface PurchasedItemWithReceived extends PurchasedItemResponse {
+  received: number;
 }

@@ -62,7 +62,7 @@ export const getPurchase = (id: string): Promise<PurchaseDetail> =>
 export const createPurchase = (
   payload: CreatePurchasePayload,
 ): Promise<{ message: string }> => {
-  const { purchaseDate, ...rest } = payload as any;
+  const { purchaseDate, ...rest } = payload;
   return api
     .post("/purchase", { ...rest, customDate: purchaseDate })
     .then((r) => r.data);

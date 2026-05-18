@@ -36,7 +36,7 @@ export function usePurchases() {
 
   return {
     purchases: data?.data ?? [],
-    total: data?.meta?.totalCount ?? 0,
+    total: data?.meta?.total ?? 0,
     totalPages: data?.meta?.totalPages ?? 1,
     page,
     setPage,

@@ -18,17 +18,17 @@ export function useSearch({
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      return; // skip on mount — don't call onSearch on initial load
+      return;
     }
-    onSearch?.(); // fires only after the 400ms debounce settles
+    onSearch?.();
   }, [debouncedSearch]);
 
   const handleSearch = (value: string) => {
-    setSearch(value); // just update raw value
+    setSearch(value);
   };
 
   const clearSearch = () => {
-    setSearch(""); // onSearch fires via useEffect when debouncedSearch clears
+    setSearch("");
   };
 
   return { search, debouncedSearch, handleSearch, clearSearch };

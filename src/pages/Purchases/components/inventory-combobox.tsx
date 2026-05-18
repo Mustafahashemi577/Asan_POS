@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
 import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
 } from "@/components/ui/combobox";
 import type { Inventory } from "@/queries/inventory";
 import { getInventories } from "@/queries/inventory";
@@ -67,8 +67,8 @@ export default function InventoryCombobox({
   return (
     <Combobox
       value={value}
-      onValueChange={(val: string) => {
-        onChange(val);
+      onValueChange={(val: string | null) => {
+        onChange(val ?? "");
         setSearch("");
       }}
     >

@@ -9,6 +9,7 @@ import Product from "@/pages/product";
 import ProfilePage from "@/pages/profile";
 import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
+import StockInPage from "@/pages/Purchases/stock-in";
 import Report from "@/pages/report";
 import Transaction from "@/pages/transaction";
 import { createBrowserRouter } from "react-router-dom";
@@ -99,6 +100,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <NewPurchasePage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/Purchases/:id/stock-in",
+        element: (
+          <PrivateRoute>
+            <StockInPage />
           </PrivateRoute>
         ),
       },

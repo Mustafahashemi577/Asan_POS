@@ -137,6 +137,7 @@ export default function CustomerDialog({
                 <PhoneNumberInput
                   label="Phone Number"
                   value={field.value as PhoneValue}
+                  placeholder="700 000 000"
                   onChange={(val) => field.onChange(val ?? "")}
                   error={!!errors.phone}
                 />
