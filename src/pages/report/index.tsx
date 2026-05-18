@@ -1,5 +1,5 @@
 import TransactionTable, { TRANSACTIONS } from "@/components/transactiontable";
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -49,7 +49,7 @@ export default function Report() {
   const dateRangeLabel = `${fmtDate(startDate)} - ${fmtDate(endDate)}`;
 
   return (
-    <div className="min-h-[calc(100vh-57px)]">
+    <div className="max-h-[calc(100vh-57px)]">
       <div className=" p-2.5 lg:p-2.5 space-y-5">
         {/* ── HEADER ──────────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -72,30 +72,34 @@ export default function Report() {
                 displayValue={dateRangeLabel}
               />
             </div>
-            <div className='flex items-center gap-2'>
-
-             {!searchOpen && <Button onClick={() => setSearchOpen(true)}>
-                <SearchIcon size={20} />
-              </Button>}
-            {searchOpen && <div className="relative sm:w-64">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search Recent Transaction..."
-                className="h-9 pl-9 rounded-sm border-gray-200 text-sm bg-white"
-              />
-              <XIcon
-                size={15}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSearchOpen(false)}}
-              />
-            </div>}
+            <div className="flex items-center gap-2">
+              {!searchOpen && (
+                <Button onClick={() => setSearchOpen(true)}>
+                  <SearchIcon size={20} />
+                </Button>
+              )}
+              {searchOpen && (
+                <div className="relative sm:w-64">
+                  <Search
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search Recent Transaction..."
+                    className="h-9 pl-9 rounded-sm border-gray-200 text-sm bg-white"
+                  />
+                  <XIcon
+                    size={15}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchOpen(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <Select value={exports} onValueChange={setExport}>
