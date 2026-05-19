@@ -33,7 +33,7 @@ export default function InventoryCombobox({
     setLoading(true);
     getInventories({
       page: 1,
-      itemsPerPage: 15,
+      itemsPerPage: 8,
       search: debouncedSearch.trim() || undefined,
     })
       .then(({ data }) => {
