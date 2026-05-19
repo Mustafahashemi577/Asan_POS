@@ -139,7 +139,7 @@ export default function StockInPage() {
         <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
             <Button
-              variant="ghost"
+              variant="ghost-dark"
               size="icon"
               className="rounded-xl text-white hover:bg-white/10 shrink-0"
               onClick={() => navigate("/Purchases")}
