@@ -1,5 +1,4 @@
 import ProductCard from "./product-card";
-
 export interface Product {
   id: string;
   name: string;
@@ -28,8 +27,8 @@ export function ProductList({
     return (
       <div className="flex flex-col items-center text-center justify-center w-full min-h-[60vh] px-4">
         <img
-          src="/photos/NotFound2.jpeg"
-          alt="No Categories"
+          src="/photos/NotFound2.avif"
+          alt="No Products"
           className="
               max-w-50
               max-h-50

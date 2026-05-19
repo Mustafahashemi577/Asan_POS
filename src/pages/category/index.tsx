@@ -1,13 +1,11 @@
 import { Plus, Search, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   createCategory,
   deleteCategory,
-  getCategories,
   updateCategory,
 } from "@/queries/category";
-import useSWR from "swr";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,26 +19,13 @@ import { useCategories } from "@/hooks/use-categories";
 import type { Category } from "@/types";
 
 export default function Category() {
-  const { search, handleSearch, clearSearch } = useCategories();
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { categories, search, handleSearch, clearSearch, mutate } =
+    useCategories();
   const [searchOpen, setSearchOpen] = useState(false);
-
-  const { data: categories, mutate } = useSWR(
-    ["categories", debouncedSearch],
-    () => getCategories(debouncedSearch),
-  );
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 400); // 400ms delay
-
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const openAdd = () => {
     setEditing(null);
@@ -152,17 +137,17 @@ export default function Category() {
 
       {/* CONTENT */}
       {!categories ? (
-        <div className="justify-center items-center absolute-right-180 max-w-200 max-h-200">
+        <div className="flex flex-col items-center text-center justify-center w-full min-h-[60vh] px-4">
           <p className="text-sm text-gray-600">No Categories found</p>
-          <img src="../../../public/photos/NotFound2.jpeg" alt="Not Found" />
+          <img src="/photos/NotFound2.avif" alt="Not Found" />
         </div>
       ) : categories.length === 0 ? (
-        <div className="justify-center absolute right-180 items-center max-w-100 max-h-100">
+        <div className="flex flex-col items-center text-center justify-center w-full min-h-[60vh] px-4">
           <p className="text-center text-gray-500">
             No categories yet! <br />
           </p>
           <img
-            src="../../../public/photos/NotFound2.jpeg"
+            src="/photos/NotFound2.avif"
             alt="Not Found"
             className="max-w-100 max-h-100"
           />
