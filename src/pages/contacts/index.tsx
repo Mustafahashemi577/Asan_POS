@@ -1,4 +1,5 @@
 import {
+  Contact,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -110,7 +111,8 @@ export default function ContactsPage() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
               <div>
                 <h1 className="text-white text-xl sm:text-2xl font-semibold">
-                  Customer Overview
+                  <Contact className="w-5 h-5 mr-2 inline" />
+                  Customer
                 </h1>
                 <p className="text-gray-400 text-xs sm:text-sm mt-1">
                   Manage and track all your customer contacts

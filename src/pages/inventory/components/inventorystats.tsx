@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { Inventory, InventoryDetail } from "@/types/inventory";
-import { Plus } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 
 interface InventoryStatsProps {
   inventories: Inventory[];
@@ -25,6 +25,7 @@ export default function InventoryStats({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-white text-xl sm:text-2xl font-semibold">
+            <Building2 className="w-5 h-5 mr-2 inline" />
             {selectedInventory?.name ?? "Inventory Overview"}
           </h1>
           <p className="text-gray-400 text-xs sm:text-sm mt-1">

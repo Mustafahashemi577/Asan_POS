@@ -71,7 +71,7 @@ export default function InventoryCombobox({
         className="h-10 rounded-xl border border-gray-200 bg-transparent px-3 text-sm shadow-none focus:border-gray-300 focus:ring-3 focus:ring-gray-100"
       />
 
-      <ComboboxContent className="mt-2 w-[var(--anchor-width)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+      <ComboboxContent className=" w-[var(--anchor-width)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
         <ComboboxList className="max-h-80 overflow-y-auto p-1">
           {loading && (
             <div className="px-4 py-3 text-sm text-muted-foreground">
