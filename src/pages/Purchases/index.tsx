@@ -98,8 +98,9 @@ export default function PurchasesPage() {
 
   const {
     purchases,
-    total,
+    totalItems,
     totalPages,
+    itemsPerPage,
     page,
     setPage,
     search,
@@ -110,6 +111,11 @@ export default function PurchasesPage() {
     isLoading,
     mutate,
   } = usePurchases();
+
+  // ── Derived pagination values ──────────────────────────────────────────────
+
+  const from = totalItems === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const to = Math.min(page * itemsPerPage, totalItems);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -393,9 +399,8 @@ export default function PurchasesPage() {
                                     Stock In
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-
                                   <DropdownMenuItem
-                                    className="text-xs cursor-pointer "
+                                    className="text-xs cursor-pointer"
                                     onClick={() =>
                                       handleStatusChange(item.id, "Cancelled")
                                     }
@@ -479,14 +484,6 @@ export default function PurchasesPage() {
                               Stock In
                             </button>
                             <button
-                              onClick={() =>
-                                handleStatusChange(item.id, "Done")
-                              }
-                              className="text-xs text-green-600 hover:underline"
-                            >
-                              Done
-                            </button>
-                            <button
                               onClick={() => handleDelete(item.id)}
                               className="text-xs text-red-500 hover:underline"
                             >
@@ -502,18 +499,18 @@ export default function PurchasesPage() {
             )}
           </div>
 
-          {/* Pagination */}
+          {/* Pagination footer */}
           <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs text-gray-500">
-              Showing {purchases.length} of {total} records
+            <span className="text-xs text-gray-400">
+              {totalItems === 0
+                ? "No records"
+                : `Showing ${from}–${to} of ${totalItems} records`}
             </span>
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            )}
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+            />
           </div>
         </div>
       </div>

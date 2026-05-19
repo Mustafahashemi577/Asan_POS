@@ -93,7 +93,7 @@ export default function NewPurchasePage() {
         })),
       });
       form.reset();
-      navigate("/purchases");
+      navigate("/Purchases");
     } catch (err) {
       console.error("Failed to create purchase:", err);
     }

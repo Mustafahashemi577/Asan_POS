@@ -20,6 +20,7 @@ export interface PurchasesMeta {
   total: number;
   page: number;
   totalPages: number;
+  totalItems: number;
   itemsPerPage: number;
 }
 

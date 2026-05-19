@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeInfo } from "@/types/index";
-import { display, getDisplayName, getInitials } from "@/utils/profile.helpers";
+import { display, getInitials } from "@/utils/profile.helpers";
 import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -68,7 +68,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-64">
+              <SheetContent side="right" className="w-24">
                 <div className="mt-6 flex flex-col gap-2">
                   {items.map((item) => {
                     const isActive = location.pathname.startsWith(item.path);
@@ -175,31 +175,31 @@ export const Navbar = ({ profile }: NavbarProps) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-                variant="ghost"
+                className="flex bg-white items-center gap-2 rounded-md px-3 py-1.5"
+                variant="outline"
               >
                 <Avatar className="w-7 h-7">
                   <AvatarImage src={profile.imageUrl ?? undefined} />
                   <AvatarFallback>{getInitials(profile)}</AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                  <p className="text-xs font-medium">
-                    {getDisplayName(profile)}
-                  </p>
-                  <p className="text-[10px] text-gray-500">
-                    {display(profile.email)}
-                  </p>
-                </div>
+
                 <ChevronDown size={13} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-45">
               <DropdownMenuItem onClick={() => navigate("/profile")}>
                 View Profile
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                 Logout
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem>
+                <p className="text-[10px] text-gray-600">
+                  {display(profile.email)}
+                </p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

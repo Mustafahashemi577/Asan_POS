@@ -43,6 +43,8 @@ export interface PurchaseListItem {
   totalPrice: number;
   customer: PurchaseCustomer;
   items: PurchasedItemResponse[];
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 // ── Detail (returned by GET /purchase/:id) ────────────────────────────────────
@@ -56,6 +58,17 @@ export interface CreatePurchasePayload {
   /** ISO date string from the date picker */
   purchaseDate: string;
   items: PurchaseItemPayload[];
+}
+
+export interface PaginationMeta {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+  totalCount: number;
+  search?: string;
+  filters?: Record<string, string | string[]>;
+  sorts?: Record<string, "asc" | "desc">;
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────

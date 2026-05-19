@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 
-import { Archive, ArrowLeft, Calendar, Hash, User } from "lucide-react";
+import { ArrowLeft, Calendar, Hash, User } from "lucide-react";
 
 import { getPurchase } from "@/queries/purchase";
 import type { PurchaseDetail, PurchaseStatus } from "@/types/purchases";
@@ -72,7 +72,7 @@ function PurchaseDetailCard({ purchase }: { purchase: PurchaseDetail }) {
       </div>
 
       {/* Meta grid — 4 tiles separated by 1px gray lines */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-100">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-100">
         {[
           {
             icon: <User className="w-3.5 h-3.5" />,
@@ -80,29 +80,24 @@ function PurchaseDetailCard({ purchase }: { purchase: PurchaseDetail }) {
             value: purchase.customer?.name ?? "—",
           },
           {
-            icon: <Archive className="w-3.5 h-3.5" />,
-            label: "Inventory",
-            value: purchase.inventoryName ?? "—",
+            icon: <Hash className="w-3.5 h-3.5" />,
+            label: "Total",
+            value: fmtCurrency(purchase.totalPrice),
           },
           {
             icon: <Calendar className="w-3.5 h-3.5" />,
             label: "Date",
             value: fmtDate(purchase.customDate),
           },
-          {
-            icon: <Hash className="w-3.5 h-3.5" />,
-            label: "Total",
-            value: fmtCurrency(purchase.totalPrice),
-          },
         ].map(({ icon, label, value }) => (
           <div key={label} className="bg-white px-5 py-4">
-            <div className="flex items-center gap-1.5 text-gray-400 mb-1">
+            <div className="flex items-center gap-1.5 text-gray-500 mb-1">
               {icon}
-              <p className="text-[10px] uppercase tracking-wide font-medium">
+              <p className="text-[13px] uppercase tracking-wide font-medium">
                 {label}
               </p>
             </div>
-            <p className="text-sm font-semibold text-gray-800 truncate">
+            <p className="text-sm mt-2 pt-2 font-semibold text-gray-800 truncate">
               {value}
             </p>
           </div>
@@ -121,7 +116,7 @@ function PurchaseDetailCard({ purchase }: { purchase: PurchaseDetail }) {
                 {["Product", "Unit Price", "Qty", "Line Total"].map((h) => (
                   <th
                     key={h}
-                    className={`py-2.5 px-4 font-medium text-gray-500 ${h === "Product" ? "text-left" : "text-right"}`}
+                    className={`py-2.5 px-4 font-medium text-gray-600 ${h === "Product" ? "text-left" : "text-right"}`}
                   >
                     {h}
                   </th>
@@ -213,7 +208,7 @@ export default function ViewPurchase() {
         <Button
           variant="outline"
           className="rounded-xl"
-          onClick={() => navigate("/purchases")}
+          onClick={() => navigate("/Purchases")}
         >
           Back to Purchases
         </Button>
@@ -228,7 +223,7 @@ export default function ViewPurchase() {
       {/* Top bar: back link + conditional delete */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate("/purchases")}
+          onClick={() => navigate("/Purchases")}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
