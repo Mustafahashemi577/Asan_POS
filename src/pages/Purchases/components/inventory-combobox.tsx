@@ -8,28 +8,15 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
+
 import type { Inventory } from "@/queries/inventory";
 import { getInventories } from "@/queries/inventory";
-
-// ── useDebounce ───────────────────────────────────────────────────────────────
-
-function useDebounce<T>(value: T, delay = 400): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
-
-// ── Props ─────────────────────────────────────────────────────────────────────
+import { useDebounce } from "use-debounce";
 
 interface InventoryComboboxProps {
   value: string;
   onChange: (id: string) => void;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InventoryCombobox({
   value,
@@ -38,14 +25,15 @@ export default function InventoryCombobox({
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const debouncedSearch = useDebounce(search, 400);
+
+  const [debouncedSearch] = useDebounce(search, 400);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     getInventories({
       page: 1,
-      itemsPerPage: 20,
+      itemsPerPage: 15,
       search: debouncedSearch.trim() || undefined,
     })
       .then(({ data }) => {
@@ -62,48 +50,61 @@ export default function InventoryCombobox({
     };
   }, [debouncedSearch]);
 
-  const selected = inventories.find((inv) => inv.id === value);
+  // Display name of currently selected inventory
+  const selectedName = inventories.find((inv) => inv.id === value)?.name ?? "";
 
   return (
-    <div className="w-full">
-      <Combobox
-        value={value}
-        onValueChange={(val: string | null) => {
-          onChange(val ?? "");
-          setSearch("");
-        }}
-      >
-        <ComboboxInput
-          className="h-11 pl-9 rounded-xl border-gray-200 text-sm w-full"
-          placeholder={selected ? selected.name : "Assign to inventory…"}
-          value={search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearch(e.target.value)
-          }
-          showClear={!!value}
-        />
-        <ComboboxContent className="min-w-(--anchor-width) w-(--anchor-width)">
-          <ComboboxList>
-            {loading ? (
-              <p className="px-4 py-3 text-xs text-muted-foreground">
-                Searching…
-              </p>
-            ) : (
-              <ComboboxEmpty>No inventories found</ComboboxEmpty>
-            )}
-            {inventories.map((inv) => (
-              <ComboboxItem key={inv.id} value={inv.id}>
-                <span>{inv.name}</span>
-                {inv.address && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    — {inv.address}
-                  </span>
-                )}
-              </ComboboxItem>
-            ))}
-          </ComboboxList>
-        </ComboboxContent>
-      </Combobox>
-    </div>
+    <Combobox
+      value={selectedName}
+      filter={() => true}
+      onValueChange={(name: string | null) => {
+        // Map name back to id before calling onChange
+        const inv = inventories.find((i) => i.name === (name ?? ""));
+        onChange(inv?.id ?? "");
+        setSearch("");
+      }}
+    >
+      <ComboboxInput
+        placeholder={selectedName || "Assign to inventory..."}
+        onChange={(e) => setSearch(e.target.value)}
+        showClear={!!value}
+        className="h-10 rounded-xl border border-gray-200 bg-transparent px-3 text-sm shadow-none focus:border-gray-300 focus:ring-3 focus:ring-gray-100"
+      />
+
+      <ComboboxContent className="mt-2 w-[var(--anchor-width)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+        <ComboboxList className="max-h-80 overflow-y-auto p-1">
+          {loading && (
+            <div className="px-4 py-3 text-sm text-muted-foreground">
+              Searching...
+            </div>
+          )}
+          {!loading && inventories.length === 0 && (
+            <ComboboxEmpty className="py-6 text-sm text-muted-foreground">
+              No inventories found
+            </ComboboxEmpty>
+          )}
+          {inventories.map((inv) => (
+            <ComboboxItem
+              key={inv.id}
+              value={inv.name}
+              className="rounded-xl px-4 py-3 cursor-pointer transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+            >
+              <div className="flex w-full items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">
+                    {inv.name}
+                  </div>
+                  {inv.address && (
+                    <div className="mt-1 truncate text-xs text-muted-foreground">
+                      {inv.address}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 }
