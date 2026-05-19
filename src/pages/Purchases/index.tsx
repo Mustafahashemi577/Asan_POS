@@ -79,14 +79,14 @@ function fmtCurrency(n: number): string {
 }
 
 function normalizeStatus(status: string): PurchaseStatus {
-  return status.toUpperCase() as PurchaseStatus;
+  return status as PurchaseStatus;
 }
 
 const STATUS_STYLES: Record<PurchaseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
-  DONE: "bg-green-100 text-green-700",
-  CANCELLED: "bg-red-100 text-red-500",
-  PENDING: "bg-yellow-100 text-orange-700",
+  Draft: "bg-gray-100 text-gray-600",
+  Done: "bg-green-100 text-green-700",
+  Cancelled: "bg-red-100 text-red-500",
+  Pending: "bg-yellow-100 text-orange-700",
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -380,7 +380,8 @@ export default function PurchasesPage() {
                               >
                                 View
                               </DropdownMenuItem>
-                              {itemStatus === "DRAFT" && (
+                              {(itemStatus === "Draft" ||
+                                itemStatus === "Pending") && (
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
@@ -392,17 +393,9 @@ export default function PurchasesPage() {
                                     Stock In
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-green-600 focus:text-green-600"
+                                    className="text-xs cursor-pointer "
                                     onClick={() =>
-                                      handleStatusChange(item.id, "DONE")
-                                    }
-                                  >
-                                    Mark as DONE
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-orange-500 focus:text-orange-500"
-                                    onClick={() =>
-                                      handleStatusChange(item.id, "CANCELLED")
+                                      handleStatusChange(item.id, "Cancelled")
                                     }
                                   >
                                     Cancel Purchase
@@ -473,7 +466,7 @@ export default function PurchasesPage() {
                         >
                           View
                         </button>
-                        {itemStatus === "DRAFT" && (
+                        {itemStatus === "Draft" && (
                           <>
                             <button
                               onClick={() =>
@@ -485,7 +478,7 @@ export default function PurchasesPage() {
                             </button>
                             <button
                               onClick={() =>
-                                handleStatusChange(item.id, "DONE")
+                                handleStatusChange(item.id, "Done")
                               }
                               className="text-xs text-green-600 hover:underline"
                             >

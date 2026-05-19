@@ -3,16 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import useSWR from "swr";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ChevronDown, Package, PackagePlus } from "lucide-react";
+import { ArrowLeft, Package, PackagePlus } from "lucide-react";
 
-import { useInventory } from "@/hooks/use-inventory";
+import InventoryCombobox from "@/pages/Purchases/components/inventory-combobox";
 import { getPurchase } from "@/queries/purchase";
 import { createStockIn } from "@/queries/stock-in";
 import type {
@@ -43,21 +37,16 @@ export default function StockInPage() {
   const navigate = useNavigate();
 
   const [rows, setRows] = useState<RowState[]>([]);
-  const [selectedInventoryId, setSelectedInventoryId] = useState("");
-  const [selectedInventoryName, setSelectedInventoryName] = useState("");
+  const [inventoryId, setInventoryId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Data ───────────────────────────────────────────────────────────────────
   const { data: purchase, isLoading } = useSWR(
     id ? `purchase-${id}` : null,
     () => getPurchase(id!),
     { revalidateOnFocus: false },
   );
 
-  const { inventories } = useInventory();
-
-  // ── Build rows ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!purchase) return;
     setRows(
@@ -77,8 +66,6 @@ export default function StockInPage() {
     );
   }, [purchase]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-
   const updateReceivingNow = (index: number, value: number) => {
     setRows((prev) =>
       prev.map((row, i) => {
@@ -94,30 +81,25 @@ export default function StockInPage() {
 
   const handleSubmit = async () => {
     setError(null);
-
-    if (!selectedInventoryId) {
+    if (!inventoryId) {
       setError("Please select an inventory.");
       return;
     }
-
     const items = rows
       .filter((r) => r.receivingNow > 0)
       .map((r) => ({
         purchaseItemId: r.purchaseItemId,
         quantity: r.receivingNow,
       }));
-
     if (items.length === 0) {
       setError("Enter a quantity for at least one item.");
       return;
     }
-
     const payload: CreateStockInPayload = {
       purchaseId: id!,
-      inventoryId: selectedInventoryId,
+      inventoryId,
       items,
     };
-
     try {
       setSubmitting(true);
       await createStockIn(payload);
@@ -130,8 +112,6 @@ export default function StockInPage() {
       setSubmitting(false);
     }
   };
-
-  // ── Loading / not found ────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -152,12 +132,10 @@ export default function StockInPage() {
   const totalUnits = rows.reduce((sum, r) => sum + r.receivingNow, 0);
   const itemsReceiving = rows.filter((r) => r.receivingNow > 0).length;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <div className="overflow-y-auto">
       <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-        {/* Stats header — matches index.tsx style */}
+        {/* Stats header */}
         <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
             <Button
@@ -179,7 +157,6 @@ export default function StockInPage() {
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               {
@@ -238,57 +215,11 @@ export default function StockInPage() {
                 Adjust quantities if receiving partially
               </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              {/* Inventory dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-10 rounded-xl border-gray-200 text-sm justify-between gap-2 min-w-48"
-                  >
-                    <span
-                      className={
-                        selectedInventoryId ? "text-gray-800" : "text-gray-400"
-                      }
-                    >
-                      {selectedInventoryName || "Select inventory..."}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="rounded-xl w-56">
-                  {inventories.length === 0 ? (
-                    <DropdownMenuItem
-                      disabled
-                      className="text-xs text-gray-400"
-                    >
-                      No inventories found
-                    </DropdownMenuItem>
-                  ) : (
-                    inventories.map((inv) => (
-                      <DropdownMenuItem
-                        key={inv.id}
-                        className="text-xs cursor-pointer"
-                        onClick={() => {
-                          setSelectedInventoryId(inv.id);
-                          setSelectedInventoryName(inv.name);
-                        }}
-                      >
-                        {inv.name}
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting || !selectedInventoryId}
-                className="h-10 px-6 rounded-xl bg-black text-white hover:bg-black/90 font-medium text-sm"
-              >
-                {submitting ? "Processing..." : "Confirm Stock In"}
-              </Button>
+            <div className="w-full sm:max-w-xs">
+              <InventoryCombobox
+                value={inventoryId}
+                onChange={setInventoryId}
+              />
             </div>
           </div>
 
@@ -423,6 +354,37 @@ export default function StockInPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Footer — summary + submit */}
+          <div className="border-t border-gray-100 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-6 text-xs text-gray-500">
+              <span>
+                Items receiving:{" "}
+                <span className="font-semibold text-gray-800">
+                  {itemsReceiving}
+                </span>
+              </span>
+              <span>
+                Total units:{" "}
+                <span className="font-semibold text-gray-800">
+                  {totalUnits}
+                </span>
+              </span>
+              <span>
+                Purchase total:{" "}
+                <span className="font-semibold text-gray-800">
+                  {fmtCurrency(purchase.totalPrice)}
+                </span>
+              </span>
+            </div>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting || !inventoryId}
+              className="h-10 px-8 rounded-xl bg-black text-white hover:bg-black/90 font-medium text-sm w-full sm:w-auto"
+            >
+              {submitting ? "Processing..." : "Confirm Stock In"}
+            </Button>
           </div>
         </div>
       </div>

@@ -32,10 +32,10 @@ function normalizeStatus(status: string): PurchaseStatus {
 }
 
 const STATUS_STYLES: Record<PurchaseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
-  DONE: "bg-green-100 text-green-700",
-  CANCELLED: "bg-red-100 text-red-500",
-  PENDING: "bg-yellow-100 text-orange-700",
+  Draft: "bg-gray-100 text-gray-600",
+  Done: "bg-green-100 text-green-700",
+  Cancelled: "bg-red-100 text-red-500",
+  Pending: "bg-yellow-100 text-orange-700",
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -168,14 +168,14 @@ export function PurchaseDetailSheet({
 
         {/* Sticky footer */}
         <SheetFooter className="border-t border-gray-100 px-6 py-4 flex-row flex-wrap gap-2">
-          {!data || isLoading || !status ? null : status === "DRAFT" ? (
+          {!data || isLoading || !status ? null : status === "Draft" ? (
             <>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={actionLoading}
                 className="rounded-xl border-orange-400 text-orange-500 hover:bg-orange-50 hover:text-orange-600 text-xs h-9 px-4"
-                onClick={() => onStatusChange(data.id, "CANCELLED")}
+                onClick={() => onStatusChange(data.id, "Cancelled")}
               >
                 Cancel
               </Button>
@@ -192,11 +192,11 @@ export function PurchaseDetailSheet({
                 Delete
               </Button>
             </>
-          ) : status === "DONE" ? (
+          ) : status === "Done" ? (
             <p className="text-xs text-gray-400 self-center">
               Purchase completed — items have been transferred to inventory.
             </p>
-          ) : status === "CANCELLED" ? (
+          ) : status === "Cancelled" ? (
             <p className="text-xs text-gray-400 self-center">
               This purchase has been CANCELLED and cannot be modified.
             </p>

@@ -1,6 +1,6 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type PurchaseStatus = "DRAFT" | "DONE" | "CANCELLED" | "PENDING";
+export type PurchaseStatus = "Draft" | "Done" | "Cancelled" | "Pending";
 
 // ── Shared sub-shapes ─────────────────────────────────────────────────────────
 

@@ -65,43 +65,45 @@ export default function InventoryCombobox({
   const selected = inventories.find((inv) => inv.id === value);
 
   return (
-    <Combobox
-      value={value}
-      onValueChange={(val: string | null) => {
-        onChange(val ?? "");
-        setSearch("");
-      }}
-    >
-      <ComboboxInput
-        className="h-11 pl-9 rounded-xl border-gray-200 text-sm w-full"
-        placeholder={selected ? selected.name : "Assign to inventory…"}
-        value={search}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setSearch(e.target.value)
-        }
-        showClear={!!value}
-      />
-      <ComboboxContent>
-        <ComboboxList>
-          {loading ? (
-            <p className="px-4 py-3 text-xs text-muted-foreground">
-              Searching…
-            </p>
-          ) : (
-            <ComboboxEmpty>No inventories found</ComboboxEmpty>
-          )}
-          {inventories.map((inv) => (
-            <ComboboxItem key={inv.id} value={inv.id}>
-              <span>{inv.name}</span>
-              {inv.address && (
-                <span className="text-xs text-muted-foreground ml-1">
-                  — {inv.address}
-                </span>
-              )}
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+    <div className="w-full">
+      <Combobox
+        value={value}
+        onValueChange={(val: string | null) => {
+          onChange(val ?? "");
+          setSearch("");
+        }}
+      >
+        <ComboboxInput
+          className="h-11 pl-9 rounded-xl border-gray-200 text-sm w-full"
+          placeholder={selected ? selected.name : "Assign to inventory…"}
+          value={search}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearch(e.target.value)
+          }
+          showClear={!!value}
+        />
+        <ComboboxContent className="min-w-(--anchor-width) w-(--anchor-width)">
+          <ComboboxList>
+            {loading ? (
+              <p className="px-4 py-3 text-xs text-muted-foreground">
+                Searching…
+              </p>
+            ) : (
+              <ComboboxEmpty>No inventories found</ComboboxEmpty>
+            )}
+            {inventories.map((inv) => (
+              <ComboboxItem key={inv.id} value={inv.id}>
+                <span>{inv.name}</span>
+                {inv.address && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    — {inv.address}
+                  </span>
+                )}
+              </ComboboxItem>
+            ))}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </div>
   );
 }

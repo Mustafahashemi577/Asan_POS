@@ -29,18 +29,15 @@ export function purchasesKey(params: PurchasesQuery = {}) {
 }
 
 /** Normalize a purchase object so status is always uppercase */
-function normalizePurchase<T extends { status: string }>(p: T): T {
-  return { ...p, status: p.status.toUpperCase() };
-}
 
 export const getPurchases = (
   query: PurchasesQuery = {},
 ): Promise<{ data: PurchaseListItem[]; meta: PurchasesMeta }> =>
   api.get("/purchase", { params: query }).then((r) => {
     const raw = r.data;
-    const items: PurchaseListItem[] = (
-      Array.isArray(raw) ? raw : (raw.data ?? raw.purchases ?? [])
-    ).map(normalizePurchase);
+    const items: PurchaseListItem[] = Array.isArray(raw)
+      ? raw
+      : (raw.data ?? raw.purchases ?? []);
     const meta: PurchasesMeta = raw.meta ?? {
       total: items.length,
       page: 1,
@@ -53,9 +50,7 @@ export const getPurchases = (
 // ── Single ────────────────────────────────────────────────────────────────────
 
 export const getPurchase = (id: string): Promise<PurchaseDetail> =>
-  api
-    .get(`/purchase/${id}`)
-    .then((r) => normalizePurchase(r.data) as PurchaseDetail);
+  api.get(`/purchase/${id}`).then((r) => r.data as PurchaseDetail);
 
 // ── Create ────────────────────────────────────────────────────────────────────
 
