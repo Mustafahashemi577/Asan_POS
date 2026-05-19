@@ -10,6 +10,7 @@ import ProfilePage from "@/pages/profile";
 import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
 import StockInPage from "@/pages/Purchases/stock-in";
+import ViewPurchase from "@/pages/Purchases/view-purchase";
 import Report from "@/pages/report";
 import Transaction from "@/pages/transaction";
 import { createBrowserRouter } from "react-router-dom";
@@ -100,6 +101,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <NewPurchasePage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/Purchases/:id",
+        element: (
+          <PrivateRoute>
+            <ViewPurchase />
           </PrivateRoute>
         ),
       },

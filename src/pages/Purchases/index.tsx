@@ -23,7 +23,6 @@ import { MoreHorizontal, Plus, Search, XIcon } from "lucide-react";
 import { usePurchases } from "@/hooks/use-purchases";
 import { deletePurchase, updatePurchaseStatus } from "@/queries/purchase";
 import type { PurchaseStatus } from "@/types/purchases";
-import { PurchaseDetailSheet } from "./components/purchase-detail-sheet";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -56,10 +55,10 @@ const PURCHASE_STATS = [
 
 const STATUS_FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: "All Statuses", value: "ALL" },
-  { label: "DRAFT", value: "DRAFT" },
-  { label: "DONE", value: "DONE" },
-  { label: "CANCELLED", value: "CANCELLED" },
-  { label: "PENDING", value: "PENDING" },
+  { label: "Draft", value: "Draft" },
+  { label: "Done", value: "Done" },
+  { label: "Cancelled", value: "Cancelled" },
+  { label: "Pending", value: "Pending" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -94,7 +93,6 @@ const STATUS_STYLES: Record<PurchaseStatus, string> = {
 export default function PurchasesPage() {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [viewId, setViewId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -376,7 +374,9 @@ export default function PurchasesPage() {
                             >
                               <DropdownMenuItem
                                 className="text-xs cursor-pointer"
-                                onClick={() => setViewId(item.id)}
+                                onClick={() =>
+                                  navigate(`/Purchases/${item.id}`)
+                                }
                               >
                                 View
                               </DropdownMenuItem>
@@ -392,6 +392,8 @@ export default function PurchasesPage() {
                                   >
                                     Stock In
                                   </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+
                                   <DropdownMenuItem
                                     className="text-xs cursor-pointer "
                                     onClick={() =>
@@ -461,7 +463,7 @@ export default function PurchasesPage() {
                       </div>
                       <div className="flex gap-3 items-center">
                         <button
-                          onClick={() => setViewId(item.id)}
+                          onClick={() => navigate(`/Purchases/${item.id}`)}
                           className="text-xs text-blue-500 hover:underline"
                         >
                           View
@@ -482,7 +484,7 @@ export default function PurchasesPage() {
                               }
                               className="text-xs text-green-600 hover:underline"
                             >
-                              DONE
+                              Done
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
@@ -515,15 +517,6 @@ export default function PurchasesPage() {
           </div>
         </div>
       </div>
-
-      <PurchaseDetailSheet
-        id={viewId}
-        open={!!viewId}
-        onClose={() => setViewId(null)}
-        onStatusChange={handleStatusChange}
-        onDelete={handleDelete}
-        actionLoading={!!loadingId}
-      />
     </div>
   );
 }
