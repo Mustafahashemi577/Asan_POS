@@ -48,7 +48,7 @@ export function usePurchases(): UsePurchasesReturn {
     getPurchases({
       search: debouncedSearch,
       page,
-      itemsPerPage: PAGE_SIZE,
+      itemsPerPage: 10,
       status: status !== "ALL" ? status : undefined,
     }),
   );

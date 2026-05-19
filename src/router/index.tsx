@@ -5,6 +5,7 @@ import Category from "@/pages/category";
 import Contacts from "@/pages/contacts";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
+import Journals from "@/pages/journals";
 import Product from "@/pages/product";
 import ProfilePage from "@/pages/profile";
 import Purchases from "@/pages/Purchases";
@@ -117,6 +118,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <StockInPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/journals",
+        element: (
+          <PrivateRoute>
+            <Journals />
           </PrivateRoute>
         ),
       },
