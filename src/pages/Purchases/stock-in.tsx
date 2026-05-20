@@ -99,6 +99,7 @@ export default function StockInPage() {
       purchaseId: id!,
       inventoryId,
       items,
+      status: "Pending",
     };
     try {
       setSubmitting(true);

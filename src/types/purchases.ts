@@ -4,6 +4,8 @@ export type PurchaseStatus = "Draft" | "Done" | "Cancelled" | "Pending";
 
 export type PaymentMethod = "Cash" | "Bank Transfer" | "Cheque" | "Other";
 
+export type StockInStatus = "Pending" | "Completed";
+
 // ── Shared sub-shapes ─────────────────────────────────────────────────────────
 
 export interface PurchaseCustomer {
@@ -103,12 +105,14 @@ export interface CreatePaymentPayload {
 export interface StockInItemPayload {
   purchaseItemId: string;
   quantity: number;
+  status: StockInStatus;
 }
 
 export interface CreateStockInPayload {
   purchaseId: string;
   inventoryId: string;
   items: StockInItemPayload[];
+  status: StockInStatus;
 }
 
 /** Item shape on the stock-in page — extends PurchasedItemResponse with received */

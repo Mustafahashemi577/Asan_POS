@@ -108,12 +108,8 @@ export default function PurchasesPage() {
     mutate,
   } = usePurchases();
 
-  // ── Derived pagination values ──────────────────────────────────────────────
-
   const from = totalItems === 0 ? 0 : (page - 1) * itemsPerPage + 1;
   const to = Math.min(page * itemsPerPage, totalItems);
-
-  // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleDelete = async (id: string) => {
     setLoadingId(id);
@@ -146,8 +142,6 @@ export default function PurchasesPage() {
       setLoadingId(null);
     }
   };
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="overflow-y-auto">
@@ -220,7 +214,6 @@ export default function PurchasesPage() {
                 found
               </p>
             </div>
-
             <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
               {!searchOpen ? (
                 <Button
@@ -254,7 +247,6 @@ export default function PurchasesPage() {
                   />
                 </div>
               )}
-
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="h-10 rounded-xl border-gray-200 text-sm w-36">
                   <SelectValue />
@@ -271,7 +263,6 @@ export default function PurchasesPage() {
                   ))}
                 </SelectContent>
               </Select>
-
               <Button
                 onClick={() => navigate("/Purchases/new")}
                 className="h-10 rounded-xl bg-black text-white hover:bg-black/90 text-sm gap-1.5"
@@ -282,149 +273,24 @@ export default function PurchasesPage() {
             </div>
           </div>
 
-          {/* Desktop table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-100">
-                  {[
-                    "Purchase #",
-                    "Customer",
-                    "Total Price",
-                    "Date",
-                    "Status",
-                    "Actions",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-sm font-medium py-4 text-left text-black px-6 whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-gray-400 text-sm"
-                    >
-                      Loading purchases...
-                    </td>
-                  </tr>
-                ) : purchases.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-gray-400 text-sm"
-                    >
-                      {search
-                        ? `No purchases matching "${search}"`
-                        : "No purchases found"}
-                    </td>
-                  </tr>
-                ) : (
-                  purchases.map((item) => {
-                    const itemStatus = item.status;
-                    return (
-                      <tr
-                        key={item.id}
-                        className="border-t border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="text-xs text-gray-600 font-mono px-6 py-4 whitespace-nowrap">
-                          #{item.sequenceId}
-                        </td>
-                        <td className="text-xs text-gray-800 font-medium px-6 py-4 whitespace-nowrap">
-                          {item.customer?.name}
-                        </td>
-                        <td className="text-xs text-gray-900 font-semibold px-6 py-4 whitespace-nowrap">
-                          {fmtCurrency(item.totalPrice)}
-                        </td>
-                        <td className="text-xs text-gray-600 px-6 py-4 whitespace-nowrap">
-                          {fmtDate(item.customDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                              STATUS_STYLES[itemStatus] ??
-                              "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {itemStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={loadingId === item.id}
-                                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100 disabled:opacity-40"
-                              >
-                                <MoreHorizontal
-                                  size={16}
-                                  className="text-gray-500"
-                                />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-xl w-44"
-                            >
-                              <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={() =>
-                                  navigate(`/Purchases/${item.id}`)
-                                }
-                              >
-                                View
-                              </DropdownMenuItem>
-                              {(itemStatus === "Draft" ||
-                                itemStatus === "Pending") && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer"
-                                    onClick={() =>
-                                      navigate(`/Purchases/${item.id}/stock-in`)
-                                    }
-                                  >
-                                    Stock In
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer"
-                                    onClick={() =>
-                                      handleStatusChange(item.id, "Cancelled")
-                                    }
-                                  >
-                                    Cancel Purchase
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer text-red-500 focus:text-red-500"
-                                    onClick={() => handleDelete(item.id)}
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Rows */}
+          <div className="divide-y divide-gray-100">
+            {/* Header — desktop only */}
+            <div className="hidden sm:grid grid-cols-6 justify-items-center bg-gray-100 py-3">
+              {[
+                "Purchase #",
+                "Customer",
+                "Total Price",
+                "Date",
+                "Status",
+                "Actions",
+              ].map((h) => (
+                <span key={h} className="text-sm font-medium text-black">
+                  {h}
+                </span>
+              ))}
+            </div>
 
-          {/* Mobile cards */}
-          <div className="sm:hidden divide-y divide-gray-100">
             {isLoading ? (
               <p className="px-5 py-12 text-center text-gray-400 text-sm">
                 Loading purchases...
@@ -439,55 +305,135 @@ export default function PurchasesPage() {
               purchases.map((item) => {
                 const itemStatus = item.status;
                 return (
-                  <div key={item.id} className="px-4 py-4">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs font-mono text-gray-500">
+                  <div
+                    key={item.id}
+                    onClick={() => navigate(`/Purchases/${item.id}`)}
+                    className="grid grid-cols-6 justify-items-center gap-x-1 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    {/* Col 1: sequence + customer (stacked on mobile, separate on desktop) */}
+                    <div className="min-w-0">
+                      <p className="text-xs font-mono text-gray-500">
                         #{item.sequenceId}
-                      </span>
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 truncate sm:hidden">
+                        {item.customer?.name}
+                      </p>
+                    </div>
+
+                    {/* Col 2: customer — desktop only */}
+                    <p className="hidden sm:block text-xs font-medium text-gray-800 truncate">
+                      {item.customer?.name}
+                    </p>
+
+                    {/* Col 3: total price */}
+                    <p className="hidden sm:block text-xs font-semibold text-gray-900 whitespace-nowrap">
+                      {fmtCurrency(item.totalPrice)}
+                    </p>
+
+                    {/* Col 4: date */}
+                    <p className="hidden sm:block text-xs text-gray-600 whitespace-nowrap">
+                      {fmtDate(item.customDate)}
+                    </p>
+
+                    {/* Col 5: status */}
+                    <div className="hidden sm:flex">
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[itemStatus] ?? ""}`}
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_STYLES[itemStatus] ?? "bg-gray-100 text-gray-600"}`}
                       >
                         {itemStatus}
                       </span>
                     </div>
-                    <p className="text-sm font-medium text-gray-800 mb-0.5">
-                      {item.customer?.name}
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <div>
-                        <p className="text-xs text-gray-400">
-                          {fmtDate(item.customDate)}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {fmtCurrency(item.totalPrice)}
-                        </p>
-                      </div>
-                      <div className="flex gap-3 items-center">
-                        <button
-                          onClick={() => navigate(`/Purchases/${item.id}`)}
-                          className="text-xs text-blue-500 hover:underline"
+
+                    {/* Col 6 / mobile right column: actions + mobile meta */}
+                    <div className="flex flex-col items-end gap-1.5">
+                      {/* Mobile-only: status + price + date */}
+                      <div className="flex items-center gap-2 sm:hidden">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[itemStatus] ?? ""}`}
                         >
-                          View
-                        </button>
-                        {itemStatus === "Draft" && (
-                          <>
-                            <button
-                              onClick={() =>
-                                navigate(`/Purchases/${item.id}/stock-in`)
-                              }
-                              className="text-xs text-blue-600 hover:underline"
-                            >
-                              Stock In
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="text-xs text-red-500 hover:underline"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                          {itemStatus}
+                        </span>
                       </div>
+                      <p className="text-xs font-semibold text-gray-900 sm:hidden">
+                        {fmtCurrency(item.totalPrice)}
+                      </p>
+                      <p className="text-[11px] text-gray-400 sm:hidden">
+                        {fmtDate(item.customDate)}
+                      </p>
+
+                      {/* Actions dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={loadingId === item.id}
+                            className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100 disabled:opacity-40"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal
+                              size={16}
+                              className="text-gray-500"
+                            />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="rounded-xl w-44"
+                        >
+                          <DropdownMenuItem
+                            className="text-xs cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/Purchases/${item.id}`);
+                            }}
+                          >
+                            View
+                          </DropdownMenuItem>
+                          {(itemStatus === "Draft" ||
+                            itemStatus === "Pending" ||
+                            itemStatus === "Cancelled") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              {itemStatus !== "Cancelled" && (
+                                <>
+                                  <DropdownMenuItem
+                                    className="text-xs cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(
+                                        `/Purchases/${item.id}/stock-in`,
+                                      );
+                                    }}
+                                  >
+                                    Stock In
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-xs cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusChange(item.id, "Cancelled");
+                                    }}
+                                  >
+                                    Cancel Purchase
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                className="text-xs cursor-pointer text-red-500 focus:text-red-500"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(item.id);
+                                }}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );

@@ -2,27 +2,27 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 import { CheckCircle } from "lucide-react";
 
-import { createPayment, updatePurchaseStatus } from "@/queries/purchase";
+import { updatePurchaseStatus } from "@/queries/purchase";
 import type { PaymentMethod, PurchaseDetail } from "@/types/purchases";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -105,14 +105,6 @@ export function PaymentDialog({ purchase, onSuccess }: PaymentDialogProps) {
     setConfirming(true);
 
     try {
-      await createPayment({
-        purchaseId: purchase.id,
-        method: form.method,
-        amount,
-        paymentDate: form.paymentDate,
-        notes: form.notes || undefined,
-      });
-
       await updatePurchaseStatus(purchase.id, { status: "Done" });
 
       setOpen(false);
@@ -191,38 +183,6 @@ export function PaymentDialog({ purchase, onSuccess }: PaymentDialogProps) {
             <p className="text-[11px] text-gray-400">
               Purchase total: {fmtCurrency(purchase.totalPrice)}
             </p>
-          </div>
-
-          {/* Payment date */}
-          <div className="space-y-1.5">
-            <Label htmlFor="paymentDate">Payment Date</Label>
-            <Input
-              id="paymentDate"
-              type="date"
-              className="rounded-xl"
-              value={form.paymentDate}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, paymentDate: e.target.value }))
-              }
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">
-              Notes / Reference{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </Label>
-            <Input
-              id="notes"
-              type="text"
-              className="rounded-xl"
-              placeholder="e.g. Bank ref #123456"
-              value={form.notes}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-            />
           </div>
 
           {/* Inline error */}

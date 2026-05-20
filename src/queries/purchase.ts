@@ -1,11 +1,10 @@
 import api from "@/lib/axios";
 
 import type {
-  CreatePaymentPayload,
   CreatePurchasePayload,
   PurchaseDetail,
   PurchaseListItem,
-  UpdatePurchaseStatusPayload,
+  UpdatePurchaseStatusPayload
 } from "@/types/purchases";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -75,10 +74,3 @@ export const updatePurchaseStatus = (
 
 export const deletePurchase = (id: string): Promise<{ message: string }> =>
   api.delete(`/purchase/${id}`).then((r) => r.data);
-
-// ── Payment ───────────────────────────────────────────────────────────────────
-
-export const createPayment = (
-  payload: CreatePaymentPayload,
-): Promise<{ message: string }> =>
-  api.post("/purchase/payment", payload).then((r) => r.data);

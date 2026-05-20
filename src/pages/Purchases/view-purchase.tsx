@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -15,10 +16,10 @@ import { Button } from "@/components/ui/button";
 
 import { ArrowLeft, Calendar, Hash, User } from "lucide-react";
 
-import { usePurchases } from "@/hooks/use-purchases";
 import { getPurchase, updatePurchaseStatus } from "@/queries/purchase";
 import type { PurchaseDetail, PurchaseStatus } from "@/types/purchases";
 import { PaymentDialog } from "./components/payment-dialog";
+import { StockInSidebar } from "./components/stock-in-sidebar";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,9 @@ function PurchaseDetailCard({ purchase }: { purchase: PurchaseDetail }) {
                 {["Product", "Unit Price", "Qty", "Line Total"].map((h) => (
                   <th
                     key={h}
-                    className={`py-2.5 px-4 font-medium text-gray-500 ${h === "Product" ? "text-left" : "text-center"}`}
+                    className={`py-2.5 px-4 font-medium text-gray-500 ${
+                      h === "Product" ? "text-left" : "text-center"
+                    }`}
                   >
                     {h}
                   </th>
@@ -177,8 +180,6 @@ export default function ViewPurchase() {
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
-  const { mutate } = usePurchases();
-
   // ── Load purchase ───────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -212,7 +213,6 @@ export default function ViewPurchase() {
     try {
       await updatePurchaseStatus(purchase.id, { status: "Cancelled" });
       setPurchase((prev) => (prev ? { ...prev, status: "Cancelled" } : prev));
-      await mutate();
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to cancel purchase.",
@@ -226,14 +226,13 @@ export default function ViewPurchase() {
 
   const handlePaymentSuccess = async () => {
     setPurchase((prev) => (prev ? { ...prev, status: "Done" } : prev));
-    await mutate();
   };
 
   // ── Loading / error states ────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center text-gray-400 text-sm">
+      <div className="max-w-6xl mx-auto px-4 py-16 text-center text-gray-400 text-sm">
         Loading purchase…
       </div>
     );
@@ -241,7 +240,7 @@ export default function ViewPurchase() {
 
   if (!purchase) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+      <div className="max-w-6xl mx-auto px-4 py-16 text-center">
         <p className="text-red-500 text-sm mb-4">
           {error ?? "Purchase not found."}
         </p>
@@ -257,11 +256,12 @@ export default function ViewPurchase() {
   }
 
   const status = purchase.status;
+  const showSidebar = status === "Done";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <button
@@ -298,9 +298,9 @@ export default function ViewPurchase() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <Button variant="outline" className="rounded-xl">
+                  <AlertDialogCancel className="rounded-xl">
                     Go Back
-                  </Button>
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleCancel}
                     className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
@@ -333,8 +333,24 @@ export default function ViewPurchase() {
         </div>
       )}
 
-      {/* Purchase details */}
-      <PurchaseDetailCard purchase={purchase} />
+      {/* ── Two-column layout when Done, single column otherwise ── */}
+      <div
+        className={
+          showSidebar ? "flex flex-col lg:flex-row gap-6 items-start" : ""
+        }
+      >
+        {/* Main purchase card — takes remaining width */}
+        <div className={showSidebar ? "flex-1 min-w-0" : ""}>
+          <PurchaseDetailCard purchase={purchase} />
+        </div>
+
+        {/* Stock-in sidebar — fixed width on desktop, full width on mobile */}
+        {showSidebar && (
+          <div className="w-full lg:w-80 xl:w-96 shrink-0 lg:sticky lg:top-6">
+            <StockInSidebar purchase={purchase} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

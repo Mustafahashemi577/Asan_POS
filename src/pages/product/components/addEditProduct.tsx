@@ -137,7 +137,7 @@ export function AddEditProduct({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Product Name"
-          className="h-11 rounded-xl bg-white border-gray-200 text-sm"
+          className="h-11 rounded-xl border-gray-200 text-sm"
           disabled={isLoading}
         />
 
@@ -150,7 +150,7 @@ export function AddEditProduct({
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             placeholder="0"
-            className="h-11 rounded-xl bg-white border-gray-200 text-sm pl-12"
+            className="h-11 rounded-xl border-gray-200 text-sm pl-12"
             disabled={isLoading}
           />
         </div>

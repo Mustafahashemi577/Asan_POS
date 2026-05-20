@@ -119,7 +119,6 @@ export function OrderDetails({
               <Field>
                 <Input
                   id="name"
-                  className="bg-white"
                   placeholder="Customer Name"
                   {...form.register("name")}
                 />
@@ -131,7 +130,6 @@ export function OrderDetails({
                 <Input
                   id="quantity"
                   placeholder="Table"
-                  className="bg-white"
                   type="number"
                   {...form.register("quantity")}
                   onChange={(e) => {
@@ -149,7 +147,6 @@ export function OrderDetails({
                 <Input
                   id="description"
                   placeholder="Description"
-                  className="bg-white"
                   {...form.register("description")}
                 />
 

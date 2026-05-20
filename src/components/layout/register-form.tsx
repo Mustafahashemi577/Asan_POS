@@ -274,7 +274,7 @@ export default function RegisterForm() {
             email: userEmail,
             code,
           });
-          navigate("/login");
+          navigate("/dashboard");
         }}
       />
     </div>

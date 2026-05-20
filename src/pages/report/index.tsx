@@ -49,7 +49,7 @@ export default function Report() {
   const dateRangeLabel = `${fmtDate(startDate)} - ${fmtDate(endDate)}`;
 
   return (
-    <div className="max-h-[calc(100vh-57px)]">
+    <div className="max-h-screen overflow-y-auto">
       <div className=" p-2.5 lg:p-2.5 space-y-5">
         {/* ── HEADER ──────────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -63,18 +63,9 @@ export default function Report() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:shrink-0">
-            <div className="h-9 sm:w-74">
-              <TransactionDateInput
-                value={startDate}
-                onChange={(val) => {
-                  if (val) setStartDate(val);
-                }}
-                displayValue={dateRangeLabel}
-              />
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="flex justify-between gap-2">
               {!searchOpen && (
-                <Button onClick={() => setSearchOpen(true)}>
+                <Button className="" onClick={() => setSearchOpen(true)}>
                   <SearchIcon size={20} />
                 </Button>
               )}
@@ -100,6 +91,15 @@ export default function Report() {
                   />
                 </div>
               )}
+            </div>
+            <div className="h-9 sm:w-74">
+              <TransactionDateInput
+                value={startDate}
+                onChange={(val) => {
+                  if (val) setStartDate(val);
+                }}
+                displayValue={dateRangeLabel}
+              />
             </div>
 
             <Select value={exports} onValueChange={setExport}>

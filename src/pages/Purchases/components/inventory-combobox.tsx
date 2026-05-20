@@ -25,10 +25,13 @@ export default function InventoryCombobox({
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const [debouncedSearch] = useDebounce(search, 400);
 
   useEffect(() => {
+    if (!open) return;
+
     let cancelled = false;
     setLoading(true);
     getInventories({
@@ -48,17 +51,17 @@ export default function InventoryCombobox({
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch]);
+  }, [open, debouncedSearch]);
 
-  // Display name of currently selected inventory
   const selectedName = inventories.find((inv) => inv.id === value)?.name ?? "";
 
   return (
     <Combobox
+      open={open}
+      onOpenChange={setOpen}
       value={selectedName}
       filter={() => true}
       onValueChange={(name: string | null) => {
-        // Map name back to id before calling onChange
         const inv = inventories.find((i) => i.name === (name ?? ""));
         onChange(inv?.id ?? "");
         setSearch("");
@@ -71,7 +74,7 @@ export default function InventoryCombobox({
         className="h-10 rounded-xl border border-gray-200 bg-transparent px-3 text-sm shadow-none focus:border-gray-300 focus:ring-3 focus:ring-gray-100"
       />
 
-      <ComboboxContent className=" w-[var(--anchor-width)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+      <ComboboxContent className="w-[var(--anchor-width)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
         <ComboboxList className="max-h-80 overflow-y-auto p-1">
           {loading && (
             <div className="px-4 py-3 text-sm text-muted-foreground">
