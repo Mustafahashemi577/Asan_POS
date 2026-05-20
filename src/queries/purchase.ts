@@ -1,6 +1,7 @@
 import api from "@/lib/axios";
 
 import type {
+  CreatePaymentPayload,
   CreatePurchasePayload,
   PurchaseDetail,
   PurchaseListItem,
@@ -28,8 +29,6 @@ export function purchasesKey(params: PurchasesQuery = {}) {
   const { search = "", page = 1, itemsPerPage = 15 } = params;
   return `/purchase?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}`;
 }
-
-/** Normalize a purchase object so status is always uppercase */
 
 export const getPurchases = (
   query: PurchasesQuery = {},
@@ -65,7 +64,6 @@ export const createPurchase = (
 };
 
 // ── Update status ─────────────────────────────────────────────────────────────
-// Backend controller uses @Put(":id")
 
 export const updatePurchaseStatus = (
   id: string,
@@ -73,7 +71,14 @@ export const updatePurchaseStatus = (
 ): Promise<{ message: string }> =>
   api.put(`/purchase/${id}`, payload).then((r) => r.data);
 
-// ── Delete (only valid when status is DRAFT) ──────────────────────────────────
+// ── Delete (only valid when status is Draft) ──────────────────────────────────
 
 export const deletePurchase = (id: string): Promise<{ message: string }> =>
   api.delete(`/purchase/${id}`).then((r) => r.data);
+
+// ── Payment ───────────────────────────────────────────────────────────────────
+
+export const createPayment = (
+  payload: CreatePaymentPayload,
+): Promise<{ message: string }> =>
+  api.post("/purchase/payment", payload).then((r) => r.data);

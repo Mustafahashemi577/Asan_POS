@@ -77,10 +77,6 @@ function fmtCurrency(n: number): string {
   return "AFN " + Number(n).toLocaleString("id-ID");
 }
 
-function normalizeStatus(status: string): PurchaseStatus {
-  return status as PurchaseStatus;
-}
-
 const STATUS_STYLES: Record<PurchaseStatus, string> = {
   Draft: "bg-gray-100 text-gray-600",
   Done: "bg-green-100 text-green-700",
@@ -331,7 +327,7 @@ export default function PurchasesPage() {
                   </tr>
                 ) : (
                   purchases.map((item) => {
-                    const itemStatus = normalizeStatus(item.status);
+                    const itemStatus = item.status;
                     return (
                       <tr
                         key={item.id}
@@ -441,7 +437,7 @@ export default function PurchasesPage() {
               </p>
             ) : (
               purchases.map((item) => {
-                const itemStatus = normalizeStatus(item.status);
+                const itemStatus = item.status;
                 return (
                   <div key={item.id} className="px-4 py-4">
                     <div className="flex justify-between mb-1">

@@ -2,6 +2,8 @@
 
 export type PurchaseStatus = "Draft" | "Done" | "Cancelled" | "Pending";
 
+export type PaymentMethod = "Cash" | "Bank Transfer" | "Cheque" | "Other";
+
 // ── Shared sub-shapes ─────────────────────────────────────────────────────────
 
 export interface PurchaseCustomer {
@@ -80,10 +82,20 @@ export interface Suggestion {
   sub?: string;
 }
 
-// ── Update status payload (sent to PATCH /purchase/:id) ─────────────────────
+// ── Update status payload (sent to PUT /purchase/:id) ─────────────────────
 
 export interface UpdatePurchaseStatusPayload {
   status: PurchaseStatus;
+}
+
+// ── Payment ───────────────────────────────────────────────────────────────────
+
+export interface CreatePaymentPayload {
+  purchaseId: string;
+  method: PaymentMethod;
+  amount: number;
+  paymentDate: string;
+  notes?: string;
 }
 
 // ── Stock-In types ────────────────────────────────────────────────────────────
