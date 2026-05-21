@@ -207,10 +207,9 @@ export function useInventory(): UseInventoryReturn {
   };
 
   // ── Callbacks ─────────────────────────────────────────────────────────────
-  const handleInventoryAdded = (newId: string) => {
+  const handleInventoryAdded = () => {
     closeInventoryDialog();
     fetchInventories();
-    switchInventory(newId);
   };
 
   const handleInventoryUpdated = (id: string) => {
