@@ -63,7 +63,7 @@ function PurchaseDetailCard({ purchase }: { purchase: PurchaseDetail }) {
   const style = STATUS_STYLES[status] ?? STATUS_STYLES.Draft;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {/* Dark header strip */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-700 px-6 py-5 flex items-center justify-between">
         <div>
@@ -340,7 +340,7 @@ export default function ViewPurchase() {
         }
       >
         {/* Main purchase card — takes remaining width */}
-        <div className={showSidebar ? "flex-1 min-w-0" : ""}>
+        <div className="w-full sm:flex-1">
           <PurchaseDetailCard purchase={purchase} />
         </div>
 
