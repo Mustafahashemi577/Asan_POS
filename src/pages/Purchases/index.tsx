@@ -308,7 +308,7 @@ export default function PurchasesPage() {
                   <div
                     key={item.id}
                     onClick={() => navigate(`/Purchases/${item.id}`)}
-                    className="grid grid-cols-6 justify-items-center gap-x-1 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="grid grid-cols-[1fr_auto] sm:grid-cols-6 sm:justify-items-center gap-x-1 py-4 px-4 sm:px-1 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     {/* Col 1: sequence + customer (stacked on mobile, separate on desktop) */}
                     <div className="min-w-0">
@@ -392,7 +392,8 @@ export default function PurchasesPage() {
                           </DropdownMenuItem>
                           {(itemStatus === "Draft" ||
                             itemStatus === "Pending" ||
-                            itemStatus === "Cancelled") && (
+                            itemStatus === "Cancelled" ||
+                            itemStatus === "Done") && (
                             <>
                               <DropdownMenuSeparator />
                               {itemStatus !== "Cancelled" && (
@@ -409,16 +410,20 @@ export default function PurchasesPage() {
                                     Stock In
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-xs cursor-pointer"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleStatusChange(item.id, "Cancelled");
-                                    }}
-                                  >
-                                    Cancel Purchase
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
+                                  {itemStatus !== "Done" && (
+                                    <DropdownMenuItem
+                                      className="text-xs cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStatusChange(
+                                          item.id,
+                                          "Cancelled",
+                                        );
+                                      }}
+                                    >
+                                      Cancel Purchase
+                                    </DropdownMenuItem>
+                                  )}
                                 </>
                               )}
                               <DropdownMenuItem

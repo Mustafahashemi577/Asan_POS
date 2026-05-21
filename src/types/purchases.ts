@@ -4,7 +4,7 @@ export type PurchaseStatus = "Draft" | "Done" | "Cancelled" | "Pending";
 
 export type PaymentMethod = "Cash" | "Bank Transfer" | "Cheque" | "Other";
 
-export type StockInStatus = "Pending" | "Completed";
+export type StockInStatus = "Pending" | "Done" | "Cancelled";
 
 // ── Shared sub-shapes ─────────────────────────────────────────────────────────
 
@@ -28,11 +28,33 @@ export interface PurchaseItemPayload {
   unitPrice: number;
 }
 
+/** A single product entry within a StockIn record — matches the "products" array the API returns */
+export interface StockInItemResponse {
+  productId: string;
+  productName: string;
+  purchasedItemId: string;
+  quantity: number;
+}
+
+/** A StockIn record returned by the API */
+export interface StockInResponse {
+  stockInId: string;
+  sequenceId: string;
+  status: StockInStatus;
+  inventoryId: string;
+  inventoryName: string;
+  inventoryAddress?: string;
+  /** The API returns items under the key "products" */
+  products: StockInItemResponse[];
+  createdAt?: string;
+}
+
 /** Item shape returned by the API (list + detail) */
 export interface PurchasedItemResponse {
   id: string;
   quantity: number;
   unitPrice: number;
+  received: number;
   product: PurchasedProduct;
 }
 
@@ -49,6 +71,8 @@ export interface PurchaseListItem {
   items: PurchasedItemResponse[];
   totalItems: number;
   itemsPerPage: number;
+  /** Stock-in records associated with this purchase */
+  stockIns?: StockInResponse[];
 }
 
 // ── Detail (returned by GET /purchase/:id) ────────────────────────────────────
@@ -111,6 +135,10 @@ export interface CreateStockInPayload {
   purchaseId: string;
   inventoryId: string;
   items: StockInItemPayload[];
+}
+
+export interface UpdateStockInPayload {
+  status: StockInStatus;
 }
 
 /** Item shape on the stock-in page — extends PurchasedItemResponse with received */

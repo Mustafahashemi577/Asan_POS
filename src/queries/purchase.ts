@@ -4,7 +4,7 @@ import type {
   CreatePurchasePayload,
   PurchaseDetail,
   PurchaseListItem,
-  UpdatePurchaseStatusPayload
+  UpdatePurchaseStatusPayload,
 } from "@/types/purchases";
 
 // ── List ──────────────────────────────────────────────────────────────────────

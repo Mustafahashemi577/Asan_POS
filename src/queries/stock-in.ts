@@ -1,5 +1,8 @@
 import api from "@/lib/axios";
-import type { CreateStockInPayload } from "@/types/purchases";
+import type {
+  CreateStockInPayload,
+  UpdateStockInPayload,
+} from "@/types/purchases";
 
 export const createStockIn = (
   payload: CreateStockInPayload,
@@ -8,3 +11,9 @@ export const createStockIn = (
 
 export const getStockIn = (id: string) =>
   api.get(`/stock-in/${id}`).then((r) => r.data);
+
+export const updateStockIn = (
+  id: string,
+  payload: UpdateStockInPayload,
+): Promise<{ message: string }> =>
+  api.put(`/stock-in/${id}`, payload).then((r) => r.data);
