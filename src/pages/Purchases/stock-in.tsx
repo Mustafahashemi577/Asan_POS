@@ -381,6 +381,7 @@ export default function StockInPage() {
             <Button
               onClick={handleSubmit}
               disabled={submitting || !inventoryId}
+              variant="default"
               className="h-10 px-8 rounded-xl bg-black text-white hover:bg-black/90 font-medium text-sm w-full sm:w-auto"
             >
               {submitting ? "Processing..." : "Confirm Stock In"}

@@ -278,7 +278,8 @@ export function StockInSidebar({ purchase, onSuccess }: StockInSidebarProps) {
             <Button
               onClick={handleSubmit}
               disabled={submitting || !inventoryId}
-              className="w-full h-9 rounded-xl bg-gray-900 text-white hover:bg-gray-700 text-xs font-medium"
+              variant="default"
+              className="w-full h-9 rounded-xl "
             >
               {submitting ? "Processing…" : "Confirm Stock In"}
             </Button>
