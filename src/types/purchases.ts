@@ -105,14 +105,12 @@ export interface CreatePaymentPayload {
 export interface StockInItemPayload {
   purchaseItemId: string;
   quantity: number;
-  status: StockInStatus;
 }
 
 export interface CreateStockInPayload {
   purchaseId: string;
   inventoryId: string;
   items: StockInItemPayload[];
-  status: StockInStatus;
 }
 
 /** Item shape on the stock-in page — extends PurchasedItemResponse with received */
