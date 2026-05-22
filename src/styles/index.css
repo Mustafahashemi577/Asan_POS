@@ -128,11 +128,11 @@
     @apply border-border outline-ring/50;
   }
 
-  @layer base {
+  /* @layer base {
     input {
       background-color: white !important;
     }
-  }
+  } */
 
   html {
     @apply font-sans;
