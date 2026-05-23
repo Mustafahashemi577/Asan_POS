@@ -63,8 +63,9 @@ export default function ProductPage() {
   // Fetch categories on mount only
   useEffect(() => {
     getCategories()
-      .then((data: unknown) => {
-        const list = Array.isArray(data) ? (data as Category[]) : [];
+      .then((res: unknown) => {
+        const r = res as { data?: Category[] };
+        const list = Array.isArray(r) ? r : (r?.data ?? []);
         categoriesRef.current = list;
         setCategories(list);
       })

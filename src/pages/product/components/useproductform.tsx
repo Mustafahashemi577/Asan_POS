@@ -140,8 +140,9 @@ export function useProductForm({
   useEffect(() => {
     if (!open) return;
     getCategories()
-      .then((data: unknown) => {
-        const list = Array.isArray(data) ? (data as Category[]) : [];
+      .then((res: unknown) => {
+        const r = res as { data?: Category[] };
+        const list = Array.isArray(r) ? r : (r?.data ?? []);
         setCategories(list);
       })
       .catch(() => setCategories([]));
@@ -326,7 +327,8 @@ export function useProductForm({
     try {
       await createCategory({ name: newCategoryName.trim() });
       const updated: unknown = await getCategories();
-      const list = Array.isArray(updated) ? (updated as Category[]) : [];
+      const r = updated as { data?: Category[] };
+      const list = Array.isArray(r) ? r : (r?.data ?? []);
       setCategories(list);
       const created = list.find(
         (c) => c.name.toLowerCase() === newCategoryName.trim().toLowerCase(),
