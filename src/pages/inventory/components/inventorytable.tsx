@@ -62,11 +62,6 @@ export default function InventoryTable({
   setSearchOpen,
   onViewProduct,
 }: InventoryTableProps) {
-  const handleEdit = (product: InventoryProduct) =>
-    console.log("Edit:", product);
-  const handleDelete = (product: InventoryProduct) =>
-    console.log("Delete:", product);
-
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       {/* Header + filters */}
@@ -227,19 +222,6 @@ export default function InventoryTable({
                           >
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleEdit(product)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleDelete(product)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -293,18 +275,6 @@ export default function InventoryTable({
                     className="text-xs text-blue-500 hover:underline"
                   >
                     View
-                  </button>
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="text-xs text-gray-500 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product)}
-                    className="text-xs text-red-500 hover:underline"
-                  >
-                    Delete
                   </button>
                 </div>
               </div>
