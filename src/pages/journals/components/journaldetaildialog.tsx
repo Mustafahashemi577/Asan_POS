@@ -71,17 +71,9 @@ export function JournalDetailDialog({
                 <BookOpen size={15} className="text-gray-400" />
                 <span className="text-gray-400 text-xs font-medium">{ref}</span>
               </div>
-              <p className="text-white text-xl font-semibold">
-                AFN {amount.toLocaleString()}
-              </p>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-gray-500 text-xs mt-1">
-                  {new Date(entry.createdAt).toLocaleDateString("en-GB", {
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
+              <div className="flex items-center justify-between gap-3 py-4">
+                <p className="text-white text-xl font-semibold">
+                  AFN {amount.toLocaleString()}
                 </p>
                 <span
                   className={`text-xs px-2.5 py-2 rounded-full font-medium ${statusBadge(entry.status)}`}
@@ -182,12 +174,6 @@ export function JournalDetailDialog({
                   </p>
                   <div className="rounded-xl border border-gray-100 p-4 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Purchase ID</span>
-                      <span className="text-xs font-mono text-gray-700 truncate max-w-[180px]">
-                        {purchase.id}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500">Due date</span>
                       <span className="text-xs text-gray-700">
                         {new Date(purchase.customDate).toLocaleDateString(
@@ -208,19 +194,6 @@ export function JournalDetailDialog({
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge(purchase.status)}`}
                       >
                         {purchase.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Created</span>
-                      <span className="text-xs text-gray-700">
-                        {new Date(purchase.createdAt).toLocaleDateString(
-                          "en-GB",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          },
-                        )}
                       </span>
                     </div>
                   </div>
