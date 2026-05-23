@@ -1,6 +1,8 @@
 import { usePagination } from "@/hooks/use-pagination";
 import { useSearch } from "@/hooks/use-search";
+import type { Product } from "@/pages/product/components/product-list";
 import { getInventories, getInventory } from "@/queries/inventory";
+import { getProductById } from "@/queries/products";
 import type {
   Inventory,
   InventoryDetail,
@@ -51,6 +53,13 @@ export interface UseInventoryReturn {
   openAddInventoryDialog: () => void;
   openEditInventoryDialog: (inv: Inventory) => void;
   closeInventoryDialog: () => void;
+  // product detail dialog
+  productDialogOpen: boolean;
+  selectedProduct: InventoryProduct | null;
+  productDetail: Product | null;
+  productDetailLoading: boolean;
+  openProductDialog: (product: InventoryProduct) => void;
+  closeProductDialog: () => void;
   // item dialog
   itemDialogOpen: boolean;
   setItemDialogOpen: (open: boolean) => void;
@@ -117,6 +126,12 @@ export function useInventory(): UseInventoryReturn {
   const [inventoryDialogTarget, setInventoryDialogTarget] =
     useState<Inventory | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  // ── Product detail dialog state ────────────────────────────────────────────
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<InventoryProduct | null>(null);
+  const [productDetail, setProductDetail] = useState<Product | null>(null);
+  const [productDetailLoading, setProductDetailLoading] = useState(false);
 
   // ── Detail-view filter state ──────────────────────────────────────────────
   const [status, setStatus] = useState("all");
@@ -206,8 +221,33 @@ export function useInventory(): UseInventoryReturn {
     setInventoryDialogTarget(null);
   };
 
+  // ── Product dialog helpers ────────────────────────────────────────────────
+  const openProductDialog = (product: InventoryProduct) => {
+    setSelectedProduct(product);
+    setProductDialogOpen(true);
+    setProductDetail(null);
+    setProductDetailLoading(true);
+
+    getProductById(product.id)
+      .then((detail: Product | void) => {
+        setProductDetail(detail?.id ? detail : null);
+      })
+      .catch((err: any) => {
+        console.error("Failed to load product details:", err);
+      })
+      .finally(() => {
+        setProductDetailLoading(false);
+      });
+  };
+
+  const closeProductDialog = () => {
+    setProductDialogOpen(false);
+    setSelectedProduct(null);
+    setProductDetail(null);
+  };
+
   // ── Callbacks ─────────────────────────────────────────────────────────────
-  const handleInventoryAdded = () => {
+  const handleInventoryAdded = (_newId: string) => {
     closeInventoryDialog();
     fetchInventories();
   };
@@ -336,6 +376,13 @@ export function useInventory(): UseInventoryReturn {
     openAddInventoryDialog,
     openEditInventoryDialog,
     closeInventoryDialog,
+    // product detail dialog
+    productDialogOpen,
+    selectedProduct,
+    productDetail,
+    productDetailLoading,
+    openProductDialog,
+    closeProductDialog,
     // item dialog
     itemDialogOpen,
     setItemDialogOpen,

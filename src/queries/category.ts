@@ -1,10 +1,25 @@
 import api from "@/lib/axios";
 
-export const getCategories = async (search?: string) => {
-  const res = await api.get("/categories", {
-    params: search ? { search } : {},
-  });
-  return res.data;
+export interface CategoriesQuery {
+  page?: number;
+  itemsPerPage?: number;
+  search?: string;
+}
+
+export interface CategoriesMeta {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export const getCategories = async (query: CategoriesQuery = {}) => {
+  const res = await api.get("/categories", { params: query });
+  return res.data as {
+    data: { id: string; name: string }[];
+    meta: CategoriesMeta;
+  };
 };
 
 export const createCategory = async (data: { name: string }) => {

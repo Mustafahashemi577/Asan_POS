@@ -31,6 +31,7 @@ export interface InventoryProduct {
   name: string;
   price: number;
   quantity: number; // from StockQuantity
+  image?: string;
 }
 
 /** Full inventory detail returned by GET /inventory/:id. */

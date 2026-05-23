@@ -66,6 +66,29 @@ export const getProducts = (params?: {
  * Body: multipart/form-data  { images: File[], entityType: "product" }
  * Returns: { ids: string[] }
  */
+export const getProductById = (id: string): Promise<Product | void> =>
+  api.get(`/products/${id}`).then((r) => {
+    const p: any = r.data?.data ?? r.data ?? null;
+    if (!p) return;
+    const product: Product = {
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      category: p.categories?.[0]?.name,
+      categoryId: p.categories?.[0]?.id,
+      inStock: p.inStock,
+      image: p.images?.[0]?.imageUrlSigned ?? "/placeholder.png",
+      images:
+        p.images
+          ?.filter((img: { imageUrlSigned: string }) => img.imageUrlSigned)
+          .map((img: { id: string; imageUrlSigned: string }) => ({
+            id: img.id,
+            url: img.imageUrlSigned,
+          })) ?? [],
+    };
+    return product;
+  });
+
 export const uploadProductImages = (
   files: File[],
 ): Promise<{ ids: string[] }> => {

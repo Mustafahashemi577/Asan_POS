@@ -36,9 +36,7 @@ interface InventoryTableProps {
   setSearch: (value: string) => void;
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
-  selectedRow: string | null;
-  setSelectedRow: (id: string | null) => void;
-  setItemDialogOpen: (open: boolean) => void;
+  onViewProduct: (product: InventoryProduct) => void;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,11 +60,8 @@ export default function InventoryTable({
   setSearch,
   searchOpen,
   setSearchOpen,
-  selectedRow,
-  setSelectedRow,
+  onViewProduct,
 }: InventoryTableProps) {
-  const handleView = (product: InventoryProduct) =>
-    console.log("View:", product);
   const handleEdit = (product: InventoryProduct) =>
     console.log("Edit:", product);
   const handleDelete = (product: InventoryProduct) =>
@@ -186,16 +181,8 @@ export default function InventoryTable({
                 return (
                   <TableRow
                     key={product.id}
-                    onClick={() =>
-                      setSelectedRow(
-                        selectedRow === product.id ? null : product.id,
-                      )
-                    }
-                    className={`cursor-pointer transition-colors ${
-                      selectedRow === product.id
-                        ? "bg-blue-50"
-                        : "hover:bg-gray-50"
-                    }`}
+                    onClick={() => onViewProduct(product)}
+                    className="cursor-pointer transition-colors hover:bg-gray-50"
                   >
                     <TableCell className="pl-6 text-xs text-gray-800 font-medium whitespace-nowrap">
                       {product.name}
@@ -236,7 +223,7 @@ export default function InventoryTable({
                         >
                           <DropdownMenuItem
                             className="text-xs cursor-pointer"
-                            onClick={() => handleView(product)}
+                            onClick={() => onViewProduct(product)}
                           >
                             View
                           </DropdownMenuItem>
@@ -276,16 +263,12 @@ export default function InventoryTable({
             return (
               <div
                 key={product.id}
-                onClick={() =>
-                  setSelectedRow(selectedRow === product.id ? null : product.id)
-                }
-                className={`px-4 py-4 cursor-pointer transition-colors ${
-                  selectedRow === product.id ? "bg-blue-50" : ""
-                }`}
+                onClick={() => onViewProduct(product)}
+                className="px-4 py-4 cursor-pointer transition-colors hover:bg-gray-50"
               >
                 <div className="flex justify-between mb-1">
-                  <span className="text-xs font-mono text-gray-500">
-                    {product.id}
+                  <span className="text-sm font-medium text-gray-800 mb-1">
+                    {product.name}
                   </span>
                   <span
                     className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${className}`}
@@ -293,10 +276,7 @@ export default function InventoryTable({
                     {label}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-gray-800 mb-1">
-                  {product.name}
-                </p>
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-2 px-2">
                   <span className="text-xs text-gray-500">
                     {product.quantity.toLocaleString()} units
                   </span>
@@ -309,7 +289,7 @@ export default function InventoryTable({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => handleView(product)}
+                    onClick={() => onViewProduct(product)}
                     className="text-xs text-blue-500 hover:underline"
                   >
                     View

@@ -28,6 +28,7 @@ import {
 import AddInventoryForm from "./components/addinventoryform";
 import InventoryStats from "./components/inventorystats";
 import InventoryTable from "./components/inventorytable";
+import { ProductDetailDialog } from "./components/product-detail-dialog";
 
 export default function Inventory() {
   const inv = useInventory();
@@ -79,6 +80,15 @@ export default function Inventory() {
       <>
         {inventoryDialog}
         {itemDialog}
+        <ProductDetailDialog
+          open={inv.productDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) inv.closeProductDialog();
+          }}
+          product={inv.selectedProduct}
+          productDetail={inv.productDetail}
+          loading={inv.productDetailLoading}
+        />
 
         <div className="overflow-y-auto">
           <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
@@ -112,9 +122,7 @@ export default function Inventory() {
               setSearch={inv.setSearch}
               searchOpen={inv.searchOpen}
               setSearchOpen={inv.setSearchOpen}
-              selectedRow={inv.selectedRow}
-              setSelectedRow={inv.setSelectedRow}
-              setItemDialogOpen={inv.setItemDialogOpen}
+              onViewProduct={inv.openProductDialog}
             />
           </div>
         </div>
