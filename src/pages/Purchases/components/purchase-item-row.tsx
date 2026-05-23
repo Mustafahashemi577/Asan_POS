@@ -1,3 +1,4 @@
+import { NumberDisplay } from "@/components/number-display";
 import type { Control, UseFormSetValue } from "react-hook-form";
 import { Controller } from "react-hook-form";
 
@@ -11,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Suggestion } from "@/types/purchases";
-import { DollarSign, Hash, Package, Trash2 } from "lucide-react";
+import { Hash, Package, Trash2 } from "lucide-react";
 import { InlineCombobox } from "./inline-combobox";
 import type { FormValues } from "./purchase-form-schema";
 
@@ -106,25 +107,52 @@ export function PurchaseItemRow({
         <FormField
           control={control}
           name={`items.${index}.unitPrice`}
-          render={({ field }) => (
-            <FormItem>
-              <Label className="text-xs text-gray-500">Unit Price</Label>
-              <FormControl>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="0"
-                    className="h-11 pl-9 rounded-xl border-gray-200 text-sm"
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            // 1. Format raw number from form state to localized string with commas for display
+            const displayValue =
+              field.value !== undefined && !isNaN(field.value)
+                ? new Intl.NumberFormat("en-US").format(field.value)
+                : "";
+
+            return (
+              <FormItem>
+                <Label className="text-xs text-gray-500">Unit Price</Label>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none mr-4">
+                      AFN
+                    </span>
+                    <Input
+                      type="text" // 2. Must be text to allow commas
+                      placeholder="0"
+                      // 3. Add Tailwind font utilities to keep numbers perfectly aligned
+                      className="h-11 pl-12 rounded-xl border-gray-200 text-sm font-mono tabular-nums"
+                      value={displayValue}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+
+                        // 4. Strip all commas out to get raw numbers/decimals
+                        const cleanValue = rawValue.replace(/,/g, "");
+
+                        // 5. Handle empty state safely
+                        if (cleanValue === "") {
+                          field.onChange(NaN);
+                          return;
+                        }
+
+                        // 6. Parse back to a valid floating point number for your form state
+                        const parsedNumber = parseFloat(cleanValue);
+                        if (!isNaN(parsedNumber)) {
+                          field.onChange(parsedNumber);
+                        }
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
       </div>
 
@@ -133,7 +161,7 @@ export function PurchaseItemRow({
         <span className="text-xs text-gray-400">
           Line total:{" "}
           <span className="font-medium text-gray-700">
-            AFN {lineTotal.toLocaleString("id-ID")}
+            <NumberDisplay value={lineTotal} decimals={2} /> AFN
           </span>
         </span>
         {canRemove && (

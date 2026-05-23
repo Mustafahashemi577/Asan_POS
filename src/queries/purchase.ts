@@ -24,9 +24,10 @@ export interface PurchasesMeta {
   itemsPerPage: number;
 }
 
+// Status is now included in the key so SWR re-fetches when the filter changes
 export function purchasesKey(params: PurchasesQuery = {}) {
-  const { search = "", page = 1, itemsPerPage = 15 } = params;
-  return `/purchase?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}`;
+  const { search = "", page = 1, itemsPerPage = 15, status = "" } = params;
+  return `/purchase?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}&status=${status}`;
 }
 
 export const getPurchases = (

@@ -30,6 +30,7 @@ import {
 } from "./components/purchase-form-schema";
 import { PurchaseItemRow } from "./components/purchase-item-row";
 
+import { NumberDisplay } from "@/components/number-display";
 import { useCustomers } from "@/hooks/use-customers";
 import { createCustomer } from "@/queries/customer";
 import { createPurchase } from "@/queries/purchase";
@@ -248,7 +249,7 @@ export default function NewPurchasePage() {
             <div>
               <p className="text-xs text-gray-400">Total</p>
               <p className="text-lg font-bold text-gray-900">
-                AFN {total.toLocaleString("id-ID")}
+                AFN <NumberDisplay value={total} decimals={2} />{" "}
               </p>
             </div>
             <Button

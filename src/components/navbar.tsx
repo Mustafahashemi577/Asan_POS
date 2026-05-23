@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeInfo } from "@/types/index";
-import { display, getInitials } from "@/utils/profile.helpers";
+import { getInitials } from "@/utils/profile.helpers";
 import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -194,13 +194,6 @@ export const Navbar = ({ profile }: NavbarProps) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                 Logout
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem>
-                <p className="text-[10px] text-gray-600">
-                  {display(profile.email)}
-                </p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

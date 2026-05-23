@@ -17,3 +17,12 @@ export const updateStockIn = (
   payload: UpdateStockInPayload,
 ): Promise<{ message: string }> =>
   api.put(`/stock-in/${id}`, payload).then((r) => r.data);
+
+export const updateStockInItem = (
+  stockInId: string,
+  purchasedItemId: string,
+  payload: UpdateStockInPayload,
+): Promise<{ message: string }> =>
+  api
+    .put(`/stock-in/${stockInId}/items/${purchasedItemId}`, payload)
+    .then((r) => r.data);
