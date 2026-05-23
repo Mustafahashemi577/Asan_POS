@@ -29,19 +29,6 @@ function statusBadge(status: string) {
   }
 }
 
-function accountTypeBadge(type: string) {
-  switch (type.toLowerCase()) {
-    case "asset":
-      return "bg-blue-50 text-blue-600";
-    case "liability":
-      return "bg-purple-50 text-purple-600";
-    case "equity":
-      return "bg-teal-50 text-teal-600";
-    default:
-      return "bg-gray-100 text-gray-500";
-  }
-}
-
 export function JournalDetailDialog({
   open,
   onOpenChange,
@@ -78,12 +65,12 @@ export function JournalDetailDialog({
           <div className="flex flex-col">
             {/* Header band */}
             {/* Header band */}
-            <div className="bg-gray-950 px-5 py-5">
+            <div className="px-5 py-5 bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90">
+              {" "}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={15} className="text-gray-400" />
                 <span className="text-gray-400 text-xs font-medium">{ref}</span>
               </div>
-
               <p className="text-white text-xl font-semibold">
                 AFN {amount.toLocaleString()}
               </p>
@@ -138,12 +125,12 @@ export function JournalDetailDialog({
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${accountTypeBadge(item.account.type)}`}
+                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${item.account.type}`}
                             >
                               {item.account.type}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-xs font-medium text-blue-600">
+                          <td className="px-4 py-3 text-right text-xs font-medium text-red-600">
                             {item.debit != null ? (
                               `AFN ${item.debit.toLocaleString()}`
                             ) : (
@@ -169,7 +156,7 @@ export function JournalDetailDialog({
                         >
                           Total
                         </td>
-                        <td className="px-4 py-2.5 text-right text-xs font-semibold text-blue-600">
+                        <td className="px-4 py-2.5 text-right text-xs font-semibold text-red-600">
                           AFN{" "}
                           {entry.items
                             .reduce((s, i) => s + (i.debit ?? 0), 0)
