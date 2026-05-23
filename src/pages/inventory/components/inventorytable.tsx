@@ -91,11 +91,27 @@ export default function InventoryTable({
             <SelectTrigger className="h-10 sm:w-40 rounded-xl border-gray-200 text-sm">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
+
             <SelectContent className="rounded-xl">
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="In Stock">In Stock</SelectItem>
-              <SelectItem value="Low Stock">Low Stock</SelectItem>
-              <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+
+              <SelectItem value="In Stock">
+                <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md">
+                  In Stock
+                </span>
+              </SelectItem>
+
+              <SelectItem value="Low Stock">
+                <span className="bg-yellow-100 text-orange-600 px-2 py-1 rounded-md">
+                  Low Stock
+                </span>
+              </SelectItem>
+
+              <SelectItem value="Out of Stock">
+                <span className="bg-red-100 text-red-500 px-2 py-1 rounded-md">
+                  Out of Stock
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
 
