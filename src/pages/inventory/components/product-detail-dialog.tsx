@@ -60,7 +60,7 @@ export function ProductDetailDialog({
               <img
                 src={imageUrl}
                 alt={product.name}
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full object-contain p-1"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/placeholder.png";
                 }}
