@@ -10,7 +10,6 @@ import Product from "@/pages/product";
 import ProfilePage from "@/pages/profile";
 import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
-import StockInPage from "@/pages/Purchases/stock-in";
 import ViewPurchase from "@/pages/Purchases/view-purchase";
 import Report from "@/pages/report";
 import Transaction from "@/pages/transaction";
@@ -110,14 +109,6 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <ViewPurchase />
-          </PrivateRoute>
-        ),
-      },
-      {
-        path: "/Purchases/:id/stock-in",
-        element: (
-          <PrivateRoute>
-            <StockInPage />
           </PrivateRoute>
         ),
       },

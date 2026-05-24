@@ -78,8 +78,8 @@ const STOCK_IN_BADGE: Record<StockInCompletion, string> = {
 };
 
 /**
- * Complete   = received >= quantity for every item (confirmed Done by backend)
- * Incomplete = at least one item still has unconfirmed units
+ * Complete   = every item has received >= quantity
+ * Incomplete = at least one item still has unassigned units
  * None       = purchase has no items (edge case)
  */
 function deriveStockInCompletion(
@@ -354,6 +354,7 @@ export default function PurchasesPage() {
                 "Total Price",
                 "Date",
                 "Status",
+                "Stock In",
                 "Actions",
               ].map((h) => (
                 <span
@@ -484,6 +485,16 @@ export default function PurchasesPage() {
                           </DropdownMenuItem>
                           {itemStatus !== "Cancelled" && (
                             <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-xs cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/Purchases/${item.id}/stock-in`);
+                                }}
+                              >
+                                Stock In
+                              </DropdownMenuItem>
                               {itemStatus !== "Done" && (
                                 <>
                                   <DropdownMenuSeparator />
