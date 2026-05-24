@@ -78,10 +78,8 @@ const STOCK_IN_BADGE: Record<StockInCompletion, string> = {
 };
 
 /**
- * Mirrors the sidebar's "Unassigned" count:
- *   unassigned = ordered - received - pending_stock_in_quantities
- * Complete   = unassigned === 0 for every item
- * Incomplete = at least one item still has unassigned units
+ * Complete   = received >= quantity for every item (confirmed Done by backend)
+ * Incomplete = at least one item still has unconfirmed units
  * None       = purchase has no items (edge case)
  */
 function deriveStockInCompletion(
@@ -89,26 +87,9 @@ function deriveStockInCompletion(
 ): StockInCompletion {
   const items = purchase.items ?? [];
   if (items.length === 0) return "None";
-
-  // Build a map of pending quantities per purchasedItem from pending stock-ins
-  const pendingQtyById = new Map<string, number>();
-  for (const stockIn of purchase.stockIns ?? []) {
-    if (stockIn.status !== "Pending") continue;
-    for (const p of stockIn.products ?? []) {
-      pendingQtyById.set(
-        p.purchasedItemId,
-        (pendingQtyById.get(p.purchasedItemId) ?? 0) + p.quantity,
-      );
-    }
-  }
-
-  const allAssigned = items.every((i) => {
-    const received = i.received ?? 0;
-    const pending = pendingQtyById.get(i.id) ?? 0;
-    return received + pending >= i.quantity;
-  });
-
-  return allAssigned ? "Complete" : "Incomplete";
+  return items.every((i) => (i.received ?? 0) >= i.quantity)
+    ? "Complete"
+    : "Incomplete";
 }
 
 // ── Stats derivation ──────────────────────────────────────────────────────────
@@ -373,7 +354,6 @@ export default function PurchasesPage() {
                 "Total Price",
                 "Date",
                 "Status",
-                "Stock In",
                 "Actions",
               ].map((h) => (
                 <span
@@ -504,16 +484,6 @@ export default function PurchasesPage() {
                           </DropdownMenuItem>
                           {itemStatus !== "Cancelled" && (
                             <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/Purchases/${item.id}/stock-in`);
-                                }}
-                              >
-                                Stock In
-                              </DropdownMenuItem>
                               {itemStatus !== "Done" && (
                                 <>
                                   <DropdownMenuSeparator />

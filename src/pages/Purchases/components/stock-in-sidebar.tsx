@@ -26,6 +26,7 @@ export function StockInSidebar({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const stockIns: StockInResponse[] = purchase.stockIns ?? [];
+
   const pendingStockIns = stockIns.filter((s) => s.status === "Pending");
 
   // ── Counts ────────────────────────────────────────────────────────────────
@@ -35,7 +36,12 @@ export function StockInSidebar({
     (sum, i) => sum + (i.received ?? 0),
     0,
   );
+
+  // Unassigned = units not yet confirmed Done (only decreases when Mark as Done is clicked)
   const totalUnassigned = Math.max(0, totalOrdered - totalAssigned);
+
+  // Mark as Done is disabled only when all items have been confirmed (assigned === ordered)
+  const allConfirmed = totalAssigned >= totalOrdered;
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -73,7 +79,7 @@ export function StockInSidebar({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl border border-gray-200  overflow-hidden">
+    <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-radial from-bg-dark2 to-bg-dark2/90 px-4 py-4">
         <h2 className="text-sm font-semibold text-white">Stock In Status</h2>
@@ -173,9 +179,9 @@ export function StockInSidebar({
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={anyBusy}
+                    disabled={anyBusy || allConfirmed}
                     onClick={() => handleDone(stockIn)}
-                    className="flex-1 h-7 rounded-lg text-[11px] border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+                    className="flex-1 h-7 rounded-lg text-[11px] border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 disabled:opacity-40"
                   >
                     {doneBusy ? "Processing…" : "Mark as Done"}
                   </Button>

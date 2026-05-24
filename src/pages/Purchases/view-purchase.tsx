@@ -460,7 +460,7 @@ export default function ViewPurchase() {
         <Button
           variant="outline"
           className="rounded-xl"
-          onClick={() => navigate("/purchases")}
+          onClick={() => navigate("/Purchases")}
         >
           Back to Purchases
         </Button>
@@ -478,7 +478,7 @@ export default function ViewPurchase() {
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate("/purchases")}
+          onClick={() => navigate("/Purchases")}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
