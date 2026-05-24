@@ -163,7 +163,7 @@ function PurchaseDetailCard({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       {/* Dark header */}
       <div className="bg-radial from-bg-dark2 to-bg-dark2/90 px-6 py-5 flex items-center justify-between">
         <div>

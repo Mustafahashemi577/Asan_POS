@@ -12,6 +12,7 @@ import type {
   StockStatus,
 } from "@/types/inventory";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export type {
   Inventory,
@@ -21,49 +22,42 @@ export type {
   StockStatus,
 };
 
-// ── Hook return type ──────────────────────────────────────────────────────────
-
 export interface UseInventoryReturn {
-  // list data
   inventories: Inventory[];
   paginationMeta: PaginationMeta;
   loading: boolean;
   error: string | null;
-  // detail data
   selectedInventory: InventoryDetail | null;
   detailLoading: boolean;
   detailError: string | null;
   stats: Array<{ label: string; value: string; date: string; sub: string }>;
   filtered: InventoryProduct[];
-  // pagination
   page: number;
   itemsPerPage: number;
   totalPages: number;
   totalItems: number;
   goToPage: (page: number) => void;
-  // list search (server-side, debounced)
   listSearch: string;
   setListSearch: (value: string) => void;
   clearListSearch: () => void;
   listSearchOpen: boolean;
   setListSearchOpen: (open: boolean) => void;
-  // inventory dialog (unified add / edit)
   inventoryDialogOpen: boolean;
   inventoryDialogTarget: Inventory | null;
   openAddInventoryDialog: () => void;
   openEditInventoryDialog: (inv: Inventory) => void;
   closeInventoryDialog: () => void;
-  // product detail dialog
+
   productDialogOpen: boolean;
   selectedProduct: InventoryProduct | null;
   productDetail: Product | null;
   productDetailLoading: boolean;
   openProductDialog: (product: InventoryProduct) => void;
   closeProductDialog: () => void;
-  // item dialog
+
   itemDialogOpen: boolean;
   setItemDialogOpen: (open: boolean) => void;
-  // detail-view filter state (client-side)
+
   status: string;
   setStatus: (status: string) => void;
   search: string;
@@ -72,13 +66,12 @@ export interface UseInventoryReturn {
   setSearchOpen: (open: boolean) => void;
   selectedRow: string | null;
   setSelectedRow: (id: string | null) => void;
-  // callbacks
+
   handleInventoryAdded: (newId: string) => void;
   handleInventoryUpdated: (id: string) => void;
   handleInventoryDeleted: () => void;
   handleItemAdded: () => void;
   switchInventory: (id: string | null) => void;
-  // raw id so index.tsx can check list vs detail mode
   selectedInventoryId: string | null;
 }
 
@@ -97,22 +90,19 @@ export function useInventory(): UseInventoryReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Detail state ──────────────────────────────────────────────────────────
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
-    null,
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedInventoryId = searchParams.get("id");
+
   const [selectedInventory, setSelectedInventory] =
     useState<InventoryDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
-  // ── Pagination (list view, server-side) ───────────────────────────────────
   const { page, setPage, resetToPage1, goToPage } = usePagination({
     initialPage: 1,
     initialItemsPerPage: ITEMS_PER_PAGE,
   });
 
-  // ── List search (server-side, debounced) ──────────────────────────────────
   const {
     search: listSearch,
     debouncedSearch: listSearchDebounced,
@@ -121,25 +111,21 @@ export function useInventory(): UseInventoryReturn {
   } = useSearch({ debounceMs: 400, onSearch: resetToPage1 });
   const [listSearchOpen, setListSearchOpen] = useState(false);
 
-  // ── Dialog state ──────────────────────────────────────────────────────────
   const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
   const [inventoryDialogTarget, setInventoryDialogTarget] =
     useState<Inventory | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
-  // ── Product detail dialog state ────────────────────────────────────────────
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<InventoryProduct | null>(null);
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
 
-  // ── Detail-view filter state ──────────────────────────────────────────────
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
 
-  // ── Fetch list ────────────────────────────────────────────────────────────
   const listSearchDebouncedRef = useRef(listSearchDebounced);
   useEffect(() => {
     listSearchDebouncedRef.current = listSearchDebounced;
@@ -180,7 +166,6 @@ export function useInventory(): UseInventoryReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, listSearchDebounced]);
 
-  // ── Fetch detail ──────────────────────────────────────────────────────────
   const fetchInventoryDetail = (id: string) => {
     setDetailLoading(true);
     setDetailError(null);
@@ -205,7 +190,12 @@ export function useInventory(): UseInventoryReturn {
       .finally(() => setDetailLoading(false));
   };
 
-  // ── Dialog helpers ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (selectedInventoryId) {
+      fetchInventoryDetail(selectedInventoryId);
+    }
+  }, []);
+
   const openAddInventoryDialog = () => {
     setInventoryDialogTarget(null);
     setInventoryDialogOpen(true);
@@ -221,7 +211,6 @@ export function useInventory(): UseInventoryReturn {
     setInventoryDialogTarget(null);
   };
 
-  // ── Product dialog helpers ────────────────────────────────────────────────
   const openProductDialog = (product: InventoryProduct) => {
     setSelectedProduct(product);
     setProductDialogOpen(true);
@@ -246,7 +235,6 @@ export function useInventory(): UseInventoryReturn {
     setProductDetail(null);
   };
 
-  // ── Callbacks ─────────────────────────────────────────────────────────────
   const handleInventoryAdded = (_newId: string) => {
     closeInventoryDialog();
     fetchInventories();
@@ -272,9 +260,12 @@ export function useInventory(): UseInventoryReturn {
     }
   };
 
-  /** null → back to list; string → drill into inventory detail */
   const switchInventory = (id: string | null) => {
-    setSelectedInventoryId(id);
+    if (id === null) {
+      setSearchParams({});
+    } else {
+      setSearchParams({ id });
+    }
     setStatus("all");
     setSearch("");
     setSelectedRow(null);
@@ -287,7 +278,6 @@ export function useInventory(): UseInventoryReturn {
     }
   };
 
-  // ── Derived: stats (detail view) ──────────────────────────────────────────
   const stats = useMemo(() => {
     const products = selectedInventory?.products ?? [];
     const total = products.length;
@@ -325,7 +315,6 @@ export function useInventory(): UseInventoryReturn {
     ];
   }, [selectedInventory]);
 
-  // ── Derived: filtered products (client-side, detail view only) ────────────
   const filtered = useMemo((): InventoryProduct[] => {
     const products = selectedInventory?.products ?? [];
     return products.filter((product) => {
@@ -347,46 +336,45 @@ export function useInventory(): UseInventoryReturn {
   }, [selectedInventory, status, search]);
 
   return {
-    // list data
     inventories,
     paginationMeta,
     loading,
     error,
-    // detail data
+
     selectedInventory,
     detailLoading,
     detailError,
     stats,
     filtered,
-    // pagination
+
     page,
     itemsPerPage: ITEMS_PER_PAGE,
     totalPages: paginationMeta.totalPages,
     totalItems: paginationMeta.totalItems,
     goToPage,
-    // list search
+
     listSearch,
     setListSearch,
     clearListSearch,
     listSearchOpen,
     setListSearchOpen,
-    // inventory dialog
+
     inventoryDialogOpen,
     inventoryDialogTarget,
     openAddInventoryDialog,
     openEditInventoryDialog,
     closeInventoryDialog,
-    // product detail dialog
+
     productDialogOpen,
     selectedProduct,
     productDetail,
     productDetailLoading,
     openProductDialog,
     closeProductDialog,
-    // item dialog
+
     itemDialogOpen,
     setItemDialogOpen,
-    // detail-view filter state
+
     status,
     setStatus,
     search,
@@ -395,13 +383,13 @@ export function useInventory(): UseInventoryReturn {
     setSearchOpen,
     selectedRow,
     setSelectedRow,
-    // callbacks
+
     handleInventoryAdded,
     handleInventoryUpdated,
     handleInventoryDeleted,
     handleItemAdded,
     switchInventory,
-    // raw id
+
     selectedInventoryId,
   };
 }

@@ -73,7 +73,7 @@ export function StockInSidebar({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="flex flex-col bg-white rounded-2xl border border-gray-200  overflow-hidden">
       {/* Header */}
       <div className="bg-radial from-bg-dark2 to-bg-dark2/90 px-4 py-4">
         <h2 className="text-sm font-semibold text-white">Stock In Status</h2>

@@ -4,8 +4,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { JournalEntry } from "@/types/journal";
-import { BookOpen, Loader2 } from "lucide-react";
+import type { JournalEntry, JournalPurchaseItem } from "@/types/journal";
+import { BookOpen, Loader2, Package, ShoppingCart } from "lucide-react";
 
 interface JournalDetailDialogProps {
   open: boolean;
@@ -20,12 +20,26 @@ function statusBadge(status: string) {
       return "bg-orange-100 text-orange-700";
     case "posted":
     case "approved":
+    case "done":
       return "bg-green-100 text-green-700";
     case "rejected":
     case "cancelled":
       return "bg-red-100 text-red-600";
     default:
       return "bg-gray-100 text-gray-600";
+  }
+}
+
+function accountTypeBadge(type: string) {
+  switch (type.toLowerCase()) {
+    case "asset":
+      return "bg-blue-50 text-blue-600";
+    case "liability":
+      return "bg-purple-50 text-purple-600";
+    case "equity":
+      return "bg-teal-50 text-teal-600";
+    default:
+      return "bg-gray-100 text-gray-500";
   }
 }
 
@@ -44,14 +58,17 @@ export function JournalDetailDialog({
 
   const purchase = entry.items[0]?.purchase;
 
+  // Deduplicate purchase items — both journal items point to the same purchase
+  const purchaseItems: JournalPurchaseItem[] = purchase?.items ?? [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-lg rounded-xl p-0 overflow-hidden
-  [&>button.absolute]:text-white
-  [&>button.absolute:hover]:text-black
-  [&>button.absolute:hover]:bg-white
-  [&>button.absolute]:opacity-100"
+        className="sm:max-w-lg rounded-xl p-0 overflow-hidden max-h-[90vh] flex flex-col
+          [&>button.absolute]:text-white
+          [&>button.absolute:hover]:text-black
+          [&>button.absolute:hover]:bg-white
+          [&>button.absolute]:opacity-100"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Journal Entry Details</DialogTitle>
@@ -62,11 +79,9 @@ export function JournalDetailDialog({
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : (
-          <div className="flex flex-col">
-            {/* Header band */}
-            {/* Header band */}
-            <div className="px-5 py-5 bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90">
-              {" "}
+          <>
+            {/* ── Dark header ── */}
+            <div className="px-5 py-5 bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 shrink-0">
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={15} className="text-gray-400" />
                 <span className="text-gray-400 text-xs font-medium">{ref}</span>
@@ -83,8 +98,9 @@ export function JournalDetailDialog({
               </div>
             </div>
 
-            <div className="p-5 space-y-5">
-              {/* Double-entry ledger */}
+            {/* ── Scrollable body ── */}
+            <div className="overflow-y-auto flex-1 p-5 space-y-5">
+              {/* Ledger entries */}
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-3">
                   Ledger entries
@@ -110,14 +126,14 @@ export function JournalDetailDialog({
                     <tbody className="divide-y divide-gray-100">
                       {entry.items.map((item) => (
                         <tr key={item.id}>
-                          <td className="px-4 py-3 text-xs text-gray-800 max-w-[140px]">
+                          <td className="px-4 py-3 text-xs text-gray-800 max-w-[130px]">
                             <span className="line-clamp-2">
                               {item.account.name}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${item.account.type}`}
+                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${accountTypeBadge(item.account.type)}`}
                             >
                               {item.account.type}
                             </span>
@@ -139,7 +155,6 @@ export function JournalDetailDialog({
                         </tr>
                       ))}
                     </tbody>
-                    {/* Totals row */}
                     <tfoot>
                       <tr className="bg-gray-50 border-t border-gray-200">
                         <td
@@ -199,8 +214,92 @@ export function JournalDetailDialog({
                   </div>
                 </div>
               )}
+
+              {/* Purchased items */}
+              {purchaseItems.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShoppingCart size={13} className="text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500">
+                      Purchased items
+                      <span className="ml-1.5 text-gray-400 font-normal">
+                        ({purchaseItems.length})
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-100 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 text-xs text-gray-500">
+                          <th className="px-4 py-2.5 text-left font-medium">
+                            Product
+                          </th>
+                          <th className="px-4 py-2.5 text-right font-medium">
+                            Qty
+                          </th>
+                          <th className="px-4 py-2.5 text-right font-medium">
+                            Unit price
+                          </th>
+                          <th className="px-4 py-2.5 text-right font-medium">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {purchaseItems.map((pi) => (
+                          <tr key={pi.id}>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
+                                  <Package
+                                    size={11}
+                                    className="text-gray-400"
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-800 truncate max-w-[110px]">
+                                  {pi.product.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs text-gray-600">
+                              {pi.quantity.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs text-gray-600">
+                              AFN {pi.unitPrice.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs font-medium text-gray-900">
+                              AFN{" "}
+                              {(pi.quantity * pi.unitPrice).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-gray-50 border-t border-gray-200">
+                          <td
+                            colSpan={3}
+                            className="px-4 py-2.5 text-xs font-medium text-gray-500"
+                          >
+                            Subtotal
+                          </td>
+                          <td className="px-4 py-2.5 text-right text-xs font-semibold text-gray-900">
+                            AFN{" "}
+                            {purchaseItems
+                              .reduce(
+                                (s, pi) => s + pi.quantity * pi.unitPrice,
+                                0,
+                              )
+                              .toLocaleString()}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>

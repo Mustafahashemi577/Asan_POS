@@ -200,7 +200,7 @@ export default function Journals() {
                             {ref}
                           </td>
                           <td className="px-5 py-3 text-xs text-gray-500 whitespace-nowrap">
-                            {new Date(je.createdAt).toLocaleDateString(
+                            {new Date(je.createdAt ?? "").toLocaleDateString(
                               "en-GB",
                               {
                                 day: "2-digit",
@@ -269,11 +269,14 @@ export default function Journals() {
                         Cr: {cr?.account?.name ?? "—"}
                       </p>
                       <p className="text-[11px] text-gray-400 mt-1.5">
-                        {new Date(je.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {new Date(je.createdAt ?? "").toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
                       </p>
                     </div>
                   );
