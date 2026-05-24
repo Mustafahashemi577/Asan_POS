@@ -180,7 +180,7 @@ export default function PurchasesPage() {
   // ── All purchases (unpaginated) for stats only ────────────────────────────
   const { data: allData, isLoading: statsLoading } = useSWR(
     "/purchase/all-for-stats",
-    () => getPurchases({ itemsPerPage: 9999, page: 1 }),
+    () => getPurchases({ itemsPerPage: 100, page: 1 }),
     { revalidateOnFocus: false },
   );
   const stats = deriveStats(allData?.data ?? []);
