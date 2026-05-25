@@ -281,7 +281,7 @@ export function JournalDetailDialog({
                             colSpan={3}
                             className="px-4 py-2.5 text-xs font-medium text-gray-500"
                           >
-                            Subtotal
+                            Total
                           </td>
                           <td className="px-4 py-2.5 text-right text-xs font-semibold text-gray-900">
                             AFN{" "}
