@@ -39,6 +39,7 @@ export const Navbar = ({ profile }: NavbarProps) => {
     { label: "Purchases", path: "/Purchases" },
     { label: "Journals", path: "/journals" },
     { label: "Contacts", path: "/Contacts" },
+    { label: "POS", path: "/pos" },
   ];
 
   return (
