@@ -485,19 +485,10 @@ export default function PurchasesPage() {
                           </DropdownMenuItem>
                           {itemStatus !== "Cancelled" && (
                             <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/Purchases/${item.id}/stock-in`);
-                                }}
-                              >
-                                Stock In
-                              </DropdownMenuItem>
                               {itemStatus !== "Done" && (
                                 <>
                                   <DropdownMenuSeparator />
+
                                   <DropdownMenuItem
                                     className="text-xs cursor-pointer"
                                     onClick={(e) => {
