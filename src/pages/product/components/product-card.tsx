@@ -44,7 +44,7 @@ const ProductCard = ({
     >
       {/* Image wrapper */}
       <div
-        className="aspect-square relative"
+        className="aspect-square w-full h-20 w-20 sm:h-60 sm:w-full relative"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >

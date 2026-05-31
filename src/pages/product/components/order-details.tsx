@@ -99,14 +99,13 @@ export function OrderDetails({
                     className="w-full bg-white"
                     {...form.register("serviceType")}
                   >
-                    <SelectValue placeholder="Select Service Type" />
+                    <SelectValue placeholder="Select Customer Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Service Type</SelectLabel>
-                      <SelectItem value="Dine In">Dine In</SelectItem>
-                      <SelectItem value="Delivery">Delivery</SelectItem>
-                      <SelectItem value="Take Away">Take Away</SelectItem>
+                      <SelectLabel>Customer Type</SelectLabel>
+                      <SelectItem value="Regular">Regular</SelectItem>
+                      <SelectItem value="Walk-in">Walk-in</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
