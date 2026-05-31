@@ -5,7 +5,7 @@ import { z } from "zod";
 export const purchaseItemSchema = z.object({
   productId: z.string().min(1, "Select a product"),
   productName: z.string().min(1),
-  quantity: z.number().int().positive("Must be > 0"),
+  quantity: z.number().int().positive("Must be > 0").max(9999999, "Too large"),
   unitPrice: z.number().positive("Must be > 0"),
 });
 
