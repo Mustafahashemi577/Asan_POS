@@ -7,7 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Journals from "@/pages/journals";
 import Pos from "@/pages/pos";
-import Product from "@/pages/product";
+import Products from "@/pages/product";
 import ProfilePage from "@/pages/profile";
 import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
@@ -61,10 +61,11 @@ export const router = createBrowserRouter([
         path: "/products",
         element: (
           <PrivateRoute>
-            <Product />
+            <Products />
           </PrivateRoute>
         ),
       },
+
       {
         path: "/transactions",
         element: (
