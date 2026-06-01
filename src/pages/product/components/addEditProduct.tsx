@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,6 +67,8 @@ export function AddEditProduct({
 }: AddEditProductProps) {
   const isDesktop = useIsDesktop();
   const title = product ? "Edit Product" : "Add Product";
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const {
     name,
@@ -159,7 +171,7 @@ export function AddEditProduct({
       <div className="px-5 py-4 border-t border-gray-100 bg-white space-y-2">
         {product?.id && (
           <Button
-            onClick={handleDelete}
+            onClick={() => setDeleteConfirmOpen(true)}
             disabled={isLoading}
             className="w-full h-11 bg-white text-red-500 hover:bg-red-50 border border-red-200 rounded-xl text-sm font-medium flex items-center gap-2"
           >
@@ -184,11 +196,10 @@ export function AddEditProduct({
   return (
     <>
       {isDesktop ? (
-        // Desktop — Sheet from right, unchanged
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent
             side="right"
-            className=" m-2.5 rounded-md flex flex-col p-0 gap-0"
+            className="m-2.5 rounded-md flex flex-col p-0 gap-0"
           >
             <SheetHeader className="px-5 pt-5 pb-3 border-b border-gray-100">
               <SheetTitle className="text-left text-base font-semibold">
@@ -199,18 +210,13 @@ export function AddEditProduct({
           </SheetContent>
         </Sheet>
       ) : (
-        // Mobile — plain fixed overlay + card, no Dialog/Sheet at all
         open && (
           <>
-            {/* Backdrop */}
             <div
               className="fixed top-[105px] inset-x-0 bottom-0 z-40 bg-black/20 backdrop-blur-[4px]"
               onClick={() => onOpenChange(false)}
             />
-
-            {/* Card */}
             <div className="fixed top-[112px] left-4 right-4 z-50 bg-white rounded-2xl shadow-xl flex flex-col max-h-[calc(100dvh-89px)] overflow-hidden">
-              {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
                 <span className="text-base font-semibold text-gray-900">
                   {title}
@@ -227,6 +233,32 @@ export function AddEditProduct({
           </>
         )
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this product?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium">{name}</span> will be permanently
+              deleted. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
+            >
+              {deleting ? "Deleting…" : "Delete Product"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AddCategoryDialog
         open={categoryDialogOpen}
