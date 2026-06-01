@@ -5,7 +5,7 @@ import type { PosProduct } from "@/queries/pos-inventory";
 import { getPosInventory } from "@/queries/pos-inventory";
 import type { Category } from "@/types";
 import { ShoppingCart, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PosCategoryFilter } from "./components/pos-category-filter";
 import { PosOrderDetails } from "./components/pos-order-details";
 import { PosProductList } from "./components/pos-product-list";
@@ -14,63 +14,28 @@ import { usePosOrder } from "./components/use-pos-order";
 const ITEMS_PER_PAGE = 12;
 
 export default function PosPage() {
-  // ── Inventory selection ──
-  const [inventoryId, setInventoryId] = useState("");
-  const [inventoryLabel, setInventoryLabel] = useState("");
   const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
-
-  // ── Customer selection ──
-  const [customerLabel, setCustomerLabel] = useState("");
-
-  // ── Categories (derived from loaded products) ──
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
-
-  // ── Mobile bottom sheet state ──
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [customerLabel, setCustomerLabel] = useState("");
 
-  // ── Search + pagination (client-side over inventory products) ──
   const { page, setPage, resetToPage1 } = usePagination();
   const { search, debouncedSearch, handleSearch } = useSearch({
     onSearch: resetToPage1,
   });
 
-  // ── Cart / order ──
-  const {
-    cart,
-    customerId,
-    setCustomerId,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    subtotal,
-    tax,
-    total,
-    submitting,
-    handlePay,
-  } = usePosOrder();
+  // ── Load inventory products ──────────────────────────────────────────────────
 
-  const cartQuantities = useMemo(
-    () =>
-      cart.reduce(
-        (acc, i) => ({ ...acc, [i.id]: i.quantity }),
-        {} as Record<string, number>,
-      ),
-    [cart],
-  );
-
-  const totalCartItems = cart.reduce((s, i) => s + i.quantity, 0);
-
-  // ── Fetch inventory products when inventory changes ──
-  useEffect(() => {
-    if (!inventoryId) {
+  const loadInventory = useCallback((id: string) => {
+    if (!id) {
       setAllProducts([]);
       setCategories([]);
       return;
     }
     setLoadingInventory(true);
-    getPosInventory(inventoryId)
+    getPosInventory(id)
       .then((detail) => {
         setAllProducts(detail.products);
         const seen = new Set<string>();
@@ -92,9 +57,50 @@ export default function PosPage() {
         setCategories([]);
       })
       .finally(() => setLoadingInventory(false));
-  }, [inventoryId]);
+  }, []);
 
-  // ── Client-side filter + paginate ──
+  // ── Cart / order ─────────────────────────────────────────────────────────────
+  // inventoryId + inventoryLabel live in the hook (persisted to localStorage)
+
+  const {
+    cart,
+    customerId,
+    setCustomerId,
+    inventoryId,
+    inventoryLabel,
+    setInventoryId,
+    setInventoryLabel,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    subtotal,
+    tax,
+    total,
+    submitting,
+    handlePay,
+  } = usePosOrder({
+    // After a successful sale, re-fetch the inventory to get fresh stock quantities
+    onSaleSuccess: () => loadInventory(inventoryId),
+  });
+
+  // On mount (including refresh) restore the inventory if one was previously selected
+  useEffect(() => {
+    if (inventoryId) loadInventory(inventoryId);
+  }, []); // intentionally runs once on mount only
+
+  const cartQuantities = useMemo(
+    () =>
+      cart.reduce(
+        (acc, i) => ({ ...acc, [i.id]: i.quantity }),
+        {} as Record<string, number>,
+      ),
+    [cart],
+  );
+
+  const totalCartItems = cart.reduce((s, i) => s + i.quantity, 0);
+
+  // ── Client-side filter + paginate ─────────────────────────────────────────────
+
   const filteredProducts = useMemo(() => {
     let result = allProducts;
     if (selectedCategory !== "all") {
@@ -118,10 +124,12 @@ export default function PosPage() {
     page * ITEMS_PER_PAGE,
   );
 
-  // ── Handlers ──
+  // ── Handlers ──────────────────────────────────────────────────────────────────
+
   const handleInventoryChange = (id: string, name: string) => {
     setInventoryId(id);
     setInventoryLabel(name);
+    loadInventory(id);
   };
 
   const handleCustomerChange = (id: string, name: string) => {
@@ -134,7 +142,6 @@ export default function PosPage() {
     resetToPage1();
   };
 
-  // Close sheet and clear cart after successful pay
   const handlePayAndClose = async () => {
     await handlePay();
     setMobileSheetOpen(false);
@@ -173,11 +180,9 @@ export default function PosPage() {
               No inventory selected
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              {/* Mobile hint */}
               <span className="lg:hidden">
                 Tap the cart button below to select an inventory
               </span>
-              {/* Desktop hint */}
               <span className="hidden lg:inline">
                 Choose an inventory on the right to load products
               </span>
@@ -246,15 +251,11 @@ export default function PosPage() {
       {/* ── MOBILE: Bottom sheet ── */}
       {mobileSheetOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
             onClick={() => setMobileSheetOpen(false)}
           />
-
-          {/* Sheet */}
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[90dvh]">
-            {/* Drag handle + close */}
             <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
               <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
               <h2 className="text-base font-semibold text-gray-900">
@@ -267,8 +268,6 @@ export default function PosPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Content — scrollable */}
             <div className="flex-1 overflow-y-auto">
               <PosOrderDetails
                 inventoryId={inventoryId}

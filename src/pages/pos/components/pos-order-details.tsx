@@ -132,7 +132,8 @@ export function PosOrderDetails({
                 </span>
                 <button
                   onClick={() => onUpdateQuantity(item.id, 1)}
-                  className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-200 transition-colors"
+                  disabled={item.quantity >= item.stock}
+                  className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200"
                 >
                   <Plus className="w-3 h-3 text-gray-600" />
                 </button>
@@ -141,7 +142,7 @@ export function PosOrderDetails({
               {/* Remove */}
               <button
                 onClick={() => onRemoveItem(item.id)}
-                className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

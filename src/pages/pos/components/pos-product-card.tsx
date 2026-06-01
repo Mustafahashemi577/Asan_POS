@@ -33,14 +33,15 @@ export function PosProductCard({
   };
 
   const outOfStock = product.quantity === 0;
+  const atStockLimit = cartQuantity >= product.quantity && !outOfStock;
 
   return (
     <div
-      onClick={() => !outOfStock && onAdd(product)}
+      onClick={() => !outOfStock && !atStockLimit && onAdd(product)}
       className={[
         "overflow-hidden rounded-xl border border-gray-200 transition-all duration-150 select-none",
-        outOfStock
-          ? " cursor-not-allowed"
+        outOfStock || atStockLimit
+          ? "cursor-not-allowed"
           : "cursor-pointer hover:shadow-md hover:border-blue-200 active:scale-[0.98]",
       ].join(" ")}
     >
@@ -62,8 +63,17 @@ export function PosProductCard({
         {/* Out of stock overlay */}
         {outOfStock && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-xl">
-            <span className="text-sm font-semibold text-red-400 bg-white px-2 py-1 rounded-lg shadow-sm border border-red-200">
+            <span className="text-sm font-semibold text-red-500 bg-white px-2 py-1 rounded-lg shadow-sm border border-red-200">
               Out of stock
+            </span>
+          </div>
+        )}
+
+        {/* Max stock reached overlay */}
+        {atStockLimit && (
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-xl">
+            <span className="text-sm font-semibold text-orange-600 bg-white px-2 py-1 rounded-lg shadow-sm border border-orange-200">
+              Max: {product.quantity}
             </span>
           </div>
         )}
@@ -115,7 +125,7 @@ export function PosProductCard({
         </div>
         {/* Stock indicator */}
         <div className="mt-1.5 flex items-center gap-1">
-          <span className="text-[11px] text-gray-400">
+          <span className="text-[11px] text-gray-500">
             Stock: {product.quantity}
           </span>
         </div>
