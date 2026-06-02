@@ -23,7 +23,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
 import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddCategoryDialog } from "./addcategorydialog";
@@ -77,8 +76,6 @@ export function AddEditProduct({
     setPrice,
     categoryId,
     setCategoryId,
-    inStock,
-    setInStock,
     categories,
     imagePreviews,
     imageUploading,
@@ -113,11 +110,6 @@ export function AddEditProduct({
           onRemove={handleRemovePreview}
           onChange={handleImageChange}
         />
-
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm font-medium text-gray-700">Stock</span>
-          <Switch checked={inStock} onCheckedChange={setInStock} />
-        </div>
 
         <div className="flex items-center gap-2">
           <div className="flex-1">

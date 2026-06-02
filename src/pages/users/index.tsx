@@ -2,26 +2,21 @@ import { Plus, Search, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Pagination } from "@/components/ui/pagination";
-import { PhoneNumberInput } from "@/components/ui/phoneinput";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+
+import type { UserFormValues } from "@/components/AddUserDialog";
+import AddUserDialog from "@/components/AddUserDialog";
 import { useUsers } from "@/hooks/use-users";
 import { createUser } from "@/queries/user";
-import type { CreateUserPayload, UserRole } from "@/types/user";
+import type { UserRole } from "@/types/user";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -32,18 +27,6 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const USER_ROLES: UserRole[] = ["Admin", "Cashier", "Accountant"];
-
-// ── Empty form state ──────────────────────────────────────────────────────────
-
-const emptyForm = (): CreateUserPayload => ({
-  firstName: "",
-  lastName: "",
-  username: "",
-  email: "",
-  phone: "",
-  role: "Cashier",
-  password: "",
-});
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -65,56 +48,17 @@ export default function UsersPage() {
   } = useUsers();
 
   const [searchOpen, setSearchOpen] = useState(false);
-
-  // ── Add user dialog ─────────────────────────────────────────────────────────
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<CreateUserPayload>(emptyForm());
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof CreateUserPayload, string>>
-  >({});
 
-  const handleField = (field: keyof CreateUserPayload, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
+  // ── Submit handler ──────────────────────────────────────────────────────────
 
-  const validate = (): boolean => {
-    const next: Partial<Record<keyof CreateUserPayload, string>> = {};
-    if (!form.firstName.trim()) next.firstName = "First name is required";
-    if (!form.lastName.trim()) next.lastName = "Last name is required";
-    if (!form.username.trim()) next.username = "Username is required";
-    if (!form.phone.trim()) next.phone = "Phone is required";
-    if (!form.password.trim()) next.password = "Password is required";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    setSaving(true);
-    try {
-      await createUser(form);
-      setDialogOpen(false);
-      setForm(emptyForm());
-      setErrors({});
-      mutate();
-    } catch {
-      // handle silently — extend with toast if needed
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDialogOpenChange = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      setForm(emptyForm());
-      setErrors({});
-    }
+  const handleAddUser = async (values: UserFormValues) => {
+    await createUser(values);
+    mutate();
   };
 
   // ── Pagination helpers ──────────────────────────────────────────────────────
+
   const from = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(page * PAGE_SIZE, totalItems);
 
@@ -126,7 +70,7 @@ export default function UsersPage() {
         {/* Table card */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {/* Toolbar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">User List</h2>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -301,143 +245,11 @@ export default function UsersPage() {
       </div>
 
       {/* Add User Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-md rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-gray-900">
-              Add New User
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-1">
-            {/* First name + Last name */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-700">
-                  First Name
-                </Label>
-                <Input
-                  value={form.firstName}
-                  onChange={(e) => handleField("firstName", e.target.value)}
-                  placeholder="John"
-                  className={`h-9 rounded-lg text-sm ${errors.firstName ? "border-red-400" : "border-gray-200"}`}
-                />
-                {errors.firstName && (
-                  <p className="text-xs text-red-500">{errors.firstName}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-700">
-                  Last Name
-                </Label>
-                <Input
-                  value={form.lastName}
-                  onChange={(e) => handleField("lastName", e.target.value)}
-                  placeholder="Doe"
-                  className={`h-9 rounded-lg text-sm ${errors.lastName ? "border-red-400" : "border-gray-200"}`}
-                />
-                {errors.lastName && (
-                  <p className="text-xs text-red-500">{errors.lastName}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Username */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">
-                Username
-              </Label>
-              <Input
-                value={form.username}
-                placeholder="johndoe"
-                className={`h-9 rounded-lg text-sm ${errors.username ? "border-red-400" : "border-gray-200"}`}
-              />
-              {errors.username && (
-                <p className="text-xs text-red-500">{errors.username}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">Phone</Label>
-              <PhoneNumberInput
-                value={form.phone}
-                placeholder="700 000 000"
-                error={!!errors.phone}
-              />
-              {errors.phone && (
-                <p className="text-xs text-red-500">{errors.phone}</p>
-              )}
-            </div>
-            {/* Email */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">Email</Label>
-              <Input
-                className="bg-white"
-                type="email"
-                value={form.email}
-                placeholder="john.doe@example.com"
-              />
-            </div>
-
-            {/* Role */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">Role</Label>
-              <Select
-                value={form.role}
-                onValueChange={(v) => handleField("role", v)}
-              >
-                <SelectTrigger className="h-9 rounded-lg border-gray-200 text-sm">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {USER_ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">
-                Password
-              </Label>
-              <Input
-                type="password"
-                value={form.password}
-                placeholder="******"
-              />
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-lg text-sm border-gray-200"
-                onClick={() => handleDialogOpenChange(false)}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                className="h-9 rounded-lg bg-black text-white hover:bg-black/90 text-sm"
-                onClick={handleSubmit}
-                disabled={saving}
-              >
-                {saving ? "Saving…" : "Add User"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddUserDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleAddUser}
+      />
     </div>
   );
 }

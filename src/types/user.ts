@@ -25,6 +25,7 @@ export interface CreateUserPayload {
   email: string;
   role: UserRole;
   password: string;
+  confirmPassword: string;
 }
 
 // ── Update payload ────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ export interface UpdateUserPayload {
   phone?: string;
   email?: string;
   role?: UserRole;
+  password: string;
 }
 
 // ── Pagination meta ───────────────────────────────────────────────────────────

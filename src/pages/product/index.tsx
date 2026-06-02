@@ -23,8 +23,8 @@ import type { ProductFormData } from "./components/useproductform";
 
 function fmtPrice(n: number) {
   return (
-    <span className="font-medium ">
-      <b>؋ </b>
+    <span className="font-medium text-gray-600">
+      <b>(AFN) </b>
       {Number(n).toLocaleString("en-US")}
     </span>
   );

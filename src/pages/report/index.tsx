@@ -91,7 +91,7 @@ export default function Report() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search Recent Transaction..."
+                placeholder="Search Recent Reports..."
                 className="h-9 pl-9 rounded-sm border-gray-200 text-sm bg-white"
               />
             </div>
