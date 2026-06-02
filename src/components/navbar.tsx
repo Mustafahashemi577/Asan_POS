@@ -33,11 +33,11 @@ export const Navbar = ({ profile }: NavbarProps) => {
     { label: "Dashboard", path: "/dashboard" },
     { label: "Categories", path: "/categories" },
     { label: "Products", path: "/products" },
-    { label: "Transactions", path: "/transactions" },
     { label: "Reports", path: "/reports" },
     { label: "Inventories", path: "/inventories" },
     { label: "Purchases", path: "/Purchases" },
     { label: "Journals", path: "/journals" },
+    { label: "Users", path: "/users" },
     { label: "Contacts", path: "/Contacts" },
     { label: "POS", path: "/pos" },
   ];

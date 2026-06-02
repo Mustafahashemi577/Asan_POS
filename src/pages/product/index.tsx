@@ -1,33 +1,10 @@
-import {
-  Eye,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  XIcon,
-} from "lucide-react";
+import { Pencil, Plus, Search, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -35,10 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { Pagination } from "@/components/ui/pagination";
 import { getCategories } from "@/queries/category";
-import { deleteProduct, getProducts } from "@/queries/products";
+import { getProducts } from "@/queries/products";
 import type { Category } from "@/types";
 import { AddEditProduct } from "./components/addEditProduct";
 import type { Product } from "./components/product-list";
@@ -47,14 +22,19 @@ import type { ProductFormData } from "./components/useproductform";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtPrice(n: number) {
-  return "$" + Number(n).toLocaleString("en-US");
+  return (
+    <span className="font-medium ">
+      <b>؋ </b>
+      {Number(n).toLocaleString("en-US")}
+    </span>
+  );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const ITEMS_PER_PAGE = 10;
 
-export default function Products() {
+export default function ProductManagementPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
@@ -76,10 +56,6 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(
     null,
   );
-
-  // Delete confirm
-  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const categoriesRef = useRef<Category[]>([]);
 
@@ -178,20 +154,6 @@ export default function Products() {
     refresh();
   };
 
-  // ── Delete ──────────────────────────────────────────────────────────────────
-
-  const handleDeleteConfirm = async () => {
-    if (!deletingProduct) return;
-    setDeleting(true);
-    try {
-      await deleteProduct(deletingProduct.id);
-      setDeletingProduct(null);
-      refresh();
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   // ── Category change ─────────────────────────────────────────────────────────
 
   const handleCategoryChange = (value: string) => {
@@ -206,9 +168,9 @@ export default function Products() {
 
   return (
     <div className="overflow-y-auto max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-      <div className="w-full h-full">
+      <div className="max-w-7xl mx-auto space-y-5">
         {/* Table card */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {/* Toolbar */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100">
             <div>
@@ -334,18 +296,22 @@ export default function Products() {
                   products.map((product, idx) => (
                     <tr
                       key={product.id}
-                      className={`border-b border-gray-50 hover:bg-gray-50/60 transition-colors ${
+                      onClick={() => handleEdit(product)}
+                      className={`border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer ${
                         selected.has(product.id) ? "bg-blue-50/40" : ""
                       }`}
                     >
-                      <td className="w-10 px-4 py-3">
+                      <td
+                        className="w-10 px-4 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Checkbox
                           checked={selected.has(product.id)}
                           onCheckedChange={() => toggleOne(product.id)}
                         />
                       </td>
 
-                      {/* SKU — backend doesn't expose one, use index-based fallback */}
+                      {/* SKU */}
                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                         PT
                         {String(idx + 1 + (page - 1) * ITEMS_PER_PAGE).padStart(
@@ -381,7 +347,6 @@ export default function Products() {
                         {fmtPrice(product.price)}
                       </td>
 
-                      {/* inStock as a proxy for qty since the API doesn't return qty */}
                       <td className="px-4 py-3">
                         {product.inStock === false ? (
                           <span className="text-xs font-medium text-red-500 bg-red-50 border border-red-100 rounded-full px-2 py-0.5">
@@ -394,41 +359,18 @@ export default function Products() {
                         )}
                       </td>
 
-                      {/* Actions */}
-                      <td className="px-4 py-3 text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-36 rounded-xl"
-                          >
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(product)}
-                              className="gap-2 text-sm cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-gray-500" />
-                              View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(product)}
-                              className="gap-2 text-sm cursor-pointer"
-                            >
-                              <Pencil className="w-3.5 h-3.5 text-gray-500" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setDeletingProduct(product)}
-                              className="gap-2 text-sm cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      {/* Actions — edit only */}
+                      <td
+                        className="px-4 py-3 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -461,34 +403,6 @@ export default function Products() {
         onSave={handleSaved}
         onDelete={handleSaved}
       />
-
-      {/* Delete confirmation */}
-      <AlertDialog
-        open={!!deletingProduct}
-        onOpenChange={(open) => {
-          if (!open) setDeletingProduct(null);
-        }}
-      >
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete product?</AlertDialogTitle>
-            <AlertDialogDescription>
-              <span className="font-medium">{deletingProduct?.name}</span> will
-              be permanently deleted. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-              className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
-            >
-              {deleting ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

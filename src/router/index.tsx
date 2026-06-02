@@ -13,7 +13,7 @@ import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
 import ViewPurchase from "@/pages/Purchases/view-purchase";
 import Report from "@/pages/report";
-import Transaction from "@/pages/transaction";
+import UsersPage from "@/pages/users";
 import { createBrowserRouter } from "react-router-dom";
 import { authRoutes } from "./auth";
 import { PrivateRoute, PublicRoute } from "./guards";
@@ -67,14 +67,6 @@ export const router = createBrowserRouter([
       },
 
       {
-        path: "/transactions",
-        element: (
-          <PrivateRoute>
-            <Transaction />
-          </PrivateRoute>
-        ),
-      },
-      {
         path: "/reports",
         element: (
           <PrivateRoute>
@@ -127,6 +119,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Contacts />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/users",
+        element: (
+          <PrivateRoute>
+            <UsersPage />
           </PrivateRoute>
         ),
       },
