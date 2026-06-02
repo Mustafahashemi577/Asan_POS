@@ -1,6 +1,6 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type UserRole = "Admin" | "Cashier" | "Accountant";
+export type UserRole = "Admin" | "Cashier";
 
 // ── Shapes ────────────────────────────────────────────────────────────────────
 

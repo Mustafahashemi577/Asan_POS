@@ -2,7 +2,6 @@ import { Pencil, Plus, Search, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import {
@@ -24,7 +23,6 @@ import type { ProductFormData } from "./components/useproductform";
 function fmtPrice(n: number) {
   return (
     <span className="font-medium text-gray-600">
-      <b>(AFN) </b>
       {Number(n).toLocaleString("en-US")}
     </span>
   );
@@ -32,7 +30,7 @@ function fmtPrice(n: number) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 15;
 
 export default function ProductManagementPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -247,18 +245,13 @@ export default function ProductManagementPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-white">
-                  <th className="w-10 px-4 py-3 text-left">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={toggleAll}
-                    />
-                  </th>
+                  <th className="w-10 px-4 py-3 text-left"></th>
                   {[
                     "SKU",
                     "Product Name",
                     "Category",
-                    "Price",
-                    "Qty",
+                    "Price (AFN)",
+                    "Quantity",
                     "Actions",
                   ].map((h) => (
                     <th
@@ -304,12 +297,7 @@ export default function ProductManagementPage() {
                       <td
                         className="w-10 px-4 py-3"
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selected.has(product.id)}
-                          onCheckedChange={() => toggleOne(product.id)}
-                        />
-                      </td>
+                      ></td>
 
                       {/* SKU */}
                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">
