@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import {createJSONStorage, persist} from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware";
+import { useUtilsStore } from "./utilsStore";
 
 // function getValidToken(token: string | null): string | null {
 //   if (!token) return null;
@@ -90,12 +91,13 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         get().clearAuth();
-      }
+        useUtilsStore.getState().clearUtilsStore();
+      },
     }),
     {
       name: "auth-storage",
 
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );

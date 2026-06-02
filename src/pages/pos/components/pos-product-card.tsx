@@ -125,7 +125,7 @@ export function PosProductCard({
         </div>
         {/* Stock indicator */}
         <div className="mt-1.5 flex items-center gap-1">
-          <span className="text-[11px] text-gray-400">
+          <span className="text-[11px] text-gray-600">
             Stock: {product.quantity}
           </span>
         </div>

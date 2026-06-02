@@ -59,9 +59,6 @@ export default function PosPage() {
       .finally(() => setLoadingInventory(false));
   }, []);
 
-  // ── Cart / order ─────────────────────────────────────────────────────────────
-  // inventoryId + inventoryLabel live in the hook (persisted to localStorage)
-
   const {
     cart,
     customerId,

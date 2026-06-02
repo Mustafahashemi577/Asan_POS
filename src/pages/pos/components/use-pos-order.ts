@@ -1,3 +1,4 @@
+import { useUtilsStore } from "@/lib/utilsStore";
 import type { PosProduct } from "@/queries/pos-inventory";
 import { completeStockOut, createSale, createStockOut } from "@/queries/sale";
 import { useState } from "react";
@@ -14,15 +15,8 @@ export interface PosCartItem {
   stock: number;
 }
 
-// ── localStorage keys ─────────────────────────────────────────────────────────
-
-const LS_INVENTORY_ID = "pos:inventoryId";
-const LS_INVENTORY_LABEL = "pos:inventoryLabel";
-
 // ── Hook ──────────────────────────────────────────────────────────────────────
-
 interface UsePosOrderOptions {
-  /** Called after a successful pay so the page can re-fetch inventory products */
   onSaleSuccess?: () => void;
 }
 
@@ -30,35 +24,8 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
   const [cart, setCart] = useState<PosCartItem[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-
-  // ── Inventory — initialised from localStorage so it survives refresh ──
-  const [inventoryId, setInventoryIdState] = useState<string>(
-    () => localStorage.getItem(LS_INVENTORY_ID) ?? "",
-  );
-  const [inventoryLabel, setInventoryLabelState] = useState<string>(
-    () => localStorage.getItem(LS_INVENTORY_LABEL) ?? "",
-  );
-
-  // Keep localStorage in sync whenever the selection changes
-  const setInventoryId = (id: string) => {
-    setInventoryIdState(id);
-    if (id) {
-      localStorage.setItem(LS_INVENTORY_ID, id);
-    } else {
-      localStorage.removeItem(LS_INVENTORY_ID);
-    }
-  };
-
-  const setInventoryLabel = (label: string) => {
-    setInventoryLabelState(label);
-    if (label) {
-      localStorage.setItem(LS_INVENTORY_LABEL, label);
-    } else {
-      localStorage.removeItem(LS_INVENTORY_LABEL);
-    }
-  };
-
-  // ── Cart helpers ──
+  const { inventoryId, setInventoryId, inventoryLabel, setInventoryLabel } =
+    useUtilsStore();
 
   const addToCart = (product: PosProduct) => {
     setCart((prev) => {
@@ -145,7 +112,7 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
         items: cart.map((i) => ({
           productId: i.id,
           quantity: i.quantity,
-          unitPrice: i.price,
+          unitPrice: i.price + i.price * 0.1, // include tax in unit price since we don't have a separate tax line-item in the backend
         })),
       });
 
