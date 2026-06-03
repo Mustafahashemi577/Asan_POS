@@ -97,12 +97,16 @@ export default function DateInput({ value, onChange }: Props) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="p-0 w-40  rounded-xl"
+                className="p-0 w-40 rounded-xl overflow-hidden"
                 align="start"
                 sideOffset={4}
               >
                 <Command>
-                  <CommandGroup className="max-h-60 overflow-y-auto overscroll-contain">
+                  <CommandGroup
+                    className="max-h-60 overflow-y-auto overscroll-contain"
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                  >
                     {MONTHS.map((m, i) => (
                       <CommandItem
                         key={m}
@@ -137,6 +141,7 @@ export default function DateInput({ value, onChange }: Props) {
               >
                 <div
                   className="max-h-60 overflow-y-auto overscroll-contain"
+                  onWheel={(e) => e.stopPropagation()}
                   onTouchMove={(e) => e.stopPropagation()}
                 >
                   {Array.from({ length: 120 }).map((_, i) => {
@@ -192,11 +197,7 @@ export default function DateInput({ value, onChange }: Props) {
                   onClick={() => selectDay(day)}
                   variant="outline"
                   className={`w-8 h-8 mx-auto text-xs rounded-lg flex items-center justify-center
-                    ${
-                      isSelected
-                        ? "bg-gray-900 text-white"
-                        : "hover:bg-gray-100 text-gray-700"
-                    }`}
+                    ${isSelected ? "bg-gray-900 text-white" : "hover:bg-gray-100 text-gray-700"}`}
                 >
                   {day}
                 </Button>

@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/lib/store";
 import type { EmployeeInfo } from "@/types/index";
 import { getInitials } from "@/utils/profile.helpers";
-import { Bell, ChevronDown, Menu } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, UserCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -116,12 +116,20 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate("/profile")}>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                onClick={() => navigate("/profile")}
+                className="cursor-pointer hover:bg-gray-50"
+              >
+                <UserCircle size={14} className="mr-2" />
                 View Profile
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-500 hover:bg-gray-50"
+              >
+                <LogOut size={14} className="mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -188,12 +196,20 @@ export const Navbar = ({ profile }: NavbarProps) => {
                 <ChevronDown size={13} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-45">
-              <DropdownMenuItem onClick={() => navigate("/profile")}>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                onClick={() => navigate("/profile")}
+                className="cursor-pointer hover:bg-gray-50"
+              >
+                <UserCircle size={14} className="mr-2" />
                 View Profile
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-500 hover:bg-gray-50 hover:text-red-700 cursor-pointer"
+              >
+                <LogOut size={14} className="mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

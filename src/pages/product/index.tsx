@@ -47,7 +47,7 @@ export default function ProductManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected] = useState<Set<string>>(new Set());
 
   // AddEdit sheet
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -114,23 +114,6 @@ export default function ProductManagementPage() {
 
   const refresh = () => fetchProducts(page, debouncedSearch, selectedCategory);
 
-  // ── Selection ───────────────────────────────────────────────────────────────
-
-  const allSelected =
-    products.length > 0 && products.every((p) => selected.has(p.id));
-
-  const toggleAll = () => {
-    setSelected(allSelected ? new Set() : new Set(products.map((p) => p.id)));
-  };
-
-  const toggleOne = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
   // ── Add / Edit ──────────────────────────────────────────────────────────────
 
   const handleAdd = () => {
@@ -179,7 +162,7 @@ export default function ProductManagementPage() {
                 {totalItems} product{totalItems !== 1 ? "s" : ""} found
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
+            <div className="flex flex-wrap items-center  gap-2 lg:shrink-0">
               {!searchOpen ? (
                 <Button
                   variant="default"
@@ -241,7 +224,7 @@ export default function ProductManagementPage() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto justify-start">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-white">

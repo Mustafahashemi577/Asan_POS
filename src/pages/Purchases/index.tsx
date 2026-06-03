@@ -280,8 +280,8 @@ export default function PurchasesPage() {
 
                         {/* Total price */}
                         <p className="text-xs font-semibold text-gray-900 whitespace-nowrap">
-                          AFN{" "}
-                          <NumberDisplay value={item.totalPrice} decimals={0} />
+                          <NumberDisplay value={item.totalPrice} decimals={0} />{" "}
+                          AFN
                         </p>
 
                         {/* Date */}

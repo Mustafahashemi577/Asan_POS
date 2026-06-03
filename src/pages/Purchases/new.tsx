@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, User, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, User, UserPlus } from "lucide-react";
 
 import { InlineCombobox } from "./components/inline-combobox";
 import {
@@ -112,8 +112,19 @@ export default function NewPurchasePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-xl font-semibold text-gray-900">New Purchase</h1>
+      <div className="flex items-center">
+        <h1 className="text-xl font-semibold text-gray-900">New Purchase</h1>
 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-gray-500 hover:text-gray-700 ml-auto"
+          onClick={() => navigate("/Purchases")}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Purchases
+        </Button>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Customer + Date */}

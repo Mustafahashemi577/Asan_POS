@@ -258,7 +258,7 @@ export default function EditProfileForm({
             )}
           </div>
           <div>
-            <label className="text-sm text-gray-600 mb-2 block">Role</label>
+            <label className="text-sm text-gray-600 mb-2 block">Rool</label>
             <Input
               {...register("role")}
               className="h-10 rounded-xl border-gray-200 text-sm"

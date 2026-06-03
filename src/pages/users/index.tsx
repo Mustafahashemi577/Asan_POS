@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import type { UserFormValues } from "@/components/AddUserDialog";
-import AddUserDialog from "@/components/AddUserDialog";
 import { useUsers } from "@/hooks/use-users";
+import type { UserFormValues } from "@/pages/users/components/AddUserDialog";
+import AddUserDialog from "@/pages/users/components/AddUserDialog";
 import { createUser } from "@/queries/user";
 import type { UserRole } from "@/types/user";
 
@@ -23,6 +23,7 @@ import type { UserRole } from "@/types/user";
 const ROLE_COLORS: Record<string, string> = {
   Admin: "text-purple-600 bg-purple-50 border-purple-100",
   Cashier: "text-blue-600 bg-blue-50 border-blue-100",
+  Accountant: "text-green-600 bg-green-50 border-green-100",
 };
 
 const USER_ROLES: UserRole[] = ["Admin", "Cashier"];
@@ -52,7 +53,9 @@ export default function UsersPage() {
   // ── Submit handler ──────────────────────────────────────────────────────────
 
   const handleAddUser = async (values: UserFormValues) => {
-    await createUser(values);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { confirmPassword, ...payload } = values;
+    await createUser(payload);
     mutate();
   };
 
@@ -140,14 +143,7 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-white">
-                  {[
-                    "#",
-                    "First Name",
-                    "Last Name",
-                    "Username",
-                    "Phone",
-                    "Role",
-                  ].map((h) => (
+                  {["#", "Name", "Email", "Phone", "Role"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 font-semibold text-gray-700 whitespace-nowrap text-left"
@@ -162,7 +158,7 @@ export default function UsersPage() {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
                       className="px-4 py-16 text-center text-sm text-gray-400"
                     >
                       Loading…
@@ -171,7 +167,7 @@ export default function UsersPage() {
                 ) : users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
                       className="px-4 py-16 text-center text-sm text-gray-400"
                     >
                       No users found.
@@ -191,34 +187,35 @@ export default function UsersPage() {
                         )}
                       </td>
 
-                      {/* First name */}
+                      {/* Name */}
                       <td className="px-4 py-3 font-medium text-gray-800">
-                        {user.firstName}
+                        {user.name}
                       </td>
 
-                      {/* Last name */}
-                      <td className="px-4 py-3 text-gray-600">
-                        {user.lastName}
-                      </td>
-
-                      {/* Username */}
-                      <td className="px-4 py-3 text-gray-500 font-mono text-xs">
-                        @{user.username}
+                      {/* Email */}
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {user.email}
                       </td>
 
                       {/* Phone */}
-                      <td className="px-4 py-3 text-gray-600">{user.phone}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {user.phone ?? "—"}
+                      </td>
 
                       {/* Role badge */}
                       <td className="px-4 py-3">
-                        <span
-                          className={`text-xs font-medium border rounded-full px-2 py-0.5 ${
-                            ROLE_COLORS[user.role] ??
-                            "text-gray-600 bg-gray-50 border-gray-100"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
+                        {user.role ? (
+                          <span
+                            className={`text-xs font-medium border rounded-full px-2 py-0.5 ${
+                              ROLE_COLORS[user.role] ??
+                              "text-gray-600 bg-gray-50 border-gray-100"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </td>
                     </tr>
                   ))
