@@ -1,5 +1,18 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { PosCustomerCombobox } from "./pos-customer-combobox";
 import { PosInventoryCombobox } from "./pos-inventory-combobox";
 import type { PosCartItem } from "./use-pos-order";
@@ -13,6 +26,7 @@ interface PosOrderDetailsProps {
   onCustomerChange: (id: string, name: string) => void;
   cart: PosCartItem[];
   onUpdateQuantity: (productId: string, delta: number) => void;
+  onSetQuantity: (productId: string, value: number) => void;
   onRemoveItem: (productId: string) => void;
   subtotal: number;
   tax: number;
@@ -20,6 +34,112 @@ interface PosOrderDetailsProps {
   submitting: boolean;
   onPay: () => void;
 }
+
+// ── Editable quantity cell ────────────────────────────────────────────────────
+// - Always an input, never toggled
+// - Fully erasable: when empty shows placeholder "0", immediately calls
+//   onSetQuantity(0) so the product card badge and totals update in real time
+// - Commits final value on blur / Enter; Escape restores previous value
+// - Clamps to stock on commit
+
+function QuantityInput({
+  item,
+  onUpdateQuantity,
+  onSetQuantity,
+}: {
+  item: PosCartItem;
+  onUpdateQuantity: (id: string, delta: number) => void;
+  onSetQuantity: (id: string, value: number) => void;
+}) {
+  const [raw, setRaw] = useState(String(item.quantity));
+  const [focused, setFocused] = useState(false);
+
+  // Only sync externally (e.g. + / - button) when the user is NOT inside the field
+  if (!focused && raw !== "" && Number(raw) !== item.quantity) {
+    setRaw(String(item.quantity));
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only update local display — never touch the cart while the user is typing
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    if (val === "") {
+      setRaw("");
+      return;
+    }
+    const n = parseInt(val, 10);
+    // Clamp to stock — can't type more than available
+    if (n > item.stock) {
+      toast.warning(`Only ${item.stock} in stock`);
+      setRaw(String(item.stock));
+    } else {
+      setRaw(val);
+    }
+  };
+
+  const commit = () => {
+    const n = raw === "" ? 0 : parseInt(raw, 10);
+    const clamped = isNaN(n) ? item.quantity : Math.min(n, item.stock);
+    if (clamped !== item.quantity) {
+      onSetQuantity(item.id, clamped);
+    }
+    // Reflect the committed value — if 0 or empty, show empty (placeholder shows "0")
+    setRaw(clamped <= 0 ? "" : String(clamped));
+  };
+
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      {/* − */}
+      <button
+        onClick={() => {
+          onUpdateQuantity(item.id, -1);
+          setRaw(String(Math.max(0, item.quantity - 1)));
+        }}
+        className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-red-50 hover:border-red-200 transition-colors"
+      >
+        <Minus className="w-3 h-3 text-gray-600" />
+      </button>
+
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={raw}
+        placeholder="0"
+        onChange={handleChange}
+        onFocus={(e) => {
+          setFocused(true);
+          e.target.select();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          commit();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            setRaw(String(item.quantity));
+            e.currentTarget.blur();
+          }
+        }}
+        className="w-12 h-7 text-center text-sm font-semibold text-gray-800 border border-gray-200 rounded-lg outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors"
+      />
+
+      {/* + */}
+      <button
+        onClick={() => {
+          onUpdateQuantity(item.id, 1);
+          setRaw(String(Math.min(item.stock, item.quantity + 1)));
+        }}
+        disabled={item.quantity >= item.stock}
+        className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200"
+      >
+        <Plus className="w-3 h-3 text-gray-600" />
+      </button>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function PosOrderDetails({
   inventoryId,
@@ -30,6 +150,7 @@ export function PosOrderDetails({
   onCustomerChange,
   cart,
   onUpdateQuantity,
+  onSetQuantity,
   onRemoveItem,
   subtotal,
   tax,
@@ -38,14 +159,15 @@ export function PosOrderDetails({
   onPay,
 }: PosOrderDetailsProps) {
   const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+  const canPay =
+    cart.length > 0 &&
+    cart.every((i) => i.quantity > 0) &&
+    !!customerId &&
+    !!inventoryId;
 
   return (
-    /**
-     * On desktop this fills the fixed-height panel (h-full, flex col).
-     * On mobile it's inside a scrollable sheet so we just let it grow naturally.
-     */
     <div className="flex flex-col h-full p-4 gap-3">
-      {/* Header — desktop only (mobile has its own header in the sheet) */}
+      {/* Header — desktop only */}
       <div className="hidden lg:flex items-center justify-between shrink-0">
         <h2 className="text-base font-semibold text-gray-900">Order Details</h2>
         {totalItems > 0 && (
@@ -76,8 +198,6 @@ export function PosOrderDetails({
       <div className="border-t border-gray-100 shrink-0" />
 
       {/* Cart items */}
-      {/* Desktop: flex-1 + overflow-y-auto to fill remaining panel height */}
-      {/* Mobile: no fixed height, just flows naturally inside the sheet scroller */}
       <div className="lg:flex-1 lg:overflow-y-auto lg:min-h-0 space-y-2">
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -91,11 +211,11 @@ export function PosOrderDetails({
           cart.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100/70 transition-colors"
+              className="flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100/70 transition-colors"
             >
               {/* Image */}
               {item.image ? (
-                <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-gray-200">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -103,7 +223,7 @@ export function PosOrderDetails({
                   />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-lg shrink-0 bg-gray-200" />
+                <div className="w-11 h-11 rounded-lg shrink-0 bg-gray-200" />
               )}
 
               {/* Name + price */}
@@ -112,32 +232,19 @@ export function PosOrderDetails({
                   {item.name}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {item.price} AFN × {item.quantity} ={" "}
+                  {item.price} AFN ={" "}
                   <span className="font-semibold text-gray-700">
                     {(item.price * item.quantity).toFixed(0)} AFN
                   </span>
                 </p>
               </div>
 
-              {/* Quantity controls */}
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => onUpdateQuantity(item.id, -1)}
-                  className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-red-50 hover:border-red-200 transition-colors"
-                >
-                  <Minus className="w-3 h-3 text-gray-600" />
-                </button>
-                <span className="w-6 text-center text-sm font-semibold text-gray-800">
-                  {item.quantity}
-                </span>
-                <button
-                  onClick={() => onUpdateQuantity(item.id, 1)}
-                  disabled={item.quantity >= item.stock}
-                  className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200"
-                >
-                  <Plus className="w-3 h-3 text-gray-600" />
-                </button>
-              </div>
+              {/* Qty controls — click number to type */}
+              <QuantityInput
+                item={item}
+                onUpdateQuantity={onUpdateQuantity}
+                onSetQuantity={onSetQuantity}
+              />
 
               {/* Remove */}
               <button
@@ -151,7 +258,7 @@ export function PosOrderDetails({
         )}
       </div>
 
-      {/* Totals + Pay — always visible at the bottom */}
+      {/* Totals + Pay */}
       {cart.length > 0 && (
         <div className="shrink-0 space-y-2 border-t border-gray-100 pt-3 mt-auto">
           <div className="flex items-center justify-between text-sm">
@@ -171,14 +278,81 @@ export function PosOrderDetails({
             <span className="text-gray-900">{total.toFixed(2)} AFN</span>
           </div>
 
-          <Button
-            onClick={onPay}
-            disabled={submitting || !customerId}
-            className="w-full h-12 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-semibold mt-1 flex items-center gap-2"
-          >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Processing…" : `Pay ${total.toFixed(2)} AFN`}
-          </Button>
+          {/* ── Confirmation dialog ── */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={!canPay || submitting}
+                className="w-full h-12 bg-black text-white hover:bg-black/90 rounded-xl text-sm font-semibold mt-1 flex items-center gap-2"
+              >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {submitting ? "Processing…" : `Pay ${total.toFixed(2)} AFN`}
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent className="rounded-2xl max-w-sm mx-4 sm:mx-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Sale</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3 text-sm text-gray-600">
+                    {/* Order summary */}
+                    <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
+                      {cart.map((item) => (
+                        <div key={item.id} className="flex justify-between">
+                          <span className="truncate mr-2">
+                            {item.name}
+                            <span className="text-gray-400 ml-1">
+                              ×{item.quantity}
+                            </span>
+                          </span>
+                          <span className="font-medium text-gray-800 shrink-0">
+                            {(item.price * item.quantity).toFixed(0)} AFN
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Totals */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-gray-500">
+                        <span>Subtotal</span>
+                        <span>{subtotal.toFixed(2)} AFN</span>
+                      </div>
+                      <div className="flex justify-between text-gray-500">
+                        <span>Tax (10%)</span>
+                        <span>{tax.toFixed(2)} AFN</span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-gray-900 text-base pt-1 border-t border-gray-200">
+                        <span>Total</span>
+                        <span>{total.toFixed(2)} AFN</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Customer:{" "}
+                      <span className="text-gray-600 font-medium">
+                        {customerLabel}
+                      </span>
+                      &nbsp;·&nbsp; Inventory:{" "}
+                      <span className="text-gray-600 font-medium">
+                        {inventoryLabel}
+                      </span>
+                    </p>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                <AlertDialogCancel className="rounded-xl h-11 w-full sm:w-auto">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onPay}
+                  className="rounded-xl h-11 w-full sm:w-auto bg-black text-white hover:bg-black/90"
+                >
+                  Confirm & Pay
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
     </div>

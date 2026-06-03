@@ -4,8 +4,6 @@ import { completeStockOut, createSale, createStockOut } from "@/queries/sale";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface PosCartItem {
   id: string;
   name: string;
@@ -15,7 +13,6 @@ export interface PosCartItem {
   stock: number;
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
 interface UsePosOrderOptions {
   onSaleSuccess?: () => void;
 }
@@ -73,6 +70,22 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
     );
   };
 
+  // Direct number input — clamps to stock, removes if 0
+  const setItemQuantity = (productId: string, value: number) => {
+    if (value <= 0) {
+      setCart((prev) => prev.filter((i) => i.id !== productId));
+      return;
+    }
+    setCart((prev) =>
+      prev.map((i) => {
+        if (i.id !== productId) return i;
+        const clamped = Math.min(value, i.stock);
+        if (value > i.stock) toast.warning(`Only ${i.stock} in stock`);
+        return { ...i, quantity: clamped };
+      }),
+    );
+  };
+
   const removeFromCart = (productId: string) => {
     setCart((prev) => prev.filter((i) => i.id !== productId));
   };
@@ -82,13 +95,9 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
     setCustomerId("");
   };
 
-  // ── Totals ──
-
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
-
-  // ── Pay: create sale → create stock-out → mark stock-out done ──
 
   const handlePay = async () => {
     if (!customerId) {
@@ -106,22 +115,19 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
 
     setSubmitting(true);
     try {
-      // Step 1 — create sale
       const sale = await createSale({
         customerId,
         items: cart.map((i) => ({
           productId: i.id,
           quantity: i.quantity,
-          unitPrice: i.price + i.price * 0.1, // include tax in unit price since we don't have a separate tax line-item in the backend
+          unitPrice: i.price + i.price * 0.1,
         })),
       });
 
-      // Build productId → saleItemId map
       const saleItemMap = new Map(
         sale.items.map((si) => [si.productId, si.id]),
       );
 
-      // Step 2 — create stock-out
       const stockOut = await createStockOut({
         saleId: sale.id,
         inventoryId,
@@ -131,13 +137,10 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
         })),
       });
 
-      // Step 3 — mark stock-out done (deducts from inventory)
       await completeStockOut(stockOut.id);
 
       toast.success("Sale completed and stock updated");
       clearCart();
-
-      // Notify the page to re-fetch inventory so stock quantities are fresh
       onSaleSuccess?.();
     } catch (err: unknown) {
       const msg =
@@ -159,6 +162,7 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
     setInventoryLabel,
     addToCart,
     updateQuantity,
+    setItemQuantity,
     removeFromCart,
     clearCart,
     subtotal,

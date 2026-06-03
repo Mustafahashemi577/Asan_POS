@@ -59,6 +59,9 @@ export default function PosPage() {
       .finally(() => setLoadingInventory(false));
   }, []);
 
+  // ── Cart / order ─────────────────────────────────────────────────────────────
+  // inventoryId + inventoryLabel live in the hook (persisted to localStorage)
+
   const {
     cart,
     customerId,
@@ -70,6 +73,7 @@ export default function PosPage() {
     addToCart,
     updateQuantity,
     removeFromCart,
+    setItemQuantity,
     subtotal,
     tax,
     total,
@@ -219,6 +223,7 @@ export default function PosPage() {
             onCustomerChange={handleCustomerChange}
             cart={cart}
             onUpdateQuantity={updateQuantity}
+            onSetQuantity={setItemQuantity}
             onRemoveItem={removeFromCart}
             subtotal={subtotal}
             tax={tax}
@@ -275,6 +280,7 @@ export default function PosPage() {
                 onCustomerChange={handleCustomerChange}
                 cart={cart}
                 onUpdateQuantity={updateQuantity}
+                onSetQuantity={setItemQuantity}
                 onRemoveItem={removeFromCart}
                 subtotal={subtotal}
                 tax={tax}
