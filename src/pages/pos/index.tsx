@@ -1,12 +1,14 @@
 import { Pagination } from "@/components/ui/pagination";
 import { usePagination } from "@/hooks/use-pagination";
 import { useSearch } from "@/hooks/use-search";
+import { getCustomers } from "@/queries/customer";
 import type { PosProduct } from "@/queries/pos-inventory";
 import { getPosInventory } from "@/queries/pos-inventory";
 import type { Category } from "@/types";
 import { ShoppingCart, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PosCategoryFilter } from "./components/pos-category-filter";
+import { PosInventoryCombobox } from "./components/pos-inventory-combobox";
 import { PosOrderDetails } from "./components/pos-order-details";
 import { PosProductList } from "./components/pos-product-list";
 import { usePosOrder } from "./components/use-pos-order";
@@ -26,7 +28,37 @@ export default function PosPage() {
     onSearch: resetToPage1,
   });
 
-  // ── Load inventory products ──────────────────────────────────────────────────
+  // ── Cart / order — must come before loadInventory so inventoryId is available ──
+
+  const {
+    cart,
+    customerId,
+    setCustomerId,
+    inventoryId,
+    inventoryLabel,
+    setInventoryId,
+    setInventoryLabel,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    setItemQuantity,
+    subtotal,
+    tax,
+    total,
+    submitting,
+    handlePay,
+  } = usePosOrder({
+    // use a ref-based callback so it always sees the latest inventoryId
+    onSaleSuccess: () => loadInventoryRef.current(inventoryIdRef.current),
+  });
+
+  // Refs so the onSaleSuccess closure never goes stale
+  const inventoryIdRef = useRef(inventoryId);
+  useEffect(() => {
+    inventoryIdRef.current = inventoryId;
+  }, [inventoryId]);
+
+  // ── Load inventory products ───────────────────────────────────────────────────
 
   const loadInventory = useCallback((id: string) => {
     if (!id) {
@@ -59,35 +91,30 @@ export default function PosPage() {
       .finally(() => setLoadingInventory(false));
   }, []);
 
-  // ── Cart / order ─────────────────────────────────────────────────────────────
-  // inventoryId + inventoryLabel live in the hook (persisted to localStorage)
+  // Keep loadInventory ref in sync so onSaleSuccess always calls the latest version
+  const loadInventoryRef = useRef(loadInventory);
+  useEffect(() => {
+    loadInventoryRef.current = loadInventory;
+  }, [loadInventory]);
 
-  const {
-    cart,
-    customerId,
-    setCustomerId,
-    inventoryId,
-    inventoryLabel,
-    setInventoryId,
-    setInventoryLabel,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    setItemQuantity,
-    subtotal,
-    tax,
-    total,
-    submitting,
-    handlePay,
-  } = usePosOrder({
-    // After a successful sale, re-fetch the inventory to get fresh stock quantities
-    onSaleSuccess: () => loadInventory(inventoryId),
-  });
+  // ── On mount: restore inventory + pre-select walk-in customer ────────────────
 
-  // On mount (including refresh) restore the inventory if one was previously selected
   useEffect(() => {
     if (inventoryId) loadInventory(inventoryId);
-  }, []); // intentionally runs once on mount only
+
+    if (!customerId) {
+      getCustomers({ page: 1, itemsPerPage: 10 })
+        .then(({ data }) => {
+          if (data.length > 0) {
+            setCustomerId(data[0].id);
+            setCustomerLabel(data[0].name);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Derived ───────────────────────────────────────────────────────────────────
 
   const cartQuantities = useMemo(
     () =>
@@ -99,8 +126,6 @@ export default function PosPage() {
   );
 
   const totalCartItems = cart.reduce((s, i) => s + i.quantity, 0);
-
-  // ── Client-side filter + paginate ─────────────────────────────────────────────
 
   const filteredProducts = useMemo(() => {
     let result = allProducts;
@@ -148,10 +173,21 @@ export default function PosPage() {
     setMobileSheetOpen(false);
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col lg:flex-row">
       {/* ── Product list ── */}
       <div className="bg-white flex-1 rounded-xl min-w-0 overflow-y-auto p-4 space-y-3 pb-24 lg:pb-4">
+        {/* MOBILE: inventory picker always visible so user never needs to open sheet for it */}
+        <div className="lg:hidden">
+          <PosInventoryCombobox
+            value={inventoryId}
+            label={inventoryLabel}
+            onChange={handleInventoryChange}
+          />
+        </div>
+
         <PosCategoryFilter
           categories={categories}
           selected={selectedCategory}
@@ -161,7 +197,7 @@ export default function PosPage() {
         />
 
         {!inventoryId ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
               <svg
                 className="w-8 h-8 text-gray-300"
@@ -182,7 +218,7 @@ export default function PosPage() {
             </p>
             <p className="text-sm text-gray-400 mt-1">
               <span className="lg:hidden">
-                Tap the cart button below to select an inventory
+                Select an inventory above to load products
               </span>
               <span className="hidden lg:inline">
                 Choose an inventory on the right to load products
@@ -241,7 +277,9 @@ export default function PosPage() {
           className="relative flex items-center gap-2.5 bg-black text-white pl-4 pr-5 py-3 rounded-2xl shadow-xl active:scale-95 transition-transform"
         >
           <ShoppingCart className="w-5 h-5" />
-          <span className="text-sm font-semibold">Order</span>
+          <span className="text-sm font-semibold">
+            {totalCartItems > 0 ? `Order (${totalCartItems})` : "Order"}
+          </span>
           {totalCartItems > 0 && (
             <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-blue-500 text-white text-[11px] font-bold flex items-center justify-center shadow">
               {totalCartItems}
@@ -258,8 +296,8 @@ export default function PosPage() {
             onClick={() => setMobileSheetOpen(false)}
           />
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[90dvh]">
-            <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
+            <div className="relative flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-gray-100">
+              <div className="w-10 h-1 rounded-full bg-gray-200 absolute left-1/2 -translate-x-1/2 top-2" />
               <h2 className="text-base font-semibold text-gray-900">
                 Order Details
               </h2>

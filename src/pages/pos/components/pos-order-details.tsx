@@ -34,6 +34,7 @@ interface PosOrderDetailsProps {
   submitting: boolean;
   onPay: () => void;
 }
+
 function QuantityInput({
   item,
   onUpdateQuantity,

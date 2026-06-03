@@ -1,10 +1,10 @@
 import api from "@/lib/axios";
 
 import type {
-    CreateUserPayload,
-    UpdateUserPayload,
-    User,
-    UsersMeta,
+  CreateUserPayload,
+  UpdateUserPayload,
+  User,
+  UsersMeta,
 } from "@/types/user";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -18,13 +18,13 @@ export interface UsersQuery {
 
 export function usersKey(params: UsersQuery = {}) {
   const { search = "", page = 1, itemsPerPage = 15, role = "" } = params;
-  return `/users?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}&role=${role}`;
+  return `/employees?search=${search}&page=${page}&itemsPerPage=${itemsPerPage}&role=${role}`;
 }
 
 export const getUsers = (
   query: UsersQuery = {},
 ): Promise<{ data: User[]; meta: UsersMeta }> =>
-  api.get("/users", { params: query }).then((r) => {
+  api.get("/employees", { params: query }).then((r) => {
     const raw = r.data;
     const items: User[] = Array.isArray(raw)
       ? raw
@@ -41,24 +41,22 @@ export const getUsers = (
 // ── Single ────────────────────────────────────────────────────────────────────
 
 export const getUser = (id: string): Promise<User> =>
-  api.get(`/users/${id}`).then((r) => r.data as User);
+  api.get(`/employees/${id}`).then((r) => r.data as User);
 
 // ── Create ────────────────────────────────────────────────────────────────────
 
 export const createUser = (
   payload: CreateUserPayload,
 ): Promise<{ message: string }> =>
-  api.post("/users", payload).then((r) => r.data);
-
-// ── Update ────────────────────────────────────────────────────────────────────
+  api.post("/employees/register", payload).then((r) => r.data);
 
 export const updateUser = (
   id: string,
   payload: UpdateUserPayload,
 ): Promise<{ message: string }> =>
-  api.put(`/users/${id}`, payload).then((r) => r.data);
+  api.put(`/employees/${id}`, payload).then((r) => r.data);
 
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 export const deleteUser = (id: string): Promise<{ message: string }> =>
-  api.delete(`/users/${id}`).then((r) => r.data);
+  api.delete(`/employees/${id}`).then((r) => r.data);
