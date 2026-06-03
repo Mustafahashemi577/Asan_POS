@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/store";
+import { decodeToken } from "@/lib/utils";
 import TwoFADialog from "@/pages/(auth)/two-fa-dialog";
 import { login } from "@/queries/auth";
 import { Eye, EyeOff } from "lucide-react";
@@ -34,6 +35,7 @@ export default function LoginForm() {
   };
 
   const { setAuth } = useAuthStore();
+
   const handleSubmit = async () => {
     setError("");
     if (!form.email && !form.password)
@@ -44,14 +46,45 @@ export default function LoginForm() {
     try {
       setLoading(true);
       const res = await login({ email: form.email, password: form.password });
+
       if (res.data.twoFactorRequired) {
         setTwoFAOpen(true);
         setLoading(false);
         return;
       }
 
-      setAuth({ id: "", email: form.email || "" }, res.data.token);
-      navigate("/dashboard", { replace: true });
+      const token = res.data.token;
+      if (!token) {
+        setError("Login failed: no token received");
+        return;
+      }
+
+      const decoded = decodeToken<{ role: string; id: string; email: string }>(
+        token,
+      );
+      console.log(
+        "decoded role:",
+        decoded?.role,
+        "navigating to:",
+        decoded?.role === "Cashier" ? "/pos" : "/dashboard",
+      );
+      if (!decoded) {
+        setError("Login failed: invalid token");
+        return;
+      }
+
+      setAuth(
+        {
+          id: decoded.id || "",
+          email: decoded.email || form.email,
+          role: decoded.role as "Admin" | "Cashier",
+        },
+        token,
+      );
+
+      navigate(decoded.role === "Cashier" ? "/pos" : "/dashboard", {
+        replace: true,
+      });
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg || "Login failed");

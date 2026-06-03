@@ -1,6 +1,7 @@
 import OtpDialog from "@/components/otp-dialog";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/lib/store";
+import { decodeToken } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -22,9 +23,32 @@ export default function TwoFADialog({ open, onClose, email, password }: Props) {
       description="Enter the 6-digit code from your authenticator app"
       onVerify={async (code) => {
         const res = await api.post("/auth/login", { email, password, code });
-        setAuth({ id: "", email }, res.data.token);
+
+        const token = res.data.token;
+        const decoded = decodeToken<{
+          role: string;
+          id: string;
+          email: string;
+        }>(token);
+        console.log(
+          "decoded role:",
+          decoded?.role,
+          "navigating to:",
+          decoded?.role === "Cashier" ? "/pos" : "/dashboard",
+        );
+        setAuth(
+          {
+            id: decoded?.id || "",
+            email: decoded?.email || email,
+            role: decoded?.role as "Admin" | "Cashier",
+          },
+          token,
+        );
+
         setTwoFAEnabled(true);
-        navigate("/dashboard", { replace: true });
+        navigate(decoded?.role === "Cashier" ? "/pos" : "/dashboard", {
+          replace: true,
+        });
       }}
     />
   );

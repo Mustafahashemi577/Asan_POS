@@ -13,10 +13,11 @@ import Purchases from "@/pages/Purchases";
 import NewPurchasePage from "@/pages/Purchases/new";
 import ViewPurchase from "@/pages/Purchases/view-purchase";
 import Report from "@/pages/report";
+import UnauthorizedPage from "@/pages/unauthorized";
 import UsersPage from "@/pages/users";
 import { createBrowserRouter } from "react-router-dom";
 import { authRoutes } from "./auth";
-import { PrivateRoute, PublicRoute } from "./guards";
+import { PrivateRoute, PublicRoute, RoleRoute } from "./guards";
 
 export const router = createBrowserRouter([
   {
@@ -34,100 +35,107 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        path: "/dashboard",
+        path: "/unauthorized",
         element: (
           <PrivateRoute>
-            <Dashboard />
+            <UnauthorizedPage />
           </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard",
+        element: (
+          <RoleRoute allowed={["Admin"]}>
+            <Dashboard />
+          </RoleRoute>
         ),
       },
       {
         path: "/profile",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <ProfilePage />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/categories",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Category />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/products",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Products />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
-
       {
         path: "/reports",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Report />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/inventories",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Inventory />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/Purchases",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Purchases />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/Purchases/new",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <NewPurchasePage />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/Purchases/:id",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <ViewPurchase />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/journals",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Journals />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/contacts",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <Contacts />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {
         path: "/users",
         element: (
-          <PrivateRoute>
+          <RoleRoute allowed={["Admin"]}>
             <UsersPage />
-          </PrivateRoute>
+          </RoleRoute>
         ),
       },
       {

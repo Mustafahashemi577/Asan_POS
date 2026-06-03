@@ -12,7 +12,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor to handle 401 errors globally
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
@@ -20,16 +19,20 @@ api.interceptors.response.use(
       _401Handled?: boolean;
     };
 
-    // Only handle 401 errors that haven't been processed yet
     if (error.response?.status === 401 && config && !config._401Handled) {
-      // Mark this request as handled to prevent infinite loops
       config._401Handled = true;
 
-      // Only clear auth and redirect if we're not already on the login page
       const currentPath = window.location.pathname;
       if (currentPath !== "/") {
-        // Clear the auth state to remove invalid token
         useAuthStore.getState().clearAuth();
+      }
+    }
+
+    // Redirect to unauthorized page on 403
+    if (error.response?.status === 403) {
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/unauthorized") {
+        window.location.href = "/unauthorized";
       }
     }
 

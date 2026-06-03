@@ -6,6 +6,8 @@ export const register = (payload: Register) =>
   api.post("/auth/register", payload);
 
 interface LoginResponse {
+  id: string;
+  role: "Admin" | "Cashier";
   message: string;
   token?: string;
   twoFactorRequired?: boolean;

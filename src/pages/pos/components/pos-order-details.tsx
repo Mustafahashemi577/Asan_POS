@@ -34,14 +34,6 @@ interface PosOrderDetailsProps {
   submitting: boolean;
   onPay: () => void;
 }
-
-// ── Editable quantity cell ────────────────────────────────────────────────────
-// - Always an input, never toggled
-// - Fully erasable: when empty shows placeholder "0", immediately calls
-//   onSetQuantity(0) so the product card badge and totals update in real time
-// - Commits final value on blur / Enter; Escape restores previous value
-// - Clamps to stock on commit
-
 function QuantityInput({
   item,
   onUpdateQuantity,
