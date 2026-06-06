@@ -1,4 +1,3 @@
-// TODO: Replace mock data with real API call using SWR when transactions endpoint is ready
 import {
   Table,
   TableBody,
@@ -21,144 +20,12 @@ export interface Transaction {
   status: TransactionStatus;
 }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
-
-export const TRANSACTIONS: Transaction[] = [
-  {
-    id: "21239172AKS231",
-    customer: "Deni Setiawan",
-    date: "2024-04-27",
-    typeService: "Delivery",
-    total: 10,
-    status: "Pending",
-  },
-  {
-    id: "21239172AKS232",
-    customer: "Nemaanestina",
-    date: "2024-04-27",
-    typeService: "Take Away",
-    total: 22,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS233",
-    customer: "Dina Septiani",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 22,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS234",
-    customer: "Relastini",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 11,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS235",
-    customer: "Vikinaki",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 224,
-    status: "Declined",
-  },
-  {
-    id: "21239172AKS236",
-    customer: "Purwa Adi Wicaksana",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 20,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS237",
-    customer: "Wade Warren",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 54,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS238",
-    customer: "Esther Howard",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 54,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS239",
-    customer: "Ronald Richards",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 98,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS240",
-    customer: "Purwa Adi Wicaksana",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 90,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS241",
-    customer: "Floyd",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 15,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS242",
-    customer: "Bruce",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 123,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS243",
-    customer: "Cameron",
-    date: "2024-04-27",
-    typeService: "Take Away",
-    total: 111,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS244",
-    customer: "Nathan",
-    date: "2024-04-27",
-    typeService: "Dine In",
-    total: 120,
-    status: "Completed",
-  },
-  {
-    id: "21239172AKS245",
-    customer: "Jacob",
-    date: "2024-04-27",
-    typeService: "Delivery",
-    total: 28,
-    status: "Completed",
-  },
-];
-
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface TransactionTableProps {
-  /** Filtered rows to display. Defaults to all TRANSACTIONS (used by dashboard). */
-  rows?: Transaction[];
-  /** Table section title. */
+  rows: Transaction[];
   title?: string;
-  /** Show the Status column and badge. Default true. */
   showStatus?: boolean;
-  /** Show the Action / View column. Default true. */
-  showAction?: boolean;
-  /** Show the Total Payment footer row. Default false. */
-  showTotal?: boolean;
 }
 
 // ── Status badge helper ───────────────────────────────────────────────────────
@@ -172,15 +39,10 @@ const STATUS_STYLES: Record<TransactionStatus, string> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TransactionTable({
-  rows = TRANSACTIONS,
+  rows,
   title = "Recent Transaction",
   showStatus = true,
-  showAction = true,
-  showTotal = false,
 }: TransactionTableProps) {
-  const totalPayment = rows.reduce((s, t) => s + t.total, 0);
-
-  // Build desktop column headers dynamically
   const headers = [
     "Transaction ID",
     "Customer",
@@ -188,20 +50,14 @@ export default function TransactionTable({
     "Type Services",
     "Total Balance",
     ...(showStatus ? ["Status"] : []),
-    ...(showAction ? ["Action"] : []),
   ];
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-150 ">
+      <div className="bg-white rounded-2xl border border-gray-150">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-          {showAction && (
-            <button className="text-xs text-blue-500 hover:underline">
-              View all
-            </button>
-          )}
         </div>
 
         {/* DESKTOP TABLE */}
@@ -242,17 +98,19 @@ export default function TransactionTable({
                       {row.customer}
                     </TableCell>
                     <TableCell className="text-xs text-gray-600 whitespace-nowrap">
-                      {new Date(row.date).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {row.date
+                        ? new Date(row.date).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-xs text-gray-600 whitespace-nowrap">
                       {row.typeService}
                     </TableCell>
                     <TableCell className="text-xs text-gray-800 font-medium whitespace-nowrap">
-                      AFN {(row.total * 1000).toLocaleString("id-ID")},00
+                      AFN {row.total.toLocaleString("id-ID")}
                     </TableCell>
                     {showStatus && (
                       <TableCell className="whitespace-nowrap">
@@ -261,13 +119,6 @@ export default function TransactionTable({
                         >
                           {row.status}
                         </span>
-                      </TableCell>
-                    )}
-                    {showAction && (
-                      <TableCell className="pr-6 whitespace-nowrap">
-                        <button className="text-xs text-blue-500 hover:underline">
-                          View
-                        </button>
                       </TableCell>
                     )}
                   </TableRow>
@@ -303,32 +154,13 @@ export default function TransactionTable({
                 </p>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>{row.typeService}</span>
-                  <span>
-                    AFN {(row.total * 1000).toLocaleString("id-ID")},00
-                  </span>
+                  <span>AFN {row.total.toLocaleString("id-ID")}</span>
                 </div>
-                {showAction && (
-                  <button className="text-xs text-blue-500 mt-2 hover:underline">
-                    View Receipt
-                  </button>
-                )}
               </div>
             ))
           )}
         </div>
       </div>
-      {/* Total Payment footer */}
-      {showTotal && (
-        <div className="mb-auto px-5 py-4 flex items-center justify-between">
-          <span className="text-sm text-gray-600 font-medium">
-            Total Payment
-          </span>
-          <span className="text-base font-bold text-gray-900">
-            {totalPayment.toLocaleString("id-ID", { minimumFractionDigits: 2 })}
-            AFN
-          </span>
-        </div>
-      )}
     </>
   );
 }

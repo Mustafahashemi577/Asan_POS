@@ -1,4 +1,6 @@
-import TransactionTable, { TRANSACTIONS } from "@/components/transactiontable";
+import { Loading } from "@/components/loading";
+import type { Transaction } from "@/components/transactiontable";
+import TransactionTable from "@/components/transactiontable";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -7,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useJournals } from "@/hooks/use-journal";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import TransactionDateInput from "./components/transactionDateInput";
@@ -25,15 +28,65 @@ function fmtDate(iso: string) {
   });
 }
 
+function toTransactionStatus(
+  status: string | undefined,
+): Transaction["status"] {
+  switch ((status ?? "").toLowerCase()) {
+    case "pending":
+      return "Pending";
+    case "posted":
+    case "approved":
+    case "done":
+      return "Completed";
+    case "rejected":
+    case "cancelled":
+      return "Declined";
+    default:
+      return "Completed";
+  }
+}
+
+function extractCustomerName(accountName: string | undefined): string {
+  if (!accountName) return "—";
+  return (
+    accountName
+      .replace(/\s*-\s*Accounts\s*(Payable|Receivable)\s*$/i, "")
+      .trim() || "—"
+  );
+}
+
 export default function Report() {
+  const j = useJournals();
   const [startDate, setStartDate] = useState("2024-03-27");
   const endDate = addOneMonth(startDate);
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
 
+  // Map journal entries → Transaction rows
+  const allRows = useMemo<Transaction[]>(() => {
+    if (!j.journals?.length) return [];
+
+    return j.journals.map((je) => {
+      const dr = je.items.find((i) => i.debit != null);
+      const amount = dr?.debit ?? 0;
+      const accountName = dr?.account?.name;
+
+      return {
+        id: `${je.sequence.prefix}-${String(je.sequence.lastIndex).padStart(4, "0")}`,
+        customer: extractCustomerName(accountName),
+        date: je.createdAt
+          ? new Date(je.createdAt).toISOString().split("T")[0]
+          : "",
+        typeService: accountName ?? "—",
+        total: amount,
+        status: toTransactionStatus(je.status),
+      };
+    });
+  }, [j.journals]);
+
   const filtered = useMemo(
     () =>
-      TRANSACTIONS.filter((t) => {
+      allRows.filter((t) => {
         const matchesStatus =
           status === "all" || t.status.toLowerCase() === status.toLowerCase();
         const matchesSearch =
@@ -43,14 +96,16 @@ export default function Report() {
         const matchesDate = t.date >= startDate && t.date <= endDate;
         return matchesStatus && matchesSearch && matchesDate;
       }),
-    [status, search, startDate, endDate],
+    [allRows, status, search, startDate, endDate],
   );
 
   const dateRangeLabel = `${fmtDate(startDate)} - ${fmtDate(endDate)}`;
 
+  if (j.loading) return <Loading message="Loading reports..." />;
+
   return (
     <div className="overflow-y-auto">
-      <div className="p-6 space-y-5 ">
+      <div className="p-6 space-y-5">
         {/* ── HEADER ──────────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -98,14 +153,18 @@ export default function Report() {
           </div>
         </div>
 
-        {/* ── TABLE — reused from TransactionTable ─────────────────────── */}
-        <TransactionTable
-          rows={filtered}
-          title="Sales Result Report"
-          showStatus
-          showAction
-          showTotal
-        />
+        {/* ── TABLE ───────────────────────────────────────────────────── */}
+        {j.error ? (
+          <div className="bg-white rounded-2xl border border-gray-150 px-5 py-12 text-center text-sm text-red-500">
+            {j.error}
+          </div>
+        ) : (
+          <TransactionTable
+            rows={filtered}
+            title="Sales Result Report"
+            showStatus
+          />
+        )}
       </div>
     </div>
   );

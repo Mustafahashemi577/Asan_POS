@@ -104,6 +104,7 @@ export function useJournals(): UseJournalsReturn {
   const stats = useMemo((): JournalStats => {
     const now = new Date();
     const thisMonth = journals.filter((je) => {
+      if (!je.createdAt) return false;
       const d = new Date(je.createdAt);
       return (
         d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
