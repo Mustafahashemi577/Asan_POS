@@ -32,7 +32,7 @@ export default function UnauthorizedPage() {
           Go back
         </Button>
         <Button
-          variant="outline"
+          variant="destructive"
           className="gap-2"
           onClick={() => {
             logout();

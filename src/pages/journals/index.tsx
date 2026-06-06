@@ -178,7 +178,7 @@ export default function Journals() {
                       <th className="px-5 py-3 text-left">Date</th>
                       <th className="px-5 py-3 text-left">Debit account</th>
                       <th className="px-5 py-3 text-left">Credit account</th>
-                      <th className="px-5 py-3 text-right">Amount</th>
+                      <th className="px-5 py-3 text-left">Amount (AFN)</th>
                       <th className="px-5 py-3 text-right">Status</th>
                     </tr>
                   </thead>
@@ -215,7 +215,13 @@ export default function Journals() {
                           <td className="px-5 py-3 text-xs text-gray-800 max-w-[180px] truncate">
                             {cr?.account?.name ?? "—"}
                           </td>
-                          <td className="px-5 py-3 text-xs font-medium text-right whitespace-nowrap text-red-600">
+                          <td
+                            className={`px-5 py-3 text-xs font-medium whitespace-nowrap tabular-nums ${
+                              cr?.account?.name === "Default Account"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
                             AFN {amount?.toLocaleString()}
                           </td>
                           <td className="px-5 py-3 text-right">
@@ -252,8 +258,15 @@ export default function Journals() {
                           <p className="text-xs font-medium text-gray-500">
                             {ref}
                           </p>
-                          <p className="text-sm font-semibold text-blue-600 mt-0.5">
-                            AFN {amount?.toLocaleString()}
+                          ={" "}
+                          <p
+                            className={`text-sm font-semibold mt-0.5 ${
+                              cr?.account?.name === "Default Account"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {amount?.toLocaleString()}
                           </p>
                         </div>
                         <span
