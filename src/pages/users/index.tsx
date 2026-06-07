@@ -1,32 +1,24 @@
-import { Plus, Search, XIcon } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import { useUsers } from "@/hooks/use-users";
-import type { UserFormValues } from "@/pages/users/components/AddUserDialog";
-import AddUserDialog from "@/pages/users/components/AddUserDialog";
-import { createUser } from "@/queries/user";
-import type { UserRole } from "@/types/user";
+import { createUser, deleteUser, updateUser } from "@/queries/user";
+import type { User } from "@/types/user";
+import type { UserFormValues } from "./components/AddUserDialog";
+import AddUserDialog from "./components/AddUserDialog";
+import type { EditUserFormValues } from "./components/EditUserDialog";
+import EditUserDialog from "./components/EditUserDialog";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<string, string> = {
   Admin: "text-purple-600 bg-purple-50 border-purple-100",
   Cashier: "text-blue-600 bg-blue-50 border-blue-100",
-  Accountant: "text-green-600 bg-green-50 border-green-100",
 };
-
-const USER_ROLES: UserRole[] = ["Admin", "Cashier"];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -40,22 +32,37 @@ export default function UsersPage() {
     search,
     handleSearch,
     clearSearch,
-    role,
-    setRole,
+
     mutate,
     isLoading,
     PAGE_SIZE,
   } = useUsers();
 
   const [searchOpen, setSearchOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // ── Submit handler ──────────────────────────────────────────────────────────
+  // ── Add dialog ──────────────────────────────────────────────────────────────
+  const [addOpen, setAddOpen] = useState(false);
+
+  // ── Edit dialog — use data already in the list, no extra fetch needed ────────
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleAddUser = async (values: UserFormValues) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword, ...payload } = values;
     await createUser(payload);
+    mutate();
+  };
+
+  const handleEditUser = async (id: string, values: EditUserFormValues) => {
+    await updateUser(id, values);
+    mutate();
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    await deleteUser(id);
+    setSelectedUser(null);
     mutate();
   };
 
@@ -114,22 +121,8 @@ export default function UsersPage() {
                 </div>
               )}
 
-              <Select value={role} onValueChange={(v) => setRole(v)}>
-                <SelectTrigger className="h-10 rounded-xl border-gray-200 text-sm w-40">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Roles</SelectItem>
-                  {USER_ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Button
-                onClick={() => setDialogOpen(true)}
+                onClick={() => setAddOpen(true)}
                 className="h-10 rounded-xl bg-black text-white hover:bg-black/90 text-sm gap-1.5"
               >
                 <Plus className="w-4 h-4" />
@@ -143,10 +136,20 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-white">
-                  {["#", "Name", "Email", "Phone", "Role"].map((h) => (
+                  {[
+                    "#",
+                    "First Name",
+                    "Last Name",
+                    "Email",
+                    "Phone",
+                    "Role",
+                    "Actions",
+                  ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 font-semibold text-gray-700 whitespace-nowrap text-left"
+                      className={`px-4 py-3 font-semibold text-gray-700 whitespace-nowrap ${
+                        h === "Actions" ? "text-center" : "text-left"
+                      }`}
                     >
                       {h}
                     </th>
@@ -158,7 +161,7 @@ export default function UsersPage() {
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={7}
                       className="px-4 py-16 text-center text-sm text-gray-400"
                     >
                       Loading…
@@ -167,7 +170,7 @@ export default function UsersPage() {
                 ) : users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={7}
                       className="px-4 py-16 text-center text-sm text-gray-400"
                     >
                       No users found.
@@ -177,7 +180,8 @@ export default function UsersPage() {
                   users.map((user, idx) => (
                     <tr
                       key={user.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors"
+                      onClick={() => setSelectedUser(user)}
+                      className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer"
                     >
                       {/* # */}
                       <td className="px-4 py-3 text-gray-400 font-mono text-xs">
@@ -187,9 +191,14 @@ export default function UsersPage() {
                         )}
                       </td>
 
-                      {/* Name */}
+                      {/* First name */}
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {user.name}
+                      </td>
+
+                      {/* Last name */}
+                      <td className="px-4 py-3 text-gray-600">
+                        {user.lastName}
                       </td>
 
                       {/* Email */}
@@ -217,6 +226,29 @@ export default function UsersPage() {
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
+
+                      {/* Actions */}
+                      <td
+                        className="px-4 py-3 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setSelectedUser(user)}
+                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={async () => handleDeleteUser(user.id)}
+                            className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -242,9 +274,18 @@ export default function UsersPage() {
 
       {/* Add User Dialog */}
       <AddUserDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={addOpen}
+        onOpenChange={setAddOpen}
         onSubmit={handleAddUser}
+      />
+
+      {/* Edit User Dialog */}
+      <EditUserDialog
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        user={selectedUser}
+        onSubmit={handleEditUser}
+        onDelete={handleDeleteUser}
       />
     </div>
   );

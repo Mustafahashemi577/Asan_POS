@@ -3,30 +3,30 @@ import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import CustomerDialog from "@/components/AddCustomerDialog";
 import DateInput from "@/components/ui/DateInput";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
+import CustomerDialog from "@/pages/contacts/components/AddCustomerDialog";
 import { ArrowLeft, Plus, User, UserPlus } from "lucide-react";
 
 import { InlineCombobox } from "./components/inline-combobox";
 import {
-  purchaseFormSchema,
-  type FormValues,
+    purchaseFormSchema,
+    type FormValues,
 } from "./components/purchase-form-schema";
 import { PurchaseItemRow } from "./components/purchase-item-row";
 

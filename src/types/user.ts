@@ -1,43 +1,47 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type UserRole = "Admin" | "Cashier" | "Accountant";
+export type UserRole = "Admin" | "Cashier";
+
+export type EmployeeGender = "male" | "female" | "Other";
 
 // ── Shapes ────────────────────────────────────────────────────────────────────
 
 export interface User {
   id: string;
-  firstName: string;
+  name: string;
   lastName: string;
-  username: string;
-  phone: string;
+  phone?: string;
   email: string;
-  role: UserRole;
+  gender?: EmployeeGender;
+  role?: "Cashier";
+  dob?: string;
   createdAt?: string;
 }
 
-// ── Create payload ────────────────────────────────────────────────────────────
+// ── Create payload → POST /employees/register ─────────────────────────────────
+// confirmPassword is frontend-only validation — never sent to the API
 
 export interface CreateUserPayload {
-  firstName: string;
+  name: string;
   lastName: string;
-  username: string;
-  phone: string;
   email: string;
-  role: UserRole;
   password: string;
-  confirmPassword: string;
+  phone?: string;
+  gender?: EmployeeGender;
+  dob?: string;
 }
 
-// ── Update payload ────────────────────────────────────────────────────────────
+// ── Update payload → PUT /employees/info ──────────────────────────────────────
+// Pass id in body — backend uses dto.id if present, else falls back to JWT user
 
 export interface UpdateUserPayload {
-  firstName?: string;
+  id?: string;
+  name?: string;
   lastName?: string;
-  username?: string;
   phone?: string;
   email?: string;
-  role?: UserRole;
-  password: string;
+  gender?: EmployeeGender;
+  dob?: string;
 }
 
 // ── Pagination meta ───────────────────────────────────────────────────────────

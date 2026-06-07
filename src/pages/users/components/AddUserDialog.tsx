@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import type { Value as PhoneValue } from "react-phone-number-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
@@ -42,15 +42,14 @@ import type { UserRole } from "@/types/user";
 
 const userSchema = z
   .object({
-    name: z.string().min(1, "Full name is required"),
     email: z
       .string()
       .min(1, "Email is required")
       .email("Enter a valid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
+    name: z.string().min(3, "First Name is required"),
+    lastName: z.string().min(3, "Last Name is required"),
     phone: z
       .string()
       .optional()
@@ -60,7 +59,7 @@ const userSchema = z
       ),
     gender: z.enum(["male", "female", "Other"] as const).optional(),
     dob: z.string().optional(),
-    role: z.enum(["Admin", "Cashier"] as const).optional(),
+    role: z.enum(["Cashier"] as const).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -69,7 +68,30 @@ const userSchema = z
 
 export type UserFormValues = z.infer<typeof userSchema>;
 
-const USER_ROLES: UserRole[] = ["Admin", "Cashier"];
+// ─── Edit schema (password optional) ─────────────────────────────────────────
+
+const editUserSchema = z.object({
+  firstName: z.string().min(3, "First Name is required"),
+  lastName: z.string().min(3, "Last Name is required"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Enter a valid email address"),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || isValidPhoneNumber(val),
+      "Enter a valid phone number",
+    ),
+  gender: z.enum(["male", "female", "Other"] as const).optional(),
+  dob: z.string().optional(),
+  role: z.enum(["Cashier"] as const).optional(),
+});
+
+export type EditUserFormValues = z.infer<typeof editUserSchema>;
+
+const USER_ROLES: UserRole[] = ["Cashier"];
 
 // ─── Credentials dialog ───────────────────────────────────────────────────────
 
@@ -176,7 +198,7 @@ function CredentialsDialog({
   );
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
+// ─── Add User Dialog ──────────────────────────────────────────────────────────
 
 interface AddUserDialogProps {
   open: boolean;
@@ -184,9 +206,7 @@ interface AddUserDialogProps {
   onSubmit: (values: UserFormValues) => Promise<void>;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export default function AddUserDialog({
+export function AddUserDialog({
   open,
   onOpenChange,
   onSubmit,
@@ -202,11 +222,10 @@ export default function AddUserDialog({
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      firstName: "",
+      name: "",
       lastName: "",
       phone: "",
       role: "Cashier",
@@ -219,22 +238,9 @@ export default function AddUserDialog({
     handleSubmit,
     reset,
     control,
-    setValue,
     setError,
     formState: { isSubmitting },
   } = form;
-
-  const firstName = useWatch({ control, name: "firstName" });
-  const lastName = useWatch({ control, name: "lastName" });
-
-  useEffect(() => {
-    if (!nameEditedRef.current) {
-      const suggested = [firstName?.trim(), lastName?.trim()]
-        .filter(Boolean)
-        .join(" ");
-      setValue("name", suggested, { shouldValidate: false });
-    }
-  }, [firstName, lastName, setValue]);
 
   useEffect(() => {
     if (open) {
@@ -280,7 +286,7 @@ export default function AddUserDialog({
             >
               {/* First + Last name */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {(["firstName", "lastName"] as const).map((field) => (
+                {(["name", "lastName"] as const).map((field) => (
                   <FormField
                     key={field}
                     control={control}
@@ -288,12 +294,12 @@ export default function AddUserDialog({
                     render={({ field: f }) => (
                       <FormItem>
                         <FormLabel>
-                          {field === "firstName" ? "First Name" : "Last Name"}
+                          {field === "name" ? "First Name" : "Last Name"}
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...f}
-                            placeholder={field === "firstName" ? "John" : "Doe"}
+                            placeholder={field === "name" ? "John" : "Doe"}
                             className="h-11 rounded-xl border-gray-200"
                           />
                         </FormControl>
@@ -303,29 +309,6 @@ export default function AddUserDialog({
                   />
                 ))}
               </div>
-
-              {/* Full name */}
-              <FormField
-                control={control}
-                name="name"
-                render={({ field: f }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...f}
-                        placeholder="John Doe"
-                        className="h-11 rounded-xl border-gray-200"
-                        onChange={(e) => {
-                          nameEditedRef.current = true;
-                          f.onChange(e);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Email */}
               <FormField
@@ -442,7 +425,7 @@ export default function AddUserDialog({
                 />
               </div>
 
-              {/* Password + Confirm — shared toggle button pattern */}
+              {/* Password + Confirm */}
               {(
                 [
                   {
@@ -513,3 +496,295 @@ export default function AddUserDialog({
     </>
   );
 }
+
+// ─── Edit User Dialog ─────────────────────────────────────────────────────────
+
+interface EditUserDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: {
+    id: string;
+    name: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    role?: UserRole;
+    gender?: "male" | "female" | "Other";
+    dob?: string;
+  } | null;
+  isLoading?: boolean;
+  onSubmit: (id: string, values: EditUserFormValues) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}
+
+export function EditUserDialog({
+  open,
+  onOpenChange,
+  user,
+  isLoading = false,
+  onSubmit,
+  onDelete,
+}: EditUserDialogProps) {
+  const [deleting, setDeleting] = useState(false);
+
+  const form = useForm<EditUserFormValues>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: "Cashier",
+      gender: "male",
+      dob: "",
+    },
+  });
+
+  const {
+    handleSubmit,
+    reset,
+    control,
+    setError,
+    formState: { isSubmitting },
+  } = form;
+
+  // Populate form when a user is selected
+  useEffect(() => {
+    if (open && user) {
+      reset({
+        firstName: user.name ?? "",
+        lastName: user.lastName ?? "",
+        email: user.email ?? "",
+        phone: user.phone ?? "",
+        role: "Cashier",
+        gender: user.gender ?? "male",
+        dob: user.dob ?? "",
+      });
+    }
+  }, [open, user, reset]);
+
+  const handleDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await onDelete(user.id);
+      onOpenChange(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleFormSubmit = async (values: EditUserFormValues) => {
+    if (!user) return;
+    try {
+      await onSubmit(user.id, values);
+      onOpenChange(false);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
+        const message: string =
+          err.response.data?.message ?? "Email already in use";
+        setError("email", { type: "server", message });
+      } else {
+        throw err;
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogHeader>
+          <span className="flex items-center justify-start gap-2 text-lg font-semibold">
+            <UserPlus className="h-5 w-5" />
+            <DialogTitle>Edit User</DialogTitle>
+          </span>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-3 mt-2 animate-pulse">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="h-3.5 w-24 bg-gray-100 rounded" />
+                <div className="h-11 w-full bg-gray-100 rounded-xl" />
+              </div>
+            ))}
+            <div className="h-11 w-full bg-gray-100 rounded-xl mt-2" />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form
+              onSubmit={handleSubmit(handleFormSubmit)}
+              className="space-y-4 mt-2"
+              noValidate
+            >
+              {/* First + Last name */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(["firstName", "lastName"] as const).map((field) => (
+                  <FormField
+                    key={field}
+                    control={control}
+                    name={field}
+                    render={({ field: f }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {field === "firstName" ? "First Name" : "Last Name"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...f}
+                            placeholder={field === "firstName" ? "John" : "Doe"}
+                            className="h-11 rounded-xl border-gray-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Email */}
+              <FormField
+                control={control}
+                name="email"
+                render={({ field: f }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...f}
+                        type="email"
+                        placeholder="john.doe@example.com"
+                        className="h-11 rounded-xl border-gray-200"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Date of Birth */}
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    {fieldState.error && (
+                      <FormMessage>{fieldState.error.message}</FormMessage>
+                    )}
+                  </FormItem>
+                )}
+              />
+
+              {/* Phone */}
+              <FormField
+                control={control}
+                name="phone"
+                render={({ field: f }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <PhoneNumberInput
+                        value={f.value as PhoneValue}
+                        placeholder="700 000 000"
+                        onChange={(val) => f.onChange(val ?? "")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Role + Gender */}
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={control}
+                  name="role"
+                  render={({ field: f }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select value={f.value} onValueChange={f.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {USER_ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {r}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="gender"
+                  render={({ field: f }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Gender{" "}
+                        <span className="text-gray-500 font-normal">
+                          (Optional)
+                        </span>
+                      </FormLabel>
+                      <Select value={f.value} onValueChange={f.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={deleting || isSubmitting}
+                  onClick={handleDelete}
+                  className="flex-1 h-11 rounded-xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                >
+                  {deleting ? "Deleting…" : "Delete User"}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || deleting}
+                  className="flex-1 h-11 rounded-xl bg-black hover:bg-black/90"
+                >
+                  {isSubmitting ? "Saving…" : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Default export (Add) ─────────────────────────────────────────────────────
+
+export default AddUserDialog;

@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import CustomerDialog from "@/components/AddCustomerDialog";
+import CustomerDialog from "@/pages/contacts/components/AddCustomerDialog";
 
 import { useCustomerDialog } from "@/hooks/use-customer-dialog";
 import { useCustomers } from "@/hooks/use-customers";
