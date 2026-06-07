@@ -48,7 +48,7 @@ export default function TransactionTable({
     "Customer",
     "Date",
     "Type Services",
-    "Total Balance",
+    "Total (AFN)",
     ...(showStatus ? ["Status"] : []),
   ];
 
@@ -110,7 +110,7 @@ export default function TransactionTable({
                       {row.typeService}
                     </TableCell>
                     <TableCell className="text-xs text-gray-800 font-medium whitespace-nowrap">
-                      AFN {row.total.toLocaleString("id-ID")}
+                      {row.total.toLocaleString("id-ID")}
                     </TableCell>
                     {showStatus && (
                       <TableCell className="whitespace-nowrap">

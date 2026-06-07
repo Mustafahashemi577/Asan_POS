@@ -115,8 +115,10 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
 
     setSubmitting(true);
     try {
+      // Step 1 — create the sale (backend validates stock against this inventory)
       const sale = await createSale({
         customerId,
+        inventoryId,
         items: cart.map((i) => ({
           productId: i.id,
           quantity: i.quantity,
@@ -124,6 +126,7 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
         })),
       });
 
+      // Step 2 — create the stock-out record (status: Pending)
       const saleItemMap = new Map(
         sale.items.map((si) => [si.productId, si.id]),
       );
@@ -137,6 +140,7 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
         })),
       });
 
+      // Step 3 — complete the stock-out (status: Done → deducts StockQuantity)
       await completeStockOut(stockOut.id);
 
       toast.success("Sale completed and stock updated");
