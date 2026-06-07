@@ -21,6 +21,9 @@ export interface UseUsersReturn {
   role: string;
   setRole: (role: string) => void;
   mutate: () => void;
+  optimisticAdd: (user: User) => void;
+  optimisticUpdate: (id: string, patch: Partial<User>) => void;
+  optimisticDelete: (id: string) => void;
   isLoading: boolean;
   PAGE_SIZE: number;
 }
@@ -53,6 +56,47 @@ export function useUsers(): UseUsersReturn {
     }),
   );
 
+  // Optimistically add a user to the list without waiting for a refetch
+  const optimisticAdd = (user: User) => {
+    if (!data) return;
+    mutate(
+      {
+        ...data,
+        data: [user, ...data.data],
+        meta: { ...data.meta, totalItems: data.meta.totalItems + 1 },
+      },
+      { revalidate: true },
+    );
+  };
+
+  // Optimistically update a user in the list
+  const optimisticUpdate = (id: string, patch: Partial<User>) => {
+    if (!data) return;
+    mutate(
+      {
+        ...data,
+        data: data.data.map((u) => (u.id === id ? { ...u, ...patch } : u)),
+      },
+      { revalidate: true },
+    );
+  };
+
+  // Optimistically remove a user from the list
+  const optimisticDelete = (id: string) => {
+    if (!data) return;
+    mutate(
+      {
+        ...data,
+        data: data.data.filter((u) => u.id !== id),
+        meta: {
+          ...data.meta,
+          totalItems: Math.max(0, data.meta.totalItems - 1),
+        },
+      },
+      { revalidate: true },
+    );
+  };
+
   const totalItems = data?.meta?.totalItems ?? 0;
   const itemsPerPage = data?.meta?.itemsPerPage ?? PAGE_SIZE;
 
@@ -70,6 +114,9 @@ export function useUsers(): UseUsersReturn {
     role,
     setRole,
     mutate,
+    optimisticAdd,
+    optimisticUpdate,
+    optimisticDelete,
     isLoading,
     PAGE_SIZE,
   };

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +77,7 @@ const userSchema = z
             : 0);
         return age >= MIN_AGE;
       }, `User must be at least ${MIN_AGE} years old`),
-    role: z.enum(["Admin", "Cashier"] as const).optional(),
+    role: z.enum(["Cashier"] as const).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -85,7 +86,7 @@ const userSchema = z
 
 export type UserFormValues = z.infer<typeof userSchema>;
 
-const USER_ROLES: UserRole[] = ["Admin", "Cashier"];
+const USER_ROLES: UserRole[] = ["Cashier"];
 
 // ─── Credentials dialog ───────────────────────────────────────────────────────
 

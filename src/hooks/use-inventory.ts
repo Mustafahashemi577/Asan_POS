@@ -19,7 +19,7 @@ export type {
   InventoryDetail,
   InventoryItem,
   InventoryProduct,
-  StockStatus,
+  StockStatus
 };
 
 export interface UseInventoryReturn {
@@ -221,7 +221,7 @@ export function useInventory(): UseInventoryReturn {
       .then((detail: Product | void) => {
         setProductDetail(detail?.id ? detail : null);
       })
-      .catch((err: any) => {
+      .catch((err) => {
         console.error("Failed to load product details:", err);
       })
       .finally(() => {
@@ -235,7 +235,7 @@ export function useInventory(): UseInventoryReturn {
     setProductDetail(null);
   };
 
-  const handleInventoryAdded = (_newId: string) => {
+  const handleInventoryAdded = () => {
     closeInventoryDialog();
     fetchInventories();
   };

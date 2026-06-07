@@ -11,7 +11,7 @@ import {
 import { formatDate } from "@/utils/profile.helpers";
 
 interface Props {
-  value: string;
+  value: string | undefined;
   onChange: (val: string) => void;
 }
 

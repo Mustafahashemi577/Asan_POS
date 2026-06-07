@@ -1,6 +1,6 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type UserRole = "Admin" | "Cashier";
+export type UserRole = "Cashier";
 
 export type EmployeeGender = "male" | "female" | "Other";
 
@@ -12,8 +12,8 @@ export interface User {
   lastName: string;
   phone?: string;
   email: string;
+  role?: UserRole;
   gender?: EmployeeGender;
-  role?: "Cashier";
   dob?: string;
   createdAt?: string;
 }
@@ -27,6 +27,7 @@ export interface CreateUserPayload {
   email: string;
   password: string;
   phone?: string;
+  role?: UserRole;
   gender?: EmployeeGender;
   dob?: string;
 }
@@ -40,8 +41,12 @@ export interface UpdateUserPayload {
   lastName?: string;
   phone?: string;
   email?: string;
+  role?: UserRole;
   gender?: EmployeeGender;
   dob?: string;
+  // Password change — backend requires oldPassword to validate before updating
+  oldPassword?: string;
+  password?: string;
 }
 
 // ── Pagination meta ───────────────────────────────────────────────────────────

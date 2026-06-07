@@ -1,8 +1,8 @@
-import { usePagination } from "@/hooks/use-pagination";
-import { useSearch } from "@/hooks/use-search";
 import { getCategories } from "@/queries/category";
 import type { Category } from "@/types";
 import { useEffect, useRef, useState } from "react";
+import { usePagination } from "./use-pagination";
+import { useSearch } from "./use-search";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -45,9 +45,9 @@ export function useCategories() {
         setCategories(data);
         setMeta(meta);
       })
-      .catch((err: any) => {
+      .catch((err) => {
         setError(
-          err?.response?.data?.message ?? err.message ?? "Failed to load",
+          err?.response?.data?.message ?? (err as string) ?? "Failed to load",
         );
       })
       .finally(() => setLoading(false));

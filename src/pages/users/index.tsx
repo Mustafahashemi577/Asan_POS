@@ -1,13 +1,27 @@
-import { Pencil, Plus, Search, Trash2, XIcon } from "lucide-react";
+import { Pencil, Plus, Search, XIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useUsers } from "@/hooks/use-users";
 import { createUser, deleteUser, updateUser } from "@/queries/user";
-import type { User } from "@/types/user";
+import type { User, UserRole } from "@/types/user";
 import type { UserFormValues } from "./components/AddUserDialog";
 import AddUserDialog from "./components/AddUserDialog";
 import type { EditUserFormValues } from "./components/EditUserDialog";
@@ -19,6 +33,72 @@ const ROLE_COLORS: Record<string, string> = {
   Admin: "text-purple-600 bg-purple-50 border-purple-100",
   Cashier: "text-blue-600 bg-blue-50 border-blue-100",
 };
+
+const USER_ROLES: UserRole[] = ["Cashier"];
+
+// ── Delete confirmation dialog ────────────────────────────────────────────────
+
+interface DeleteConfirmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: User | null;
+  onConfirm: () => Promise<void>;
+}
+
+function DeleteConfirmDialog({
+  open,
+  onOpenChange,
+  user,
+  onConfirm,
+}: DeleteConfirmDialogProps) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setDeleting(true);
+    try {
+      await onConfirm();
+      onOpenChange(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="rounded-2xl sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-base">Delete User</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-1">
+          <p className="text-sm text-gray-500">
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-gray-800">
+              {user?.name} {user?.lastName}
+            </span>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 h-10 rounded-xl border-gray-200"
+              onClick={() => onOpenChange(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 h-10 rounded-xl bg-red-500 hover:bg-red-600 text-white"
+              onClick={handleConfirm}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -32,8 +112,12 @@ export default function UsersPage() {
     search,
     handleSearch,
     clearSearch,
-
+    role,
+    setRole,
     mutate,
+    optimisticAdd,
+    optimisticUpdate,
+    optimisticDelete,
     isLoading,
     PAGE_SIZE,
   } = useUsers();
@@ -43,27 +127,72 @@ export default function UsersPage() {
   // ── Add dialog ──────────────────────────────────────────────────────────────
   const [addOpen, setAddOpen] = useState(false);
 
-  // ── Edit dialog — use data already in the list, no extra fetch needed ────────
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // ── Edit dialog ─────────────────────────────────────────────────────────────
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // ── Delete confirm dialog ───────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleAddUser = async (values: UserFormValues) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword, ...payload } = values;
-    await createUser(payload);
-    mutate();
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      name: values.name,
+      lastName: values.lastName,
+      email: values.email,
+      phone: values.phone,
+      role: "Cashier",
+    };
+    optimisticAdd(newUser);
+    try {
+      await createUser(payload);
+      toast.success("User added successfully");
+      mutate();
+    } catch {
+      toast.error("Failed to add user");
+      mutate(); // revert optimistic update
+    }
   };
 
   const handleEditUser = async (id: string, values: EditUserFormValues) => {
-    await updateUser(id, values);
-    mutate();
+    optimisticUpdate(id, {
+      name: values.name,
+      lastName: values.lastName,
+      phone: values.phone,
+    });
+    try {
+      await updateUser(id, {
+        name: values.name,
+        lastName: values.lastName,
+        phone: values.phone,
+        gender: values.gender,
+        dob: values.dob,
+        ...(values.oldPassword
+          ? { oldPassword: values.oldPassword, password: values.newPassword }
+          : {}),
+      });
+      toast.success("User updated successfully");
+      mutate();
+    } catch {
+      toast.error("Failed to update user");
+      mutate();
+    }
   };
 
   const handleDeleteUser = async (id: string) => {
-    await deleteUser(id);
-    setSelectedUser(null);
-    mutate();
+    optimisticDelete(id);
+    try {
+      await deleteUser(id);
+      toast.success("User deleted successfully");
+      setSelectedUserId(null);
+      mutate();
+    } catch {
+      toast.error("Failed to delete user");
+      mutate();
+    }
   };
 
   // ── Pagination helpers ──────────────────────────────────────────────────────
@@ -120,6 +249,20 @@ export default function UsersPage() {
                   />
                 </div>
               )}
+
+              <Select value={role} onValueChange={(v) => setRole(v)}>
+                <SelectTrigger className="h-10 rounded-xl border-gray-200 text-sm w-40">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Roles</SelectItem>
+                  {USER_ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
                 onClick={() => setAddOpen(true)}
@@ -180,38 +323,27 @@ export default function UsersPage() {
                   users.map((user, idx) => (
                     <tr
                       key={user.id}
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => setSelectedUserId(user.id)}
                       className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer"
                     >
-                      {/* # */}
                       <td className="px-4 py-3 text-gray-400 font-mono text-xs">
                         {String(idx + 1 + (page - 1) * PAGE_SIZE).padStart(
                           3,
                           "0",
                         )}
                       </td>
-
-                      {/* First name */}
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {user.name}
                       </td>
-
-                      {/* Last name */}
                       <td className="px-4 py-3 text-gray-600">
                         {user.lastName}
                       </td>
-
-                      {/* Email */}
                       <td className="px-4 py-3 text-gray-500 text-xs">
                         {user.email}
                       </td>
-
-                      {/* Phone */}
                       <td className="px-4 py-3 text-gray-600">
                         {user.phone ?? "—"}
                       </td>
-
-                      {/* Role badge */}
                       <td className="px-4 py-3">
                         {user.role ? (
                           <span
@@ -226,26 +358,17 @@ export default function UsersPage() {
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
-
-                      {/* Actions */}
                       <td
                         className="px-4 py-3 text-center"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => setSelectedUser(user)}
+                            onClick={() => setSelectedUserId(user.id)}
                             className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             Edit
-                          </button>
-                          <button
-                            onClick={async () => handleDeleteUser(user.id)}
-                            className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
                           </button>
                         </div>
                       </td>
@@ -281,11 +404,18 @@ export default function UsersPage() {
 
       {/* Edit User Dialog */}
       <EditUserDialog
-        open={!!selectedUser}
-        onOpenChange={(open) => !open && setSelectedUser(null)}
-        user={selectedUser}
+        open={!!selectedUserId}
+        onOpenChange={(open) => !open && setSelectedUserId(null)}
+        userId={selectedUserId}
         onSubmit={handleEditUser}
-        onDelete={handleDeleteUser}
+      />
+
+      {/* Delete Confirm Dialog */}
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        user={deleteTarget}
+        onConfirm={() => handleDeleteUser(deleteTarget!.id)}
       />
     </div>
   );

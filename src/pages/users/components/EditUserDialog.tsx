@@ -5,6 +5,7 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import type { Value as PhoneValue } from "react-phone-number-input";
 import { isValidPhoneNumber } from "react-phone-number-input";
+import useSWR from "swr";
 import { z } from "zod";
 
 import DateInput from "@/components/ui/DateInput";
@@ -33,55 +34,110 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserCog } from "lucide-react";
 
+import { getUser } from "@/queries/user";
 import type { User } from "@/types/user";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
-// email and role are not updatable; name replaces firstName in the payload
 
 const MIN_AGE = 16;
 
-const editUserSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  lastName: z.string().min(3, "Last Name is required"),
-  phone: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || isValidPhoneNumber(val),
-      "Enter a valid phone number",
-    ),
-  gender: z.enum(["male", "female", "Other"] as const).optional(),
-  dob: z
-    .string()
-    .optional()
-    .refine((val) => {
-      if (!val) return true;
-      const birth = new Date(val);
-      const today = new Date();
-      const age =
-        today.getFullYear() -
-        birth.getFullYear() -
-        (today <
-        new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
-          ? 1
-          : 0);
-      return age >= MIN_AGE;
-    }, `User must be at least ${MIN_AGE} years old`),
-});
+const editUserSchema = z
+  .object({
+    name: z.string().min(3, "First Name is required"),
+    lastName: z.string().min(3, "Last Name is required"),
+    phone: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || isValidPhoneNumber(val),
+        "Enter a valid phone number",
+      ),
+    gender: z.enum(["male", "female", "Other"] as const).optional(),
+    dob: z
+      .string()
+      .optional()
+      .refine((val) => {
+        if (!val) return true;
+        const birth = new Date(val);
+        const today = new Date();
+        const age =
+          today.getFullYear() -
+          birth.getFullYear() -
+          (today <
+          new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
+            ? 1
+            : 0);
+        return age >= MIN_AGE;
+      }, `User must be at least ${MIN_AGE} years old`),
+    // Password fields — all optional, but if any is filled, all are required
+    oldPassword: z.string().optional(),
+    newPassword: z.string().optional(),
+    confirmNewPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      const any =
+        data.oldPassword || data.newPassword || data.confirmNewPassword;
+      if (!any) return true;
+      return !!data.oldPassword && data.oldPassword.length >= 1;
+    },
+    {
+      message: "Current password is required to change password",
+      path: ["oldPassword"],
+    },
+  )
+  .refine(
+    (data) => {
+      const any =
+        data.oldPassword || data.newPassword || data.confirmNewPassword;
+      if (!any) return true;
+      return !!data.newPassword && data.newPassword.length >= 6;
+    },
+    {
+      message: "New password must be at least 6 characters",
+      path: ["newPassword"],
+    },
+  )
+  .refine(
+    (data) => {
+      const any =
+        data.oldPassword || data.newPassword || data.confirmNewPassword;
+      if (!any) return true;
+      return data.newPassword === data.confirmNewPassword;
+    },
+    { message: "Passwords do not match", path: ["confirmNewPassword"] },
+  );
 
 export type EditUserFormValues = z.infer<typeof editUserSchema>;
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function FormSkeleton() {
+  return (
+    <div className="space-y-3 mt-2 animate-pulse">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className="space-y-1.5">
+          <div className="h-3.5 w-24 bg-gray-100 rounded" />
+          <div className="h-11 w-full bg-gray-100 rounded-xl" />
+        </div>
+      ))}
+      <div className="flex gap-2 mt-2">
+        <div className="h-11 flex-1 bg-gray-100 rounded-xl" />
+        <div className="h-11 flex-1 bg-gray-100 rounded-xl" />
+      </div>
+    </div>
+  );
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User | null;
-  isLoading?: boolean;
+  userId: string | null;
   onSubmit: (id: string, values: EditUserFormValues) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -89,12 +145,18 @@ interface EditUserDialogProps {
 export default function EditUserDialog({
   open,
   onOpenChange,
-  user,
-  isLoading = false,
+  userId,
   onSubmit,
-  onDelete,
 }: EditUserDialogProps) {
-  const [deleting, setDeleting] = useState(false);
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Fetch user from backend when dialog opens
+  const { data: user, isLoading } = useSWR<User>(
+    open && userId ? `/employees/${userId}` : null,
+    () => getUser(userId!),
+  );
 
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserSchema),
@@ -104,6 +166,9 @@ export default function EditUserDialog({
       phone: "",
       gender: "male",
       dob: "",
+      oldPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
     },
   });
 
@@ -115,58 +180,71 @@ export default function EditUserDialog({
     formState: { isSubmitting },
   } = form;
 
-  // Populate form when a user is selected
+  // Populate form once user data is fetched
   useEffect(() => {
-    if (open && user) {
+    if (user) {
       reset({
         name: user.name ?? "",
         lastName: user.lastName ?? "",
         phone: user.phone ?? "",
         gender: user.gender ?? "male",
         dob: user.dob ?? "",
+        oldPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowOld(false);
+      setShowNew(false);
+      setShowConfirm(false);
     }
-  }, [open, user, reset]);
+  }, [user, reset]);
 
-  const handleDelete = async () => {
-    if (!user) return;
-    setDeleting(true);
-    try {
-      await onDelete(user.id);
-      onOpenChange(false);
-    } finally {
-      setDeleting(false);
+  // Reset form and visibility on close
+  const handleOpenChange = (o: boolean) => {
+    if (!o) {
+      reset();
+      setShowOld(false);
+      setShowNew(false);
+      setShowConfirm(false);
     }
+    onOpenChange(o);
   };
 
   const handleFormSubmit = async (values: EditUserFormValues) => {
-    if (!user) return;
+    if (!userId || !user) return;
     try {
-      // Only send fields that differ from the original user data
-      const initial: EditUserFormValues = {
+      // Build diff — only send changed fields
+      const initial = {
         name: user.name ?? "",
         lastName: user.lastName ?? "",
         phone: user.phone ?? "",
         gender: user.gender ?? "male",
         dob: user.dob ?? "",
       };
-      const changed = (
-        Object.keys(values) as (keyof EditUserFormValues)[]
-      ).reduce((acc, key) => {
-        if (values[key] !== initial[key]) acc[key] = values[key] as never;
-        return acc;
-      }, {} as Partial<EditUserFormValues>);
-      if (Object.keys(changed).length === 0) {
-        onOpenChange(false);
-        return;
+      const changed: Partial<EditUserFormValues> = {};
+      (["name", "lastName", "phone", "gender", "dob"] as const).forEach(
+        (key) => {
+          if (values[key] !== initial[key]) changed[key] = values[key] as never;
+        },
+      );
+      // Include password fields only if the admin filled them in
+      if (values.oldPassword || values.newPassword) {
+        changed.oldPassword = values.oldPassword;
+        changed.newPassword = values.newPassword;
       }
-      await onSubmit(user.id, changed as EditUserFormValues);
-      onOpenChange(false);
+      await onSubmit(userId, changed as EditUserFormValues);
+      handleOpenChange(false);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 400) {
         const message: string =
           err.response.data?.message ?? "Something went wrong";
-        setError("name", { type: "server", message });
+        // Map backend password error to the oldPassword field
+        if (message.toLowerCase().includes("password")) {
+          setError("oldPassword", { type: "server", message });
+        } else {
+          setError("name", { type: "server", message });
+        }
       } else {
         throw err;
       }
@@ -174,25 +252,17 @@ export default function EditUserDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
           <span className="flex items-center justify-start gap-2 text-lg font-semibold">
-            <UserPlus className="h-5 w-5" />
+            <UserCog className="h-5 w-5" />
             <DialogTitle>Edit User</DialogTitle>
           </span>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="space-y-3 mt-2 animate-pulse">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="space-y-1.5">
-                <div className="h-3.5 w-24 bg-gray-100 rounded" />
-                <div className="h-11 w-full bg-gray-100 rounded-xl" />
-              </div>
-            ))}
-            <div className="h-11 w-full bg-gray-100 rounded-xl mt-2" />
-          </div>
+          <FormSkeleton />
         ) : (
           <Form {...form}>
             <form
@@ -200,70 +270,41 @@ export default function EditUserDialog({
               className="space-y-4 mt-2"
               noValidate
             >
-              {/* Name + Last name */}
+              {/* First + Last name */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <FormField
-                  control={control}
-                  name="name"
-                  render={({ field: f }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...f}
-                          placeholder="John"
-                          className="h-11 rounded-xl border-gray-200"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="lastName"
-                  render={({ field: f }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...f}
-                          placeholder="Doe"
-                          className="h-11 rounded-xl border-gray-200"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {(["name", "lastName"] as const).map((field) => (
+                  <FormField
+                    key={field}
+                    control={control}
+                    name={field}
+                    render={({ field: f }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {field === "name" ? "First Name" : "Last Name"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...f}
+                            placeholder={field === "name" ? "John" : "Doe"}
+                            className="h-11 rounded-xl border-gray-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
               </div>
 
-              {/* Email — read only, not updatable */}
-              <div className="space-y-1.5">
+              {/* Email — read only */}
+              <FormItem>
                 <FormLabel>Email</FormLabel>
                 <Input
                   value={user?.email ?? ""}
                   disabled
                   className="h-11 rounded-xl border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-400">
-                  Email cannot be changed.
-                </p>
-              </div>
-
-              {/* Role — read only, always Cashier */}
-              <div className="space-y-1.5">
-                <FormLabel>Role</FormLabel>
-                <Select value="Cashier" disabled>
-                  <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cashier">Cashier</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-400">Role cannot be changed.</p>
-              </div>
+              </FormItem>
 
               {/* Date of Birth */}
               <FormField
@@ -304,49 +345,116 @@ export default function EditUserDialog({
                 )}
               />
 
-              {/* Gender */}
-              <FormField
-                control={control}
-                name="gender"
-                render={({ field: f }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Gender{" "}
-                      <span className="text-gray-500 font-normal">
-                        (Optional)
-                      </span>
-                    </FormLabel>
-                    <Select value={f.value} onValueChange={f.onChange}>
+              {/* Role + Gender */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Role — read only */}
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select value={user?.role ?? "Cashier"} disabled>
+                    <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cashier">Cashier</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+
+                {/* Gender */}
+                <FormField
+                  control={control}
+                  name="gender"
+                  render={({ field: f }) => (
+                    <FormItem>
+                      <FormLabel>Gender </FormLabel>
+                      <Select value={f.value} onValueChange={f.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Password section */}
+              {[
+                {
+                  name: "oldPassword" as const,
+                  label: "Current Password",
+                  show: showOld,
+                  toggle: () => setShowOld((v) => !v),
+                  placeholder: "••••••••",
+                },
+                {
+                  name: "newPassword" as const,
+                  label: "New Password",
+                  show: showNew,
+                  toggle: () => setShowNew((v) => !v),
+                  placeholder: "••••••",
+                },
+                {
+                  name: "confirmNewPassword" as const,
+                  label: "Confirm New Password",
+                  show: showConfirm,
+                  toggle: () => setShowConfirm((v) => !v),
+                  placeholder: "••••••",
+                },
+              ].map(({ name, label, show, toggle, placeholder }) => (
+                <FormField
+                  key={name}
+                  control={control}
+                  name={name}
+                  render={({ field: f }) => (
+                    <FormItem>
+                      <FormLabel>{label} </FormLabel>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl border-gray-200">
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
+                        <div className="relative">
+                          <Input
+                            {...f}
+                            type={show ? "text" : "password"}
+                            placeholder={placeholder}
+                            className="h-11 rounded-xl border-gray-200 pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={toggle}
+                            tabIndex={-1}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
 
               {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={deleting || isSubmitting}
-                  onClick={handleDelete}
-                  className="flex-1 h-11 rounded-xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                  disabled={isSubmitting}
+                  onClick={() => handleOpenChange(false)}
+                  className="flex-1 h-11 rounded-xl border-gray-200"
                 >
-                  {deleting ? "Deleting…" : "Delete User"}
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || deleting}
+                  disabled={isSubmitting}
                   className="flex-1 h-11 rounded-xl bg-black hover:bg-black/90"
                 >
                   {isSubmitting ? "Saving…" : "Save Changes"}

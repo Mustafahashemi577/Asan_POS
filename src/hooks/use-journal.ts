@@ -85,7 +85,7 @@ export function useJournals(): UseJournalsReturn {
         setJournals(data);
         setMeta(m);
       })
-      .catch((err: any) => {
+      .catch((err) => {
         setError(
           err?.response?.data?.message ??
             err.message ??
