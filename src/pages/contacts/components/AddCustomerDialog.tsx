@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneNumberInput } from "@/components/ui/phoneinput";
 
-import { MapPin, User } from "lucide-react";
+import { MapPin, Trash2, User } from "lucide-react";
 
 import type { Customer } from "@/types/customer";
 
@@ -42,6 +42,7 @@ interface CustomerDialogProps {
   onOpenChange: (open: boolean) => void;
   customer?: Customer | null;
   onSubmit: (values: CustomerFormValues, id?: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -51,8 +52,11 @@ export default function CustomerDialog({
   onOpenChange,
   customer,
   onSubmit,
+  onDelete,
 }: CustomerDialogProps) {
   const isEditing = !!customer;
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     register,
@@ -66,8 +70,10 @@ export default function CustomerDialog({
     defaultValues: { name: "", phone: "", address: "" },
   });
 
+  // Reset confirmation state whenever the dialog opens/closes
   useEffect(() => {
     if (open) {
+      setConfirmingDelete(false);
       reset(
         customer
           ? {
@@ -92,6 +98,18 @@ export default function CustomerDialog({
       } else {
         throw err;
       }
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!customer?.id || !onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(customer.id);
+      onOpenChange(false);
+    } finally {
+      setIsDeleting(false);
+      setConfirmingDelete(false);
     }
   };
 
@@ -167,19 +185,62 @@ export default function CustomerDialog({
             )}
           </div>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full h-11 rounded-xl bg-black hover:bg-black/90"
-          >
-            {isSubmitting
-              ? isEditing
-                ? "Saving…"
-                : "Adding…"
-              : isEditing
-                ? "Save Changes"
-                : "Add Customer"}
-          </Button>
+          {/* ── Actions ──────────────────────────────────────────────────── */}
+          {isEditing ? (
+            <div className="space-y-2 pt-1">
+              {/* Save button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting || isDeleting}
+                className="w-full h-11 rounded-xl bg-black hover:bg-black/90"
+              >
+                {isSubmitting ? "Saving…" : "Save Changes"}
+              </Button>
+
+              {/* Delete / Confirm row */}
+              {!confirmingDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={isSubmitting || isDeleting}
+                  onClick={() => setConfirmingDelete(true)}
+                  className="w-full h-11 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
+                >
+                  <Trash2 size={15} />
+                  Delete Customer
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={isDeleting}
+                    onClick={() => setConfirmingDelete(false)}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={handleDeleteConfirmed}
+                    className="flex-1 h-11 rounded-xl bg-red-500 hover:bg-red-600 text-white gap-2"
+                  >
+                    <Trash2 size={14} />
+                    {isDeleting ? "Deleting…" : "Confirm Delete"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-11 rounded-xl bg-black hover:bg-black/90"
+            >
+              {isSubmitting ? "Adding…" : "Add Customer"}
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>

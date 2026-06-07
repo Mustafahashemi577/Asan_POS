@@ -4,7 +4,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Trash2,
   XIcon,
 } from "lucide-react";
 
@@ -101,6 +100,7 @@ export default function ContactsPage() {
         onOpenChange={setDialogOpen}
         customer={editingCustomer}
         onSubmit={handleSubmit}
+        onDelete={handleDelete}
       />
 
       <div className="overflow-y-auto">
@@ -215,9 +215,9 @@ export default function ContactsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-100">
-                    {["Name", "Phone", "Address", "Actions"].map((h) => (
+                    {["Name", "Phone", "Address", ""].map((h, i) => (
                       <TableHead
-                        key={h}
+                        key={i}
                         className="text-sm font-medium py-4 text-left text-black bg-gray-100 first:rounded-l-md first:pl-6 last:rounded-r-md last:pr-6 whitespace-nowrap"
                       >
                         {h}
@@ -246,7 +246,11 @@ export default function ContactsPage() {
                     </TableRow>
                   ) : (
                     customers.map((customer) => (
-                      <TableRow key={customer.id} className="hover:bg-gray-50">
+                      <TableRow
+                        key={customer.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleOpenEdit(customer)}
+                      >
                         <TableCell className="text-xs text-gray-800 font-medium pl-6 whitespace-nowrap">
                           {customer.name}
                         </TableCell>
@@ -256,14 +260,13 @@ export default function ContactsPage() {
                         <TableCell className="text-xs text-gray-600">
                           {customer.address}
                         </TableCell>
+                        {/* Actions cell — stops row click from firing */}
                         <TableCell
                           className="pr-6 whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <CustomerActionsMenu
                             onEdit={() => handleOpenEdit(customer)}
-                            onDelete={() => handleDelete(customer.id)}
-                            size="desktop"
                           />
                         </TableCell>
                       </TableRow>
@@ -285,16 +288,21 @@ export default function ContactsPage() {
                 </p>
               ) : (
                 customers.map((customer) => (
-                  <div key={customer.id} className="px-4 py-4">
+                  <div
+                    key={customer.id}
+                    className="px-4 py-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    onClick={() => handleOpenEdit(customer)}
+                  >
                     <div className="flex items-start justify-between mb-1">
                       <p className="text-sm font-medium text-gray-800">
                         {customer.name}
                       </p>
-                      <CustomerActionsMenu
-                        onEdit={() => handleOpenEdit(customer)}
-                        onDelete={() => handleDelete(customer.id)}
-                        size="mobile"
-                      />
+                      {/* Stop propagation so the icon tap doesn't also fire the row click */}
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <CustomerActionsMenu
+                          onEdit={() => handleOpenEdit(customer)}
+                        />
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 mb-0.5">
                       {customer.phone}
@@ -327,45 +335,22 @@ export default function ContactsPage() {
 
 // ── Sub-component ─────────────────────────────────────────────────────────────
 
-function CustomerActionsMenu({
-  onEdit,
-  onDelete,
-  size,
-}: {
-  onEdit: () => void;
-  onDelete: () => void;
-  size: "desktop" | "mobile";
-}) {
+function CustomerActionsMenu({ onEdit }: { onEdit: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className={
-            size === "desktop"
-              ? "h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-              : "h-7 w-7 p-0 rounded-lg -mt-0.5"
-          }
+          className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
         >
-          <MoreHorizontal
-            size={size === "desktop" ? 16 : 15}
-            className={size === "desktop" ? "text-gray-500" : "text-gray-400"}
-          />
+          <MoreHorizontal size={16} className="text-gray-500" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="rounded-xl w-36">
         <DropdownMenuItem className="text-xs cursor-pointer" onClick={onEdit}>
           <Pencil className="w-3.5 h-3.5 mr-2" />
           Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          variant="destructive"
-          className="text-xs cursor-pointer"
-          onClick={onDelete}
-        >
-          <Trash2 className="w-3.5 h-3.5 mr-2" />
-          Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
