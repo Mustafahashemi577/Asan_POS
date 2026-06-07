@@ -10,6 +10,7 @@ export interface SaleItemPayload {
 
 export interface CreateSalePayload {
   customerId: string;
+  inventoryId: string;
   items: SaleItemPayload[];
 }
 

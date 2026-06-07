@@ -4,8 +4,6 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -34,6 +32,13 @@ interface PosOrderDetailsProps {
   submitting: boolean;
   onPay: () => void;
 }
+
+// ── Editable quantity cell ────────────────────────────────────────────────────
+// - Always an input, never toggled
+// - Fully erasable: when empty shows placeholder "0", immediately calls
+//   onSetQuantity(0) so the product card badge and totals update in real time
+// - Commits final value on blur / Enter; Escape restores previous value
+// - Clamps to stock on commit
 
 function QuantityInput({
   item,
@@ -170,8 +175,8 @@ export function PosOrderDetails({
         )}
       </div>
 
-      {/* Inventory combobox */}
-      <div className="shrink-0">
+      {/* Inventory combobox — hidden on mobile (shown above product grid instead) */}
+      <div className="hidden lg:block shrink-0">
         <PosInventoryCombobox
           value={inventoryId}
           label={inventoryLabel}
@@ -283,67 +288,67 @@ export function PosOrderDetails({
               </Button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="rounded-2xl max-w-sm mx-4 sm:mx-auto">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirm Sale</AlertDialogTitle>
-                <AlertDialogDescription asChild>
-                  <div className="space-y-3 text-sm text-gray-600">
-                    {/* Order summary */}
-                    <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
-                      {cart.map((item) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span className="truncate mr-2">
-                            {item.name}
-                            <span className="text-gray-400 ml-1">
-                              ×{item.quantity}
-                            </span>
-                          </span>
-                          <span className="font-medium text-gray-800 shrink-0">
-                            {(item.price * item.quantity).toFixed(0)} AFN
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Totals */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-gray-500">
-                        <span>Subtotal</span>
-                        <span>{subtotal.toFixed(2)} AFN</span>
-                      </div>
-                      <div className="flex justify-between text-gray-500">
-                        <span>Tax (10%)</span>
-                        <span>{tax.toFixed(2)} AFN</span>
-                      </div>
-                      <div className="flex justify-between font-semibold text-gray-900 text-base pt-1 border-t border-gray-200">
-                        <span>Total</span>
-                        <span>{total.toFixed(2)} AFN</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Customer:{" "}
-                      <span className="text-gray-600 font-medium">
-                        {customerLabel}
-                      </span>
-                      &nbsp;·&nbsp; Inventory:{" "}
-                      <span className="text-gray-600 font-medium">
-                        {inventoryLabel}
-                      </span>
-                    </p>
-                  </div>
+            <AlertDialogContent className="rounded-2xl max-w-sm p-0 overflow-hidden gap-0">
+              {/* Header */}
+              <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+                <AlertDialogTitle className="text-base font-semibold text-gray-900">
+                  Confirm Sale
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-gray-400 mt-0.5">
+                  {customerLabel} · {inventoryLabel}
                 </AlertDialogDescription>
-              </AlertDialogHeader>
+              </div>
 
-              <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-                <AlertDialogCancel className="rounded-xl h-11 w-full sm:w-auto">
+              {/* Items */}
+              <div className="px-5 py-3 max-h-48 overflow-y-auto space-y-2">
+                {cart.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium text-gray-400 bg-gray-100 rounded px-1.5 py-0.5 shrink-0">
+                        ×{item.quantity}
+                      </span>
+                      <span className="text-sm text-gray-700 truncate">
+                        {item.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 shrink-0">
+                      {(item.price * item.quantity).toFixed(0)} AFN
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals */}
+              <div className="px-5 py-3 bg-gray-50 space-y-1.5 border-t border-gray-100">
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Subtotal</span>
+                  <span>{subtotal.toFixed(2)} AFN</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Tax (10%)</span>
+                  <span>{tax.toFixed(2)} AFN</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-200">
+                  <span>Total</span>
+                  <span>{total.toFixed(2)} AFN</span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-4 flex items-center gap-2 border-t border-gray-100">
+                <AlertDialogCancel className="flex-1 h-11 rounded-xl border-gray-200 text-sm font-medium">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={onPay}
-                  className="rounded-xl h-11 w-full sm:w-auto bg-black text-white hover:bg-black/90"
+                  className="flex-1 h-11 rounded-xl bg-black text-white hover:bg-black/90 text-sm font-semibold"
                 >
                   Confirm & Pay
                 </AlertDialogAction>
-              </AlertDialogFooter>
+              </div>
             </AlertDialogContent>
           </AlertDialog>
         </div>
