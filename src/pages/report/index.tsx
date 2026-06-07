@@ -104,8 +104,8 @@ export default function Report() {
   if (j.loading) return <Loading message="Loading reports..." />;
 
   return (
-    <div className="overflow-y-auto">
-      <div className="p-6 space-y-5">
+    <div className="overflow-y-auto max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
+      <div className="max-w-7xl mx-auto space-y-5">
         {/* ── HEADER ──────────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
