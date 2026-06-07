@@ -109,6 +109,7 @@ export default function ProductManagementPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProducts(page, debouncedSearch, selectedCategory);
   }, [page, debouncedSearch, selectedCategory]);
 
@@ -261,11 +262,22 @@ export default function ProductManagementPage() {
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-16 text-center text-sm text-gray-400"
-                    >
-                      No products found.
+                    <td colSpan={7} className="px-4 py-16">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <img
+                          src="/photos/NotFound2.avif"
+                          alt="No products found"
+                          className="w-40 h-40 mb-4 opacity-80"
+                        />
+
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          No Products Found
+                        </h3>
+
+                        <p className="mt-2 text-sm text-gray-500 max-w-sm">
+                          Check spelling or add a product to get started.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
