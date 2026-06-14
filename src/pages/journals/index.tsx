@@ -216,13 +216,13 @@ export default function Journals() {
                             {cr?.account?.name ?? "—"}
                           </td>
                           <td
-                            className={`px-5 py-3 text-xs font-medium whitespace-nowrap tabular-nums ${
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap tabular-nums ${
                               cr?.account?.name === "Default Account"
                                 ? "text-green-600"
                                 : "text-red-600"
                             }`}
                           >
-                            AFN {amount?.toLocaleString()}
+                            {amount?.toLocaleString()}
                           </td>
                           <td className="px-5 py-3 text-right">
                             <span

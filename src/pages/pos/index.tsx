@@ -7,6 +7,7 @@ import { getPosInventory } from "@/queries/pos-inventory";
 import type { Category } from "@/types";
 import { ShoppingCart, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { PosCategoryFilter } from "./components/pos-category-filter";
 import { PosInventoryCombobox } from "./components/pos-inventory-combobox";
 import { PosOrderDetails } from "./components/pos-order-details";
@@ -113,6 +114,83 @@ export default function PosPage() {
         .catch(() => {});
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Barcode scanner ───────────────────────────────────────────────────────────
+  // Scanner behaves as a keyboard: types barcode chars then fires Enter.
+  // We buffer keystrokes on window and flush on Enter.
+  // If a real input/textarea/select is focused we ignore — prevents conflicts
+  // with the search box, quantity inputs, and comboboxes.
+  // Lookup: backend encodes sequence when available, falls back to product.id.
+
+  const allProductsRef = useRef(allProducts);
+  useEffect(() => {
+    allProductsRef.current = allProducts;
+  }, [allProducts]);
+
+  const inventoryIdForScanRef = useRef(inventoryId);
+  useEffect(() => {
+    inventoryIdForScanRef.current = inventoryId;
+  }, [inventoryId]);
+
+  const addToCartRef = useRef(addToCart);
+  useEffect(() => {
+    addToCartRef.current = addToCart;
+  }, [addToCart]);
+
+  const scanBuffer = useRef("");
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // If a real input element is focused, let it handle its own keystrokes
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.key === "Enter") {
+        const barcode = scanBuffer.current.trim();
+        scanBuffer.current = "";
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+
+        if (!barcode) return;
+
+        if (!inventoryIdForScanRef.current) {
+          toast.warning("Select an inventory before scanning");
+          return;
+        }
+
+        // Backend encodes sequence when available, product.id otherwise
+        const product = allProductsRef.current.find(
+          (p) => (p.sequence ?? p.id) === barcode,
+        );
+
+        if (!product) {
+          toast.warning(`Product not found: ${barcode}`);
+          return;
+        }
+
+        addToCartRef.current(product);
+        return;
+      }
+
+      // Only buffer printable single characters
+      if (e.key.length === 1) {
+        scanBuffer.current += e.key;
+
+        // Safety reset: if nothing commits within 100ms, clear the buffer.
+        // Real scanners fire all chars + Enter in one burst well under 100ms.
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+        scanTimer.current = setTimeout(() => {
+          scanBuffer.current = "";
+        }, 100);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (scanTimer.current) clearTimeout(scanTimer.current);
+    };
+  }, []);
 
   // ── Derived ───────────────────────────────────────────────────────────────────
 
