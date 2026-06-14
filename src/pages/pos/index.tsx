@@ -16,6 +16,117 @@ import { usePosOrder } from "./components/use-pos-order";
 
 const ITEMS_PER_PAGE = 12;
 
+// ── Barcode WebSocket hook ────────────────────────────────────────────────────
+// Connects to the local Python barcode bridge (ws://localhost:8765).
+// Automatically reconnects every 2 s if the connection drops.
+// Falls back to the keyboard-buffer approach if WebSocket is unavailable.
+
+function useBarcodeScanner({
+  onBarcode,
+  enabled = true,
+}: {
+  onBarcode: (barcode: string) => void;
+  enabled?: boolean;
+}) {
+  const onBarcodeRef = useRef(onBarcode);
+  useEffect(() => {
+    onBarcodeRef.current = onBarcode;
+  }, [onBarcode]);
+
+  // Track whether WS is connected so the keyboard fallback knows when to kick in
+  const wsConnected = useRef(false);
+
+  // ── WebSocket path ──
+  useEffect(() => {
+    if (!enabled) return;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let dead = false;
+
+    function connect() {
+      if (dead) return;
+      ws = new WebSocket("ws://localhost:8765");
+
+      ws.onopen = () => {
+        wsConnected.current = true;
+        console.log("[BarcodeScanner] WebSocket connected");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data as string) as { barcode: string };
+          if (data.barcode) onBarcodeRef.current(data.barcode);
+        } catch {
+          // ignore malformed messages
+        }
+      };
+
+      ws.onclose = () => {
+        wsConnected.current = false;
+        console.log("[BarcodeScanner] WebSocket closed, retrying in 2 s…");
+        if (!dead) reconnectTimer = setTimeout(connect, 2000);
+      };
+
+      ws.onerror = () => {
+        ws?.close();
+      };
+    }
+
+    connect();
+
+    return () => {
+      dead = true;
+      wsConnected.current = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, [enabled]);
+
+  // ── Keyboard fallback (works when WS is not yet connected) ──
+  // Buffers keystrokes and flushes on Enter, same as before.
+  // Ignored when an input/textarea/select has focus.
+  const scanBuffer = useRef("");
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Let real inputs handle their own keystrokes
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // If WS is live the Python bridge handles it — avoid double-firing
+      if (wsConnected.current) return;
+
+      if (e.key === "Enter") {
+        const barcode = scanBuffer.current.trim();
+        scanBuffer.current = "";
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+        if (barcode) onBarcodeRef.current(barcode);
+        return;
+      }
+
+      if (e.key.length === 1) {
+        scanBuffer.current += e.key;
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+        scanTimer.current = setTimeout(() => {
+          scanBuffer.current = "";
+        }, 300);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (scanTimer.current) clearTimeout(scanTimer.current);
+    };
+  }, [enabled]);
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function PosPage() {
   const [allProducts, setAllProducts] = useState<PosProduct[]>([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
@@ -29,7 +140,7 @@ export default function PosPage() {
     onSearch: resetToPage1,
   });
 
-  // ── Cart / order — must come before loadInventory so inventoryId is available ──
+  // ── Cart / order ─────────────────────────────────────────────────────────────
 
   const {
     cart,
@@ -49,11 +160,10 @@ export default function PosPage() {
     submitting,
     handlePay,
   } = usePosOrder({
-    // use a ref-based callback so it always sees the latest inventoryId
     onSaleSuccess: () => loadInventoryRef.current(inventoryIdRef.current),
   });
 
-  // Refs so the onSaleSuccess closure never goes stale
+  // Refs so closures never go stale
   const inventoryIdRef = useRef(inventoryId);
   useEffect(() => {
     inventoryIdRef.current = inventoryId;
@@ -92,7 +202,6 @@ export default function PosPage() {
       .finally(() => setLoadingInventory(false));
   }, []);
 
-  // Keep loadInventory ref in sync so onSaleSuccess always calls the latest version
   const loadInventoryRef = useRef(loadInventory);
   useEffect(() => {
     loadInventoryRef.current = loadInventory;
@@ -115,12 +224,7 @@ export default function PosPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Barcode scanner ───────────────────────────────────────────────────────────
-  // Scanner behaves as a keyboard: types barcode chars then fires Enter.
-  // We buffer keystrokes on window and flush on Enter.
-  // If a real input/textarea/select is focused we ignore — prevents conflicts
-  // with the search box, quantity inputs, and comboboxes.
-  // Lookup: backend encodes sequence when available, falls back to product.id.
+  // ── Stable refs for barcode handler ──────────────────────────────────────────
 
   const allProductsRef = useRef(allProducts);
   useEffect(() => {
@@ -137,60 +241,31 @@ export default function PosPage() {
     addToCartRef.current = addToCart;
   }, [addToCart]);
 
-  const scanBuffer = useRef("");
-  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── Barcode scanner ───────────────────────────────────────────────────────────
+  // Receives barcodes from the Python WebSocket bridge (ws://localhost:8765).
+  // Falls back to keyboard buffering when the bridge is not running.
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // If a real input element is focused, let it handle its own keystrokes
-      const tag = (document.activeElement as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      if (e.key === "Enter") {
-        const barcode = scanBuffer.current.trim();
-        scanBuffer.current = "";
-        if (scanTimer.current) clearTimeout(scanTimer.current);
-
-        if (!barcode) return;
-
-        if (!inventoryIdForScanRef.current) {
-          toast.warning("Select an inventory before scanning");
-          return;
-        }
-
-        // Backend encodes sequence when available, product.id otherwise
-        const product = allProductsRef.current.find(
-          (p) => (p.sequence ?? p.id) === barcode,
-        );
-
-        if (!product) {
-          toast.warning(`Product not found: ${barcode}`);
-          return;
-        }
-
-        addToCartRef.current(product);
+  useBarcodeScanner({
+    enabled: true,
+    onBarcode: (barcode) => {
+      if (!inventoryIdForScanRef.current) {
+        toast.warning("Select an inventory before scanning");
         return;
       }
 
-      // Only buffer printable single characters
-      if (e.key.length === 1) {
-        scanBuffer.current += e.key;
+      // Match by sequence (if set) or product id
+      const product = allProductsRef.current.find(
+        (p) => (p.sequence ?? p.id) === barcode,
+      );
 
-        // Safety reset: if nothing commits within 100ms, clear the buffer.
-        // Real scanners fire all chars + Enter in one burst well under 100ms.
-        if (scanTimer.current) clearTimeout(scanTimer.current);
-        scanTimer.current = setTimeout(() => {
-          scanBuffer.current = "";
-        }, 100);
+      if (!product) {
+        toast.warning(`Product not found: ${barcode}`);
+        return;
       }
-    };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (scanTimer.current) clearTimeout(scanTimer.current);
-    };
-  }, []);
+      addToCartRef.current(product);
+    },
+  });
 
   // ── Derived ───────────────────────────────────────────────────────────────────
 
@@ -257,7 +332,7 @@ export default function PosPage() {
     <div className="h-[calc(100vh-80px)] flex flex-col lg:flex-row">
       {/* ── Product list ── */}
       <div className="bg-white flex-1 rounded-xl min-w-0 overflow-y-auto p-4 space-y-3 pb-24 lg:pb-4">
-        {/* MOBILE: inventory picker always visible so user never needs to open sheet for it */}
+        {/* MOBILE: inventory picker always visible */}
         <div className="lg:hidden">
           <PosInventoryCombobox
             value={inventoryId}
