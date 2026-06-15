@@ -1,4 +1,3 @@
-// pages/Dashboard/index.tsx
 import { Loading } from "@/components/loading";
 import type { Transaction } from "@/components/transactiontable";
 import TransactionTable from "@/components/transactiontable";
@@ -9,9 +8,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useDashboard } from "@/hooks/use-dashboard";
 import { useJournals } from "@/hooks/use-journal";
 import { useProfile } from "@/hooks/use-profile";
 import DashboardStatsCard from "@/pages/dashboard/dashboardStatsCard";
+import type { LowStockProduct } from "@/types/dashboard";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -22,8 +31,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
 
 const weeklyData = [
   { day: "Sun", income: 840 },
@@ -42,8 +49,6 @@ const monthlyData = [
   { day: "W4", income: 7000 },
 ];
 
-// ─── Custom tooltip ───────────────────────────────────────────────────────────
-
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
@@ -55,8 +60,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   }
   return null;
 };
-
-// ─── Status mapper ────────────────────────────────────────────────────────────
 
 function toTransactionStatus(
   status: string | undefined,
@@ -76,13 +79,8 @@ function toTransactionStatus(
   }
 }
 
-// ─── Extract customer name from account name ──────────────────────────────────
-
 function extractCustomerName(accountName: string | undefined): string {
   if (!accountName) return "—";
-  // e.g. "Walk-in Customer - Accounts Payable" → "Walk-in Customer"
-  // e.g. "Hedayat  - Accounts Payable"         → "Hedayat"
-  // e.g. "Abdullah - Accounts Payable"          → "Abdullah"
   return (
     accountName
       .replace(/\s*-\s*Accounts\s*(Payable|Receivable)\s*$/i, "")
@@ -90,25 +88,43 @@ function extractCustomerName(accountName: string | undefined): string {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function QtyChip({ qty }: { qty: number }) {
+  const isCritical = qty <= 4;
+  return (
+    <span
+      className={[
+        "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md border",
+        isCritical
+          ? "bg-red-500/10 text-red-500 border-red-500/20"
+          : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "w-1.5 h-1.5 rounded-full",
+          isCritical ? "bg-red-500" : "bg-yellow-500",
+        ].join(" ")}
+      />
+      {qty}
+    </span>
+  );
+}
 
 export default function Dashboard() {
   const { profile, isLoading: profileLoading, fetchError } = useProfile();
   const j = useJournals();
+  const dash = useDashboard();
 
   const [chartRange, setChartRange] = useState<"weekly" | "monthly">("weekly");
   const chartData = chartRange === "weekly" ? weeklyData : monthlyData;
   const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
 
-  // Map journal entries → Transaction rows
   const rows = useMemo<Transaction[]>(() => {
     if (!j.journals?.length) return [];
-
     return j.journals.map((je) => {
       const dr = je.items.find((i) => i.debit != null);
       const amount = dr?.debit ?? 0;
       const accountName = dr?.account?.name;
-
       return {
         id: `${je.sequence.prefix}-${String(je.sequence.lastIndex).padStart(4, "0")}`,
         customer: extractCustomerName(accountName),
@@ -122,8 +138,7 @@ export default function Dashboard() {
     });
   }, [j.journals]);
 
-  // ── Guards ────────────────────────────────────────────────────────────────
-  if (j.loading || profileLoading)
+  if (j.loading || profileLoading || dash.loading)
     return <Loading message="Loading dashboard..." />;
 
   if (fetchError || !profile) {
@@ -136,13 +151,80 @@ export default function Dashboard() {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const lowStock = dash.data?.lowStockProducts ?? [];
+
   return (
     <div className="max-w-[1401px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-      <DashboardStatsCard profile={profile} />
+      {/* Dark stats card */}
+      <DashboardStatsCard profile={profile} dashboard={dash.data} />
 
+      {/* Low stock table — outside the card, its own white panel */}
+      {lowStock.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[10px] font-semibold tracking-widest text-yellow-600 bg-yellow-50 border border-yellow-200 rounded px-1.5 py-0.5">
+                ⚠ LOW STOCK
+              </span>
+              <span className="text-xs text-gray-400">
+                {lowStock.length} item{lowStock.length !== 1 ? "s" : ""} need
+                restocking
+              </span>
+            </div>
+          </div>
+
+          {/* Table */}
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-gray-100">
+                <TableHead className="text-[10px] tracking-widest uppercase text-gray-400 font-medium h-9 pl-5">
+                  Product
+                </TableHead>
+                <TableHead className="text-[10px] tracking-widest uppercase text-gray-400 font-medium h-9">
+                  Inventory
+                </TableHead>
+                <TableHead className="text-[10px] tracking-widest uppercase text-gray-400 font-medium h-9">
+                  Qty left
+                </TableHead>
+                <TableHead className="text-[10px] tracking-widest uppercase text-gray-400 font-medium h-9 text-right pr-5">
+                  Unit price
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lowStock.map((p: LowStockProduct, i: number) => (
+                <TableRow
+                  key={`${p.id}-${i}`}
+                  className="border-gray-50 hover:bg-gray-50/70"
+                >
+                  <TableCell className="py-3 pl-5">
+                    <p className="text-sm font-medium text-gray-800">
+                      {p.name}
+                    </p>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className="text-xs text-gray-400">
+                      {p.inventoryName}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <QtyChip qty={p.quantity} />
+                  </TableCell>
+                  <TableCell className="py-3 text-right pr-5">
+                    <span className="text-sm text-gray-500 tabular-nums">
+                      {p.price.toLocaleString()} AFN
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Transactions + chart row */}
       <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-        {/* LEFT — Transaction table */}
         <div className="flex-1 min-w-0">
           {j.error ? (
             <div className="bg-white rounded-2xl border border-gray-100 px-5 py-12 text-center text-sm text-red-500">
@@ -153,7 +235,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* RIGHT — chart */}
         <div className="xl:w-[300px] xl:shrink-0">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-1">

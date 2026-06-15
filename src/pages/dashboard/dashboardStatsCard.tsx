@@ -1,52 +1,55 @@
-// components/dashboard/DashboardStatsCard.tsx
-// Stats-only card for the dashboard — no avatar, name, or profile info.
-// Profile info lives exclusively in components/profile/ProfileCard.tsx
-
 import type { EmployeeInfo } from "@/types/";
+import type { DashboardData } from "@/types/dashboard";
 import { getDisplayName } from "@/utils/profile.helpers";
-
-const stats = [
-  {
-    label: "Order Process",
-    value: "5",
-    pct: "0,5%",
-    pctColor: "text-green-400",
-    date: "Saturday, 06 Sep 2024",
-    sub: "1,300 AFN",
-  },
-  {
-    label: "Order Done",
-    value: "40",
-    pct: "",
-    pctColor: "",
-    date: "Saturday, 06 Sep 2024",
-    sub: "521 AFN",
-  },
-  {
-    label: "Total Order",
-    value: "120",
-    pct: "",
-    pctColor: "",
-    date: "Saturday, 06 Sep 2024",
-    sub: "521 AFN",
-  },
-  {
-    label: "Total Income",
-    value: "1.200 AFN",
-    pct: "0,5%",
-    pctColor: "text-green-400",
-    date: "Saturday, 06 Sep 2024",
-    sub: "1,234 AFN",
-  },
-];
 
 interface Props {
   profile: EmployeeInfo;
-  //onMakeOrder?: () => void;
+  dashboard: DashboardData | null;
 }
 
-export default function DashboardStatsCard({ profile }: Props) {
+function pctLabel(val: number): string {
+  if (val === 0) return "";
+  return `${val > 0 ? "+" : ""}${val.toFixed(1)}%`;
+}
+
+export default function DashboardStatsCard({ profile, dashboard }: Props) {
   const displayName = getDisplayName(profile);
+
+  const todaySales = dashboard?.todaySales.total ?? 0;
+  const salesPct = dashboard?.todaySales.percentageChange ?? 0;
+  const todayProfit = dashboard?.todayProfit.total ?? 0;
+  const profitPct = dashboard?.todayProfit.percentageChange ?? 0;
+  const lowStock = dashboard?.lowStockProducts ?? [];
+
+  const stats = [
+    {
+      label: "Today's Sales",
+      value: `${todaySales.toLocaleString()} AFN`,
+      pct: pctLabel(salesPct),
+      pctColor: salesPct >= 0 ? "text-green-400" : "text-red-400",
+      pctBg: salesPct >= 0 ? "bg-green-400/10" : "bg-red-400/10",
+      sub: `${salesPct >= 0 ? "▲" : "▼"} vs yesterday`,
+    },
+    {
+      label: "Today's Profit",
+      value: `${todayProfit.toLocaleString()} AFN`,
+      pct: pctLabel(profitPct),
+      pctColor: profitPct >= 0 ? "text-green-400" : "text-red-400",
+      pctBg: profitPct >= 0 ? "bg-green-400/10" : "bg-red-400/10",
+      sub: `${profitPct >= 0 ? "▲" : "▼"} vs yesterday`,
+    },
+    {
+      label: "Low Stock Items",
+      value: `${lowStock.length}`,
+      pct: lowStock.length > 0 ? "!" : "",
+      pctColor: "text-yellow-400",
+      pctBg: "bg-yellow-400/10",
+      sub:
+        lowStock.length > 0
+          ? lowStock[0].name // show the most critical item name
+          : "All stocked",
+    },
+  ];
 
   return (
     <div className="bg-gradient-to-t from-bg-dark via-bg-dark to-bg-dark/90 w-full rounded-2xl p-4 sm:p-6">
@@ -60,17 +63,10 @@ export default function DashboardStatsCard({ profile }: Props) {
             Be a good and honest employee for everyone's happiness
           </p>
         </div>
-
-        {/* <button
-          onClick={onMakeOrder}
-          className="shrink-0 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-xl"
-        >
-          Make an order
-        </button> */}
       </div>
 
-      {/* Stats grid — 2 cols on mobile, 4 on desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -84,7 +80,7 @@ export default function DashboardStatsCard({ profile }: Props) {
               </p>
               {stat.pct && (
                 <span
-                  className={`text-xs font-medium ${stat.pctColor} bg-green-400/10 px-1.5 py-0.5 rounded`}
+                  className={`text-xs font-medium ${stat.pctColor} ${stat.pctBg} px-1.5 py-0.5 rounded`}
                 >
                   {stat.pct}
                 </span>
@@ -93,14 +89,7 @@ export default function DashboardStatsCard({ profile }: Props) {
 
             <hr className="border-white/10 mb-2" />
 
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500 text-[10px]">{stat.date}</span>
-              <span className="text-gray-400 text-xs">{stat.sub}</span>
-            </div>
-
-            <button className="text-gray-500 text-[10px] mt-1.5 hover:text-gray-300 transition block">
-              View all &rsaquo;
-            </button>
+            <p className="text-gray-400 text-[10px]">{stat.sub}</p>
           </div>
         ))}
       </div>
