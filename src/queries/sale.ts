@@ -34,8 +34,10 @@ export async function createSale(
   const res = await api.post("/sales", payload);
   return res.data;
 }
-
-// ── Stock-out ─────────────────────────────────────────────────────────────────
+export async function updateSale(id: string): Promise<{ message: string }> {
+  const res = await api.put(`/sales/${id}`, { status: "Done" });
+  return res.data;
+}
 
 export interface StockOutItemPayload {
   saleItemId: string;

@@ -1,6 +1,11 @@
 import { useUtilsStore } from "@/lib/utilsStore";
 import type { PosProduct } from "@/queries/pos-inventory";
-import { completeStockOut, createSale, createStockOut } from "@/queries/sale";
+import {
+  completeStockOut,
+  createSale,
+  createStockOut,
+  updateSale,
+} from "@/queries/sale";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -130,6 +135,8 @@ export function usePosOrder({ onSaleSuccess }: UsePosOrderOptions = {}) {
       const saleItemMap = new Map(
         sale.items.map((si) => [si.productId, si.id]),
       );
+
+      await updateSale(sale.id);
 
       const stockOut = await createStockOut({
         saleId: sale.id,
